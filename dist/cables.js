@@ -2,7 +2,7 @@ import * as THREE from 'three';
 const V=(...a)=>new THREE.Vector3(...a),clamp=THREE.MathUtils.clamp;
 const smooth=(v,a,b)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
 // Physical endpoints are local pad coordinates, never free-floating approximations.
-export function createCables(root,{display,esp,battery,charger,strip,switches}){
+export function createCables(root,{display,esp,battery,charger,strip,switches,shellFront,shellRear}){
  const anchor=(object,xyz,label)=>({object,point:V(...xyz),label});
  const e=(side,row,label)=>anchor(esp,[side*12,27-(row-1)*2.54,1.2],`ESP32 · ${label} (${side<0?'J1':'J3'}-${row})`);
  const d=(i,label)=>anchor(display,[-11.43+i*2.54,-33,-.6],`Display · ${label}`);
@@ -24,6 +24,93 @@ export function createCables(root,{display,esp,battery,charger,strip,switches}){
  add('Sense / charge ADC','#3eaa78',s(3),e(1,5,'GPIO 2'),'Divided USB input voltage · ADC');
  add('Sense / USB input','#3289c1',anchor(charger,[8,-4,-1],'Charger · IN+ / VBUS'),s(4),'USB 5 V input to 100 kΩ divider');
  const group=new THREE.Group();root.add(group);group.userData.name='Wire kit';let selected=-1;
+ // Convex proxies for the parts, in each part's own frame; wires are pushed out of them.
+ const colliders=[
+  {object:display,center:V(0,0,0),r:30.4},
+  {object:esp,center:V(0,0,.6),half:V(14.6,32.6,3)},
+  {object:battery,center:V(0,0,0),half:V(30.6,25.6,3.2)},
+  {object:charger,center:V(0,0,-1.2),half:V(12.6,9.6,2.9)},
+  {object:strip,center:V(0,0,-.6),half:V(7,10.7,1.9)},
+  ...switches.map(sw=>({object:sw,center:V(0,0,-.6),half:V(3.5,3.6,2.9)})),
+ ];
+ if(shellFront)colliders.push({object:shellFront,center:V(0,0,.7),half:V(34,68,1.4)});
+ if(shellRear)colliders.push({object:shellRear,center:V(0,0,1),half:V(34,68,1.6)});
+ if(typeof location!=='undefined'&&new URLSearchParams(location.search).has('colliders')){
+  const dbg=new THREE.MeshBasicMaterial({color:'#ff2244',transparent:true,opacity:.35,depthWrite:false});
+  for(const c of colliders){const m=c.r?new THREE.Mesh(new THREE.SphereGeometry(c.r,24,16),dbg):new THREE.Mesh(new THREE.BoxGeometry(c.half.x*2,c.half.y*2,c.half.z*2),dbg);m.position.copy(c.center);c.object.add(m);}
+ }
+ const tmpW=V(),tmpQ=V(),kick=V(),camRight=V(),camUp=V(),invRoot=new THREE.Matrix4();
+ let drag=null;
+ function collideNode(node,old,k,wr,a,b){
+  if(node.distanceTo(a)<7||node.distanceTo(b)<7)return;
+  for(const c of colliders){
+   tmpW.copy(node);root.localToWorld(tmpW);c.object.worldToLocal(tmpW);
+   let hit=false;
+   if(c.r!==undefined){const dist=tmpW.distanceTo(c.center);if(dist<c.r+wr){tmpW.sub(c.center).setLength(c.r+wr).add(c.center);hit=true;}}
+   else{
+    tmpQ.copy(tmpW).sub(c.center);
+    const hx=c.half.x+wr,hy=c.half.y+wr,hz=c.half.z+wr;
+    if(Math.abs(tmpQ.x)<hx&&Math.abs(tmpQ.y)<hy&&Math.abs(tmpQ.z)<hz){
+     const px=hx-Math.abs(tmpQ.x),py=hy-Math.abs(tmpQ.y),pz=hz-Math.abs(tmpQ.z);
+     if(px<=py&&px<=pz)tmpQ.x=Math.sign(tmpQ.x||1)*hx;else if(py<=pz)tmpQ.y=Math.sign(tmpQ.y||1)*hy;else tmpQ.z=Math.sign(tmpQ.z||1)*hz;
+     tmpW.copy(tmpQ).add(c.center);hit=true;
+    }
+   }
+   if(hit){
+    c.object.localToWorld(tmpW);root.worldToLocal(tmpW);
+    tmpQ.copy(tmpW).sub(node).multiplyScalar(k);
+    node.add(tmpQ);old.addScaledVector(tmpQ,.9);
+   }
+  }
+ }
+ // Nearest rope segment to the pointer, in screen pixels.
+ function nearest(event,camera,canvas,maxPx){
+  const rect=canvas.getBoundingClientRect();let best=maxPx,found=null;
+  const pointer=new THREE.Vector2(event.clientX,event.clientY);
+  nets.forEach(n=>{if(n.shown<.05)return;
+   for(let i=0;i<Math.floor((N-1)*n.shown);i++){
+    const a=root.localToWorld(n.nodes[i].clone()).project(camera),b=root.localToWorld(n.nodes[i+1].clone()).project(camera),
+    p=new THREE.Vector2(rect.left+(a.x+1)*rect.width/2,rect.top+(1-a.y)*rect.height/2),
+    q=new THREE.Vector2(rect.left+(b.x+1)*rect.width/2,rect.top+(1-b.y)*rect.height/2),
+    v=q.clone().sub(p),t=clamp(pointer.clone().sub(p).dot(v)/(v.lengthSq()||1),0,1),
+    distance=pointer.distanceTo(p.addScaledVector(v,t));
+    if(distance<best){best=distance;found={net:n,index:clamp(Math.round(i+t),2,N-3),dist:distance};}
+   }});
+  return found;
+ }
+ // Brushing a wire nudges it; the Verlet step turns the nudge into motion.
+ function hover(event,camera,canvas){
+  if(drag)return true;
+  const f=nearest(event,camera,canvas,24);
+  if(!f)return false;
+  const mx=event.movementX||0,my=event.movementY||0;
+  if(mx||my){
+   camera.updateMatrixWorld();
+   camRight.setFromMatrixColumn(camera.matrixWorld,0);camUp.setFromMatrixColumn(camera.matrixWorld,1);
+   kick.copy(camRight).multiplyScalar(mx).addScaledVector(camUp,-my).multiplyScalar(.045);
+   if(kick.length()>1.1)kick.setLength(1.1);
+   invRoot.copy(root.matrixWorld).invert();kick.transformDirection(invRoot).multiplyScalar(Math.min(1.1,Math.hypot(mx,my)*.045));
+   for(let k=-2;k<=2;k++){const i=clamp(f.index+k,2,N-3);f.net.old[i].addScaledVector(kick,-(1-Math.abs(k)*.3));}
+  }
+  return true;
+ }
+ const dragPlane=new THREE.Plane(),dragRay=new THREE.Raycaster(),dragNdc=new THREE.Vector2(),dragHit=V();
+ function startDrag(event,camera,canvas){
+  const f=nearest(event,camera,canvas,18);
+  if(!f)return false;
+  drag={net:f.net,index:f.index,target:f.net.nodes[f.index].clone()};
+  dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(tmpW),root.localToWorld(f.net.nodes[f.index].clone()));
+  moveDrag(event,camera,canvas);
+  return true;
+ }
+ function moveDrag(event,camera,canvas){
+  if(!drag)return;
+  const rect=canvas.getBoundingClientRect();
+  dragNdc.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
+  dragRay.setFromCamera(dragNdc,camera);
+  if(dragRay.ray.intersectPlane(dragPlane,dragHit))drag.target.copy(root.worldToLocal(dragHit.clone()));
+ }
+ function endDrag(){drag=null;}
  const N=40,R=8,delta=V(),tangent=V(),normal=V(),binormal=V(),up=V(0,0,1);
  const world=a=>root.worldToLocal(a.object.localToWorld(a.point.clone()));
  nets.forEach((net,index)=>{
@@ -45,7 +132,7 @@ export function createCables(root,{display,esp,battery,charger,strip,switches}){
   root.updateWorldMatrix(true,true);
   const step=Math.min(dt,1/30),closed=smooth(current,8.6,9.6);
   nets.forEach((net,index)=>{
-   const bench=1-smooth(current,.3,.8),reveal=smooth(current,6.94+index*.009,7.14+index*.009);net.shown=Math.max(bench,reveal,index===selected&&current>6.8?1:0);net.mesh.visible=net.shown>.001;if(!net.mesh.visible){net.started=false;return}
+   const bench=1-smooth(current,.3,.8),reveal=smooth(current,6.94+index*.009,7.14+index*.009);net.shown=Math.max(bench,reveal,index===selected&&current>6.8?1:0);net.mesh.visible=net.shown>.001;if(!net.mesh.visible){net.started=false;return}if(drag&&drag.net===net&&net.shown<.05)drag=null;
    let a=world(net.a),b=world(net.b),guide;
    if(current<.8){
     const r=net.ribbonIndex;
@@ -66,8 +153,10 @@ export function createCables(root,{display,esp,battery,charger,strip,switches}){
    const targets=guide.getSpacedPoints(N-1),rest=targets.slice(1).map((v,i)=>v.distanceTo(targets[i]));
    if(!net.started){targets.forEach((v,i)=>{net.nodes[i].copy(v);net.old[i].copy(v)});net.started=true;}
    // Damped Verlet integration, fixed solder endpoints, spring routing and length constraints.
-   for(let i=1;i<N-1;i++){const node=net.nodes[i],previous=node.clone();delta.copy(node).sub(net.old[i]).multiplyScalar(.55);node.add(delta).addScaledVector(targets[i].clone().sub(node),Math.min(1,step*24));node.y-=3*step*step;net.old[i].copy(previous);}
-   for(let pass=0;pass<12;pass++){net.nodes[0].copy(a);net.nodes[N-1].copy(b);for(let i=0;i<N-1;i++){delta.copy(net.nodes[i+1]).sub(net.nodes[i]);const length=delta.length()||1;delta.multiplyScalar((length-rest[i])/length*.5);if(i>0)net.nodes[i].add(delta);if(i+1<N-1)net.nodes[i+1].sub(delta)}}
+   const springK=drag&&drag.net===net?Math.min(1,step*4):Math.min(1,step*24);
+   for(let i=1;i<N-1;i++){const node=net.nodes[i],previous=node.clone();delta.copy(node).sub(net.old[i]).multiplyScalar(.55);node.add(delta).addScaledVector(targets[i].clone().sub(node),springK);node.y-=3*step*step;net.old[i].copy(previous);}
+   for(let pass=0;pass<12;pass++){net.nodes[0].copy(a);net.nodes[N-1].copy(b);if(drag&&drag.net===net)net.nodes[drag.index].lerp(drag.target,.85);for(let i=0;i<N-1;i++){delta.copy(net.nodes[i+1]).sub(net.nodes[i]);const length=delta.length()||1;delta.multiplyScalar((length-rest[i])/length*.5);if(i>0)net.nodes[i].add(delta);if(i+1<N-1)net.nodes[i+1].sub(delta)}}
+   const collideK=(1-closed)*net.shown;if(collideK>.01){const wr=(net.ribbonIndex!==undefined?.45:.34)+.25;for(let i=2;i<N-2;i++)collideNode(net.nodes[i],net.old[i],collideK,wr,a,b);}
    // Bending resistance removes the high-frequency accordion waves of a loose rope.
    const filtered=net.nodes.map(p=>p.clone());for(let i=1;i<N-1;i++)net.nodes[i].lerp(filtered[i-1].clone().add(filtered[i+1]).multiplyScalar(.5),.35);
    net.nodes[0].copy(a);net.nodes[N-1].copy(b);
@@ -78,5 +167,5 @@ export function createCables(root,{display,esp,battery,charger,strip,switches}){
   });
  }
  function pick(event,camera,canvas){const rect=canvas.getBoundingClientRect();let best=12,index=-1;const pointer=new THREE.Vector2(event.clientX,event.clientY);nets.forEach((n,j)=>{if(n.shown<.05)return;for(let i=0;i<Math.floor((N-1)*n.shown);i++){const a=root.localToWorld(n.nodes[i].clone()).project(camera),b=root.localToWorld(n.nodes[i+1].clone()).project(camera),p=new THREE.Vector2(rect.left+(a.x+1)*rect.width/2,rect.top+(1-a.y)*rect.height/2),q=new THREE.Vector2(rect.left+(b.x+1)*rect.width/2,rect.top+(1-b.y)*rect.height/2),v=q.clone().sub(p),t=clamp(pointer.clone().sub(p).dot(v)/(v.lengthSq()||1),0,1),distance=pointer.distanceTo(p.addScaledVector(v,t));if(distance<best){best=distance;index=j}}});if(index>=0)choose(index);}
- return {update,pick,nets,group};
+ return {update,pick,nets,group,hover,startDrag,moveDrag,endDrag,get dragging(){return !!drag}};
 }
