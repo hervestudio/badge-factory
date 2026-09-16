@@ -124,12 +124,12 @@ try {
  // Two spools of silicone hook-up wire sit on the bench; runs are cut from them.
  for(const [name,color,spin] of [['Wire spool 1','#d5312b',.45],['Wire spool 2','#23262d',-.3]]){
   const sp=part(front,name,[0,0,-30],[0,0,-20],5);sp.userData.benchOnly=true;
-  const roll=new THREE.Group();sp.add(roll);roll.rotation.x=Math.PI/2;roll.rotation.y=spin;
+  const roll=new THREE.Group();sp.add(roll);roll.rotation.z=spin;
   for(const z of [-6.6,6.6])cyl(roll,14,1.8,mat.white,[0,0,z]);
   cyl(roll,11.6,11,material(color,.6),[0,0,0]);
   cyl(roll,4.4,15.4,mat.white,[0,0,0]);
   for(const z of [-2.8,.4,3.1])mesh(roll,new THREE.TorusGeometry(11.6,.5,10,48),material(color,.5),[0,0,z]);
-  wire(roll,[[11.4,-1,4.5],[15,-3,8],[19,-7,9.5],[24,-13,10]],color,.6);
+  wire(roll,[[11.4,0,3],[16.5,3.5,-.5],[21.5,8,-4],[26,13,-6.7]],color,.6);
  }
  // Finish caps use connected components from small_parts.stl, preserving engravings.
  buttonPositions.forEach(([x,y],i)=>{const cap=part(front,['Previous button','Menu button','Next button'][i],[x,y,1.5],[i===0?-14:i===2?14:0,-8,92],10);const g=geos[i===1?2:i===0?3:4].clone();g.rotateY(Math.PI);const m=mesh(cap,g,i===1?mat.yellow:mat.shell);m.userData.button=i;clickables.push(m);
@@ -168,7 +168,7 @@ try {
  'Ground bus + dividers':[-148,-29,4,Math.PI],
  'Tactile switch 1':[-140,-60,4,0], 'Tactile switch 2':[-118,-60,4,0], 'Tactile switch 3':[-96,-60,4,0],
  'Previous button':[-139,-87,2.5,0], 'Menu button':[-116,-87,2.5,0], 'Next button':[-93,-87,2.5,0],
- 'Strap bar':[55,100,2,0], 'Wire spool 1':[-64,92,14,.5], 'Wire spool 2':[-93,86,14,-.4]
+ 'Strap bar':[55,100,2,0], 'Wire spool 1':[-64,90,7.5,.5], 'Wire spool 2':[-92,81,7.5,2.4]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
  for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[120+insertIndex++*12,102,2.5,0];if(p.userData.name==='M2×12 screw')a=[97+screwIndex++*16,-99,6,0];if(p.userData.name==='Screw cap')a=[13+capIndex++*16,-98,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
@@ -188,19 +188,19 @@ try {
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=2.88*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
  document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);
- const fade=1-smooth(current,.32,1.12);workbench.visible=fade>.001;cutting.material.opacity=fade;top.material.opacity=fade;workbench.position.set(0,-85*leaveBench,-45*leaveBench);workbench.scale.setScalar(1-.04*leaveBench);
+ const fade=1-smooth(current,.32,1.12);workbench.visible=fade>.001;cutting.material.opacity=fade;top.material.opacity=fade;workbench.position.set(0,-125*leaveBench,-30*leaveBench);workbench.scale.setScalar(1-.04*leaveBench);
  const stageClose=smooth(current,8.7,10),stageKey=leaveBench+stageClose;if(Math.abs(stageBlend-stageKey)>.004||stageKey===0&&stageBlend!==0||stageKey===2&&stageBlend!==2){stageBlend=stageKey;const mobile=innerWidth<=760;stage.style.left=lerp(mobile?0:4,mobile?0:38,leaveBench)+'%';stage.style.right=lerp(mobile?0:4,mobile?0:1,leaveBench)+'%';const top0=lerp(mobile?39:37,mobile?55:6,leaveBench),h0=lerp(mobile?53:57,mobile?42:89,leaveBench);stage.style.top=lerp(top0,mobile?56:1,stageClose)+'%';stage.style.height=lerp(h0,mobile?42:99,stageClose)+'%';resize();}
 
  for(const p of animated){const {home,offset,phase,bench,benchRotation,name}=p.userData;
  p.userData.lift=lerp(p.userData.lift||0,name===hoveredName&&current<.35?7:0,Math.min(1,dt*12));
- if(p.userData.benchOnly){const bv=1-smooth(current,.28,.7);p.visible=bv>.001;p.scale.setScalar(Math.max(.001,bv));p.position.copy(bench);p.position.y-=85*leaveBench;p.position.z=bench.z+p.userData.lift;p.rotation.y=benchRotation;continue;}
+ if(p.userData.benchOnly){const bv=1-smooth(current,.28,.7);p.visible=bv>.001;p.scale.setScalar(Math.max(.001,bv));shellA.copy(bench);shellA.y-=160*leaveBench;shellA.z=bench.z+p.userData.lift;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);p.rotation.y=benchRotation-p.parent.rotation.y;continue;}
  const entryStart=phase<=1?.3:phase-.18,entryEnd=Math.min(phase+.38,10),entry=smooth(current,entryStart,entryEnd);
  const benchVisibility=1-smooth(current,.28,.7),isShell=phase===1;
  p.visible=current<.7||entry>0||isShell;
  const size=isShell?1:Math.max(benchVisibility,entry);
  p.scale.setScalar(Math.max(.001,size));
  const destination=home.clone().addScaledVector(offset,(1-entry)*.42);
- if(isShell){const g=p.parent;shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,leaveBench).sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);}else {p.position.copy(bench).lerp(destination,leaveBench);p.position.y-=85*leaveBench*(1-entry);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);p.rotation.y=lerp(benchRotation,0,leaveBench);p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,leaveBench):0;
+ if(isShell){const g=p.parent;shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,leaveBench).sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);}else if(entry>0){p.position.copy(destination);p.position.y-=55*(1-entry);}else{shellA.copy(bench);shellA.y-=160*leaveBench;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);const rotT=isShell?leaveBench:entry;p.rotation.y=entry>0||isShell?lerp(benchRotation,0,rotT):benchRotation-p.parent.rotation.y;p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,rotT):0;
  }
  if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
  const widthNeeded=lerp(540,lerp(214,120,close),leaveBench),heightNeeded=lerp(245,lerp(200,221,close),leaveBench);
