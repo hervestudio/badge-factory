@@ -1,5 +1,4 @@
 import { createRenderSettings } from './render-settings.js';
-import { makeLanyard } from './lanyard.js';
 import { createPartsInfo } from './parts-info.js';
 import { FirmwareDisplay } from './emulator-display.js';
 import { createCables } from './cables.js';
@@ -132,7 +131,6 @@ try {
  const cap=part(front,'Screw cap',[x,y,1.1],[x*.3,y*.14,92],10);const g=geos[5].clone();g.rotateY(Math.PI);mesh(cap,g,mat.shell);
  }
  const bar=part(back,'Strap bar',[0,63.8,-8],[0,20,25],9);const bg=new THREE.CylinderGeometry(1.5,1.5,29.4,24);bg.rotateZ(Math.PI/2);mesh(bar,bg,mat.silver);
- const strap=part(back,'Conference lanyard',[0,102,-8],[0,35,-30],9.7);makeLanyard(strap);
  const cables=createCables(badge,{display,esp,battery,charger,strip,switches});
  // The opening is a real, lit cutting mat with a metric grid and laid-out parts.
  const workbench=new THREE.Group();badge.add(workbench);
@@ -155,12 +153,12 @@ try {
  for(const m of [cutting.material,top.material]){m.transparent=true;m.depthWrite=false;}
  const benchPos={
  'Front enclosure':[-128,12,2,Math.PI], 'Rear enclosure':[-48,12,2,0],
- 'GC9B72 display':[100,49,7,0], 'ESP32-S3 N16R8':[29,42,4,0],
- 'LiPo 505060':[28,-37,4,0], 'TP4056 + boost':[87,-29,5,Math.PI],
- 'Ground bus + dividers':[124,-29,4,Math.PI],
- 'Tactile switch 1':[83,-60,4,0], 'Tactile switch 2':[103,-60,4,0], 'Tactile switch 3':[123,-60,4,0],
- 'Previous button':[80,-87,2.5,0], 'Menu button':[103,-87,2.5,0], 'Next button':[126,-87,2.5,0],
- 'Strap bar':[-133,100,2,0], 'Conference lanyard':[166,0,3,0]
+ 'GC9B72 display':[122,49,7,0], 'ESP32-S3 N16R8':[33,42,4,0],
+ 'LiPo 505060':[28,-37,4,0], 'TP4056 + boost':[98,-29,5,Math.PI],
+ 'Ground bus + dividers':[148,-29,4,Math.PI],
+ 'Tactile switch 1':[96,-60,4,0], 'Tactile switch 2':[118,-60,4,0], 'Tactile switch 3':[140,-60,4,0],
+ 'Previous button':[93,-87,2.5,0], 'Menu button':[116,-87,2.5,0], 'Next button':[139,-87,2.5,0],
+ 'Strap bar':[-133,100,2,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
  for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-85+insertIndex++*12,102,2.5,0];if(p.userData.name==='M2×12 screw')a=[-145+screwIndex++*16,-99,6,0];if(p.userData.name==='Screw cap')a=[-61+capIndex++*16,-98,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
@@ -190,12 +188,11 @@ try {
  p.scale.setScalar(Math.max(.001,size));
  const destination=home.clone().addScaledVector(offset,(1-entry)*.42);
  p.position.copy(bench).lerp(destination,leaveBench);p.rotation.y=lerp(benchRotation,0,leaveBench);p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,leaveBench):0;
- if(name==='Conference lanyard')p.scale.multiplyScalar(lerp(1,.5,leaveBench));
  }
  if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
- const widthNeeded=lerp(540,lerp(190,120,close),leaveBench),heightNeeded=lerp(245,lerp(180,238,close),leaveBench);
+ const widthNeeded=lerp(540,lerp(190,120,close),leaveBench),heightNeeded=lerp(245,lerp(180,185,close),leaveBench);
  const dist=Math.max(heightNeeded,widthNeeded/camera.aspect)/(2*Math.tan(THREE.MathUtils.degToRad(16)));
- camera.position.set(lerp(0,lerp(85,24,close),leaveBench),lerp(0,lerp(38,12,close),leaveBench),dist);camera.lookAt(0,lerp(0,lerp(3,33,close),leaveBench),0);
+ camera.position.set(lerp(0,lerp(85,24,close),leaveBench),lerp(0,lerp(38,12,close),leaveBench),dist);camera.lookAt(0,lerp(0,lerp(3,6,close),leaveBench),0);
  }else controls.update();
  cables.update(current,dt);firmware.tick(dt,current>9.98);composer.render();
  }
