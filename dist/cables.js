@@ -152,7 +152,7 @@ export function createCables(root,{display,esp,battery,charger,strip,switches,sh
   const step=Math.min(dt,1/30),closed=smooth(current,8.6,9.6);
   if(closed<.99&&(current<.8||current>6.8))crossNet(1-closed);
   nets.forEach((net,index)=>{
-   const bench=1-smooth(current,.3,.8),reveal=smooth(current,6.94+index*.009,7.14+index*.009);net.shown=Math.max(bench,reveal,index===selected&&current>6.8?1:0);net.mesh.visible=net.shown>.001;if(!net.mesh.visible){net.started=false;return}if(drag&&drag.net===net&&net.shown<.05)drag=null;
+   const bench=net.ribbonIndex!==undefined?1-smooth(current,.3,.8):0,reveal=smooth(current,6.94+index*.009,7.14+index*.009);net.shown=Math.max(bench,reveal,index===selected&&current>6.8?1:0);net.mesh.visible=net.shown>.001;if(!net.mesh.visible){net.started=false;return}if(drag&&drag.net===net&&net.shown<.05)drag=null;
    let a=world(net.a),b=world(net.b),guide;
    if(current<.8){
     const benchSink=85*smooth(current,.12,1.15);

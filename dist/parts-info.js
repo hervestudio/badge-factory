@@ -17,7 +17,9 @@ export const PARTS={
  'M2×12 screw':['Countersunk M2 screw','4 per badge · M2 × 12 mm for the updated 8.75 mm front. The older purchase sheet lists 10 mm; the revised guide requires 12 mm.','https://fr.aliexpress.com/item/1005006674854536.html'],
  'Screw cap':['Printed screw cap','4 per badge · original small_parts.stl mesh, fitted over the recessed screw heads.',sheet],
  'Strap bar':['Steel strap bar','Ø3 × 29.4 mm · sits across both halves in the upper cradle.','https://www.amazon.fr/dp/B0G566MV48'],
- 'Wire kit':['Ribbon & hook-up wire','10-way rainbow ribbon for the screen, plus 28–30 AWG silicone wire for power, buttons and sensing. Cut to each route.','https://fr.aliexpress.com/item/1005006350734418.html']
+ 'Wire kit':['Rainbow ribbon cable','10-way 28 AWG rainbow ribbon for the display connection. Peel and cut what each route needs.','https://www.amazon.fr/dp/B09R42ZGQD'],
+ 'Wire spool 1':['Silicone wire spool · red','30 AWG silicone-jacket hook-up wire on a spool. Power, sensing and button runs are cut to length.','https://fr.aliexpress.com/item/1005006350734418.html'],
+ 'Wire spool 2':['Silicone wire spool · black','30 AWG silicone-jacket hook-up wire on a spool. Ground returns and the darker runs come from here.','https://fr.aliexpress.com/item/1005006350734418.html']
 };
 export function createPartsInfo(){const card=document.querySelector('#part-detail'),select=document.querySelector('#part-select');let pinned=false;
  for(const [name,[title]] of Object.entries(PARTS)){const o=document.createElement('option');o.value=name;o.textContent=title;select.append(o)}

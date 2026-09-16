@@ -18,7 +18,7 @@ const $=s=>document.querySelector(s),canvas=$('#scene'),stage=$('#stage');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const chapters=[...document.querySelectorAll('.chapter')];
 const names=['THE MAKER’S WORKBENCH','PREPARE THE SHELLS','FIT THE SWITCHES','SEAT THE DISPLAY','INSTALL THE CHARGER','PLACE THE BATTERY','CONNECT THE ESP32','WIRE THE CONNECTIONS','TEST IT OPEN','CLOSE THE ENCLOSURE','READY FOR THREE CONF'];
-let current=0,target=0,active=-1,inspect=false,renderer,screenTexture,screenCtx,screenMesh;
+let current=0,target=0,active=-1,inspect=false,renderer,screenTexture,screenCtx,screenMesh,hoveredName=null;
 const animated=[],clickables=[];
 const clamp=THREE.MathUtils.clamp,lerp=THREE.MathUtils.lerp;
 const smooth=(v,a,b)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
@@ -121,6 +121,16 @@ try {
  const switches=[];
  const buttonPositions=[[-19.802,-33.471],[0,-38.5],[19.802,-33.471]];
  buttonPositions.forEach(([x,y],i)=>{const sw=part(front,'Tactile switch '+(i+1),[x,y,-3],[i===0?-18:i===2?18:0,-8,-24],2);switches.push(sw);box(sw,6,6,3.5,mat.black,[0,0,-1.8]);box(sw,5.8,5.8,.5,mat.silver,[0,0,.2]);cyl(sw,1.7,1.3,mat.black,[0,0,1]);for(const sx of [-1,1])for(const sy of [-1,1])box(sw,.55,2.8,.45,mat.silver,[sx*3.2,sy*3.3,-1]);});
+ // Two spools of silicone hook-up wire sit on the bench; runs are cut from them.
+ for(const [name,color,spin] of [['Wire spool 1','#d5312b',.45],['Wire spool 2','#23262d',-.3]]){
+  const sp=part(front,name,[0,0,-30],[0,0,-20],5);sp.userData.benchOnly=true;
+  const roll=new THREE.Group();sp.add(roll);roll.rotation.x=Math.PI/2;roll.rotation.y=spin;
+  for(const z of [-6.6,6.6])cyl(roll,14,1.8,mat.white,[0,0,z]);
+  cyl(roll,11.6,11,material(color,.6),[0,0,0]);
+  cyl(roll,4.4,15.4,mat.white,[0,0,0]);
+  for(const z of [-2.8,.4,3.1])mesh(roll,new THREE.TorusGeometry(11.6,.5,10,48),material(color,.5),[0,0,z]);
+  wire(roll,[[11.4,-1,4.5],[15,-3,8],[19,-7,9.5],[24,-13,10]],color,.6);
+ }
  // Finish caps use connected components from small_parts.stl, preserving engravings.
  buttonPositions.forEach(([x,y],i)=>{const cap=part(front,['Previous button','Menu button','Next button'][i],[x,y,1.5],[i===0?-14:i===2?14:0,-8,92],10);const g=geos[i===1?2:i===0?3:4].clone();g.rotateY(Math.PI);const m=mesh(cap,g,i===1?mat.yellow:mat.shell);m.userData.button=i;clickables.push(m);
  decal(cap,10,10,[0,0,.02],(c,w,h)=>{c.strokeStyle='#21192b';c.lineWidth=w*.10;c.lineCap='round';c.lineJoin='round';if(i===1){c.lineWidth=w*.055;c.beginPath();c.arc(w/2,h/2,w*.40,0,Math.PI*2);c.stroke();c.beginPath();c.arc(w/2,h*.49,w*.26,.15,Math.PI-.15);c.stroke();c.fillStyle='#21192b';for(let q of [.35,.65]){c.beginPath();c.arc(w*q,h*.36,w*.045,0,Math.PI*2);c.fill()}}else{c.beginPath();c.moveTo(w*.3,h*(i===0?.58:.42));c.lineTo(w*.5,h*(i===0?.38:.62));c.lineTo(w*.7,h*(i===0?.58:.42));c.stroke()}});
@@ -158,7 +168,7 @@ try {
  'Ground bus + dividers':[-148,-29,4,Math.PI],
  'Tactile switch 1':[-140,-60,4,0], 'Tactile switch 2':[-118,-60,4,0], 'Tactile switch 3':[-96,-60,4,0],
  'Previous button':[-139,-87,2.5,0], 'Menu button':[-116,-87,2.5,0], 'Next button':[-93,-87,2.5,0],
- 'Strap bar':[55,100,2,0]
+ 'Strap bar':[55,100,2,0], 'Wire spool 1':[-64,92,14,.5], 'Wire spool 2':[-93,86,14,-.4]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
  for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[120+insertIndex++*12,102,2.5,0];if(p.userData.name==='M2×12 screw')a=[97+screwIndex++*16,-99,6,0];if(p.userData.name==='Screw cap')a=[13+capIndex++*16,-98,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
@@ -169,8 +179,8 @@ try {
  canvas.addEventListener('pointerdown',e=>{if(current<.35)inspectPart(e,true);down=[e.clientX,e.clientY];if((active===7||active===8)&&cables.startDrag(e,camera,canvas)){canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';}if(active!==10)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(clickables)[0];if(hit){firmware.hold([1,4,2][hit.object.userData.button],true);canvas.setPointerCapture(e.pointerId);}});
  canvas.addEventListener('pointerup',e=>{firmware.release();cables.endDrag();if((active===7||active===8)&&down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<10)cables.pick(e,camera,canvas)});
  canvas.addEventListener('pointercancel',()=>{firmware.release();cables.endDrag();});canvas.addEventListener('lostpointercapture',()=>firmware.release());
- function inspectPart(e,pin=false){if(current>.35)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hits=ray.intersectObjects([...animated,cables.group],true);if(hits.length){let p=hits[0].object;while(p&&!p.userData.name)p=p.parent;if(p){partsInfo.show(p.userData.name,e.clientX,e.clientY,pin);canvas.style.cursor='help';return;}}if(!partsInfo.pinned)partsInfo.hide();canvas.style.cursor='';}
- canvas.addEventListener('pointermove',e=>{if(!partsInfo.pinned)inspectPart(e);if(active===7||active===8){cables.moveDrag(e,camera,canvas);const near=cables.hover(e,camera,canvas);canvas.style.cursor=cables.dragging?'grabbing':near?'grab':'';}});canvas.addEventListener('pointerleave',()=>partsInfo.hide());
+ function inspectPart(e,pin=false){if(current>.35)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hits=ray.intersectObjects([...animated,cables.group],true);if(hits.length){let p=hits[0].object;while(p&&!p.userData.name)p=p.parent;if(p){hoveredName=p.userData.name;partsInfo.show(p.userData.name,e.clientX,e.clientY,pin);canvas.style.cursor='help';return;}}hoveredName=null;if(!partsInfo.pinned)partsInfo.hide();canvas.style.cursor='';}
+ canvas.addEventListener('pointermove',e=>{if(!partsInfo.pinned)inspectPart(e);if(active===7||active===8){cables.moveDrag(e,camera,canvas);const near=cables.hover(e,camera,canvas);canvas.style.cursor=cables.dragging?'grabbing':near?'grab':'';}});canvas.addEventListener('pointerleave',()=>{hoveredName=null;partsInfo.hide();});
  const YAXIS=new THREE.Vector3(0,1,0),shellA=new THREE.Vector3(),shellB=new THREE.Vector3();
  let stageBlend=-1;
  let lastTime=performance.now();
@@ -182,13 +192,15 @@ try {
  const stageClose=smooth(current,8.7,10),stageKey=leaveBench+stageClose;if(Math.abs(stageBlend-stageKey)>.004||stageKey===0&&stageBlend!==0||stageKey===2&&stageBlend!==2){stageBlend=stageKey;const mobile=innerWidth<=760;stage.style.left=lerp(mobile?0:4,mobile?0:38,leaveBench)+'%';stage.style.right=lerp(mobile?0:4,mobile?0:1,leaveBench)+'%';const top0=lerp(mobile?39:37,mobile?55:6,leaveBench),h0=lerp(mobile?53:57,mobile?42:89,leaveBench);stage.style.top=lerp(top0,mobile?56:1,stageClose)+'%';stage.style.height=lerp(h0,mobile?42:99,stageClose)+'%';resize();}
 
  for(const p of animated){const {home,offset,phase,bench,benchRotation,name}=p.userData;
+ p.userData.lift=lerp(p.userData.lift||0,name===hoveredName&&current<.35?7:0,Math.min(1,dt*12));
+ if(p.userData.benchOnly){const bv=1-smooth(current,.28,.7);p.visible=bv>.001;p.scale.setScalar(Math.max(.001,bv));p.position.copy(bench);p.position.y-=85*leaveBench;p.position.z=bench.z+p.userData.lift;p.rotation.y=benchRotation;continue;}
  const entryStart=phase<=1?.3:phase-.18,entryEnd=Math.min(phase+.38,10),entry=smooth(current,entryStart,entryEnd);
  const benchVisibility=1-smooth(current,.28,.7),isShell=phase===1;
  p.visible=current<.7||entry>0||isShell;
  const size=isShell?1:Math.max(benchVisibility,entry);
  p.scale.setScalar(Math.max(.001,size));
  const destination=home.clone().addScaledVector(offset,(1-entry)*.42);
- if(isShell){const g=p.parent;shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,leaveBench).sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);}else {p.position.copy(bench).lerp(destination,leaveBench);p.position.y-=85*leaveBench*(1-entry);}p.rotation.y=lerp(benchRotation,0,leaveBench);p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,leaveBench):0;
+ if(isShell){const g=p.parent;shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,leaveBench).sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);}else {p.position.copy(bench).lerp(destination,leaveBench);p.position.y-=85*leaveBench*(1-entry);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);p.rotation.y=lerp(benchRotation,0,leaveBench);p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,leaveBench):0;
  }
  if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
  const widthNeeded=lerp(540,lerp(214,120,close),leaveBench),heightNeeded=lerp(245,lerp(200,221,close),leaveBench);
