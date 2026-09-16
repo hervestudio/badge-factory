@@ -155,9 +155,9 @@ export function createCables(root,{display,esp,battery,charger,strip,switches,sh
    const bench=net.ribbonIndex!==undefined?1-smooth(current,.3,.8):0,reveal=smooth(current,6.94+index*.009,7.14+index*.009);net.shown=Math.max(bench,reveal,index===selected&&current>6.8?1:0);net.mesh.visible=net.shown>.001;if(!net.mesh.visible){net.started=false;return}if(drag&&drag.net===net&&net.shown<.05)drag=null;
    let a=world(net.a),b=world(net.b),guide;
    if(current<.8){
-    const benchSink=85*smooth(current,.12,1.15);
+    const benchSink=160*smooth(current,.12,1.15);
     const r=net.ribbonIndex;
-    if(r!==undefined){a=V(3-r*.9,100-benchSink,3);b=V(-32-r*.9,91-benchSink,3);guide=new THREE.CatmullRomCurve3([a,V(-8-r*.9,97-benchSink,4),V(-22-r*.9,96-benchSink,4),b]);}
+    if(r!==undefined){const y=96+(r-4.5)*.92-benchSink;a=V(6,y,1.05);b=V(-24.4,y,2.6);guide=new THREE.CatmullRomCurve3([a,V(-6,y,1.05),V(-18,y,1.05),V(-27.5,y,1.05),V(-30.7,y,4.2),V(-27.5,y,7.4),V(-24.6,y,4.6),b]);}
     else {const lane=index-10;a=V(-59-lane*.9,101-benchSink,3);b=V(-82-lane*.9,99-benchSink,3);guide=new THREE.CatmullRomCurve3([a,V(-64-lane*.9,92-benchSink,3),V(-77-lane*.9,92-benchSink,3),b]);}
    } else if(net.ribbonIndex!==undefined){
     const lane=(net.ribbonIndex-4.5)*.9;
