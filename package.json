@@ -5,13 +5,14 @@
   "scripts": {
     "dev": "python3 -m http.server 4173 --bind 127.0.0.1 --directory dist",
     "check": "node --check dist/app.js",
-    "test": "node tests/cables.mjs"
+    "test": "node tests/cables.mjs && node tests/render-state.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "dat.gui": "0.7.9",
     "three": "^0.180.0"
   }
 }

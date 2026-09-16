@@ -1,3 +1,6 @@
+import { createRenderSettings } from './render-settings.js';
+import { makeLanyard } from './lanyard.js';
+import { createPartsInfo } from './parts-info.js';
 import { FirmwareDisplay } from './emulator-display.js';
 import { createCables } from './cables.js';
 import * as THREE from 'three';
@@ -43,8 +46,8 @@ $('#inspect').onclick=()=>setInspect(!inspect);
 $('#replay').onclick=()=>{setInspect(false);scrollTo({top:0,behavior:reduced?'instant':'smooth'})};
 
 try {
- renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
- scene.add(new THREE.HemisphereLight(0xe8edff,0x574339,.22));
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
+ const hemisphere=new THREE.HemisphereLight(0xe8edff,0x574339,.22);scene.add(hemisphere);
  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();
  scene.environment=pmrem.fromScene(room,.04).texture;scene.environmentIntensity=.32;room.dispose();pmrem.dispose();
  const key=new THREE.DirectionalLight(0xffefd9,2.9);key.position.set(-130,160,220);key.castShadow=true;
@@ -55,11 +58,13 @@ try {
  mat.yellow.roughness=.66;mat.silver.roughness=.29;mat.silver.metalness=.92;
  const grain=texture(256,256,(c,w,h)=>{const a=c.createImageData(w,h);let seed=742;for(let i=0;i<a.data.length;i+=4){seed=(seed*1664525+1013904223)>>>0;const v=110+(seed%44);a.data[i]=a.data[i+1]=a.data[i+2]=v;a.data[i+3]=255}c.putImageData(a,0,0)});
  grain.colorSpace=THREE.NoColorSpace;grain.wrapS=grain.wrapT=THREE.RepeatWrapping;grain.repeat.set(1,1);
- mat.shell.bumpMap=grain;mat.shell.bumpScale=.055;
+ mat.shell.bumpMap=grain;mat.shell.bumpScale=.055;mat.rear=mat.shell.clone();mat.rear.color.copy(mat.yellow.color);
  const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));
  const ao=new GTAOPass(scene,camera,512,512);ao.updateGtaoMaterial({radius:5,thickness:2,distanceExponent:1.8,distanceFallOff:1,samples:12,screenSpaceRadius:false});ao.updatePdMaterial({radius:4,depthPhi:2,normalPhi:4});ao.blendIntensity=.85;
  const originalVisibility=ao._overrideVisibility.bind(ao);ao._overrideVisibility=()=>{originalVisibility();scene.traverseVisible(o=>{if(o.isMesh&&o.material.transparent){ao._visibilityCache.push(o);o.visible=false}})};
- composer.addPass(ao);composer.addPass(new OutputPass());const fxaa=new ShaderPass(FXAAShader);composer.addPass(fxaa);
+ composer.addPass(ao);composer.addPass(new OutputPass());
+ const grade=new ShaderPass({uniforms:{tDiffuse:{value:null},contrast:{value:1},saturation:{value:1}},vertexShader:'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform sampler2D tDiffuse; uniform float contrast; uniform float saturation; varying vec2 vUv; void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(.2126,.7152,.0722));c.rgb=mix(vec3(l),c.rgb,saturation);c.rgb=(c.rgb-.5)*contrast+.5;gl_FragColor=vec4(clamp(c.rgb,0.,1.),c.a);}'});composer.addPass(grade);
+ const fxaa=new ShaderPass(FXAAShader);composer.addPass(fxaa);
  camera.position.set(100,45,390);camera.lookAt(0,8,0);
  controls=new OrbitControls(camera,canvas);controls.enabled=false;controls.enableDamping=true;controls.enableZoom=false;controls.enablePan=false;controls.target.set(0,7,0);controls.minPolarAngle=.22;controls.maxPolarAngle=Math.PI-.22;
  await document.fonts.load('16px Dingos');
@@ -68,7 +73,7 @@ try {
  geos[0].rotateY(Math.PI);geos[1].translate(-80,0,0);
  for(const g of geos){const a=g.attributes.position,n=g.attributes.normal,uv=new Float32Array(a.count*2);for(let i=0;i<a.count;i++){const x=Math.abs(n.getX(i)),y=Math.abs(n.getY(i)),z=Math.abs(n.getZ(i));uv[i*2]=(x>z?a.getY(i):a.getX(i))/10;uv[i*2+1]=(z>=x&&z>=y?a.getY(i):a.getZ(i))/10}g.setAttribute('uv',new THREE.BufferAttribute(uv,2))}
  const face=part(front,'Front enclosure',[0,0,0],[0,0,67],1);mesh(face,geos[0],mat.shell);
- const rear=part(back,'Rear enclosure',[0,0,-16],[0,0,-45],1);mesh(rear,geos[1],mat.shell);
+ const rear=part(back,'Rear enclosure',[0,0,-16],[0,0,-45],1);mesh(rear,geos[1],mat.rear);
  // The two shells and all seven finish caps are tessellated from the supplied CAD.
  decal(face,53,23,[0,44,.08],(c,w,h)=>{c.fillStyle='#f2eddd';c.font=`${h*.51}px Dingos,Arial Black`;c.textBaseline='top';c.fillText('THREE',0,-h*.02,w*.9);c.fillText('CONF',0,h*.46,w*.8);c.fillStyle='#f1d128';c.beginPath();c.arc(w*.88,h*.67,h*.30,0,Math.PI*2);c.fill();c.save();c.translate(w*.88,h*.67);c.rotate(-.15);c.fillStyle='#171220';c.textAlign='center';c.textBaseline='middle';c.font=`${h*.26}px Dingos`;c.fillText('.JS',0,0);c.restore()});
  decal(face,39,14,[0,-53.7,.09],(c,w,h)=>{c.fillStyle='#f1d12c';c.beginPath();c.roundRect(0,0,w,h,22);c.fill();c.fillStyle='#221a2d';c.textAlign='center';c.font=`${h*.29}px Dingos`;c.fillText('BRUNO SIMON',w/2,h*.47,w*.87);c.font=`bold ${h*.17}px Arial`;c.fillText('THREE.JS JOURNEY',w/2,h*.74)});
@@ -100,7 +105,7 @@ try {
  const battery=part(back,'LiPo 505060',[0,-32.2,-11],[-8,-7,43],5);
  box(battery,60,50,4.8,mat.silver,[0,0,0]);box(battery,60,4,5,mat.yellow,[0,23,0]);box(battery,60,2,5,mat.yellow,[0,-24,0]);
  for(const x of [-29.5,29.5])box(battery,1,49,5,mat.yellow,[x,0,0]);
- label(battery,'Li-ion POLYMER\n505060   3.7 V\n2000 mAh   7.4 Wh\n+                 −',47,29,[0,0,2.43],'#c7c9cd','#42464c');
+ decal(battery,47,29,[0,0,2.43],(c,w,h)=>{c.fillStyle='#c7c9cd';c.fillRect(0,0,w,h);c.fillStyle='#42464c';c.font=`${h*.12}px monospace`;c.textAlign='center';['Li-ion POLYMER','505060   3.7 V','2000 mAh   7.4 Wh','+                  −'].forEach((t,i)=>c.fillText(t,w/2,h*(.25+i*.16)));});
 
  // USB-C charger and boost board; no SD module or power switch in this revision.
  const charger=part(front,'TP4056 + boost',[5.5,-55.9,-5.2],[15,-16,-33],4);
@@ -109,7 +114,7 @@ try {
  for(let i=0;i<4;i++){cyl(charger,1,.2,mat.gold,[-9+i*6,7,-.65]);box(charger,1.3,2,.8,mat.silver,[-8+i*5,-3,-1])}
  const powerText=label(charger,'TP4056  5V',17,3,[0,0,-3.6],'#193e32','#eee9dc');powerText.rotation.y=Math.PI;
  // Stripboard and the four flat 100 kOhm resistors.
- const strip=part(front,'Ground bus + dividers',[-23,-48,-4],[ -15,-7,-44],6.8);
+ const strip=part(front,'Ground bus + dividers',[-16.4,-51.5,-2.5],[ -15,-7,-44],6.8);
  box(strip,12.7,20.3,1.2,material('#94713c'),[0,0,0]);
  for(let i=0;i<5;i++){box(strip,1.4,19,.1,mat.gold,[-5.08+i*2.54,0,-.66]);for(let j=0;j<8;j++){const hole=cyl(strip,.43,.15,mat.black,[-5.08+i*2.54,-8.89+j*2.54,-.76]);}}
  for(let i=0;i<4;i++){const x=-5.08+i*2.54,y=-6+i*4;box(strip,1.8,1.5,1.4,material('#acd4df'),[x+1.27,y,-1.5]);wire(strip,[[x,y,-.8],[x+.5,y,-1.5],[x+2,y,-1.5],[x+2.54,y,-.8]],'#c0c4c6',.13)}
@@ -127,50 +132,55 @@ try {
  const cap=part(front,'Screw cap',[x,y,1.1],[x*.3,y*.14,92],10);const g=geos[5].clone();g.rotateY(Math.PI);mesh(cap,g,mat.shell);
  }
  const bar=part(back,'Strap bar',[0,63.8,-8],[0,20,25],9);const bg=new THREE.CylinderGeometry(1.5,1.5,29.4,24);bg.rotateZ(Math.PI/2);mesh(bar,bg,mat.silver);
- const strap=part(back,'Conference lanyard',[0,66,-8],[0,35,-30],9.7);
- box(strap,20,48,1.5,mat.yellow,[0,23,0]);box(strap,20,17,1.5,mat.yellow,[0,8,-3]);
- decal(strap,15,38,[0,25,.78],(c,w,h)=>{c.fillStyle='#453524';c.font=`${w*.29}px Dingos`;c.translate(w*.6,h*.9);c.rotate(-Math.PI/2);c.fillText('THREE CONF',0,0,h*.8)});
+ const strap=part(back,'Conference lanyard',[0,102,-8],[0,35,-30],9.7);makeLanyard(strap);
  const cables=createCables(badge,{display,esp,battery,charger,strip,switches});
  // The opening is a real, lit cutting mat with a metric grid and laid-out parts.
  const workbench=new THREE.Group();badge.add(workbench);
- const matTexture=texture(1536,1368,(c,w,h)=>{
- c.fillStyle='#174b43';c.fillRect(0,0,w,h);const sx=w/290,sy=h/260;
+ const matTexture=texture(2048,1280,(c,w,h)=>{
+ c.fillStyle='#174b43';c.fillRect(0,0,w,h);const sx=w/420,sy=h/250;
  c.strokeStyle='#71998c';c.lineWidth=1;
- for(let x=10;x<290;x+=5){c.globalAlpha=x%10===0?.5:.22;c.beginPath();c.moveTo(x*sx,12*sy);c.lineTo(x*sx,246*sy);c.stroke()}
- for(let y=12;y<248;y+=5){c.globalAlpha=(y-12)%10===0?.5:.22;c.beginPath();c.moveTo(10*sx,y*sy);c.lineTo(280*sx,y*sy);c.stroke()}
- c.globalAlpha=.75;c.strokeStyle='#a5bca6';c.lineWidth=2;c.strokeRect(10*sx,12*sy,270*sx,235*sy);
+ for(let x=10;x<420;x+=5){c.globalAlpha=x%10===0?.5:.22;c.beginPath();c.moveTo(x*sx,12*sy);c.lineTo(x*sx,236*sy);c.stroke()}
+ for(let y=12;y<238;y+=5){c.globalAlpha=(y-12)%10===0?.5:.22;c.beginPath();c.moveTo(10*sx,y*sy);c.lineTo(410*sx,y*sy);c.stroke()}
+ c.globalAlpha=.75;c.strokeStyle='#a5bca6';c.lineWidth=2;c.strokeRect(10*sx,12*sy,400*sx,225*sy);
  c.font='16px monospace';c.fillStyle='#bdd0b9';c.textAlign='center';
- for(let x=20;x<=270;x+=10)c.fillText(String(x),x*sx,9*sy);
- for(let y=22;y<=240;y+=10)c.fillText(String(y-12),5*sx,y*sy);
- c.textAlign='left';c.font='bold 20px monospace';c.fillText('THREE CONF / MAKER WORKBENCH',13*sx,255*sy);c.font='15px monospace';c.textAlign='right';c.fillText('SELF-HEALING · mm',277*sx,255*sy);
+ for(let x=20;x<=400;x+=10)c.fillText(String(x),x*sx,9*sy);
+ for(let y=22;y<=230;y+=10)c.fillText(String(y-12),5*sx,y*sy);
+ c.textAlign='left';c.font='bold 20px monospace';c.fillText('THREE CONF / MAKER WORKBENCH',13*sx,245*sy);c.font='15px monospace';c.textAlign='right';c.fillText('SELF-HEALING · mm',407*sx,245*sy);
  c.globalAlpha=.3;c.lineWidth=1;c.beginPath();c.moveTo(10*sx,230*sy);c.lineTo(225*sx,15*sy);c.stroke();
  });
- const cutting=box(workbench,290,260,2,material('#163f38',.92),[0,0,-1.3]);
- const top=mesh(workbench,new THREE.PlaneGeometry(290,260),new THREE.MeshStandardMaterial({map:matTexture,roughness:.94,bumpMap:grain,bumpScale:.025}),[0,0,-.25]);top.castShadow=false;
+ const shape=new THREE.Shape();const w=420,h=250,r=6;shape.moveTo(-w/2+r,-h/2);shape.lineTo(w/2-r,-h/2);shape.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);shape.lineTo(w/2,h/2-r);shape.quadraticCurveTo(w/2,h/2,w/2-r,h/2);shape.lineTo(-w/2+r,h/2);shape.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);shape.lineTo(-w/2,-h/2+r);shape.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);
+ const cutting=mesh(workbench,new THREE.ExtrudeGeometry(shape,{depth:1.7,bevelEnabled:true,bevelThickness:.2,bevelSize:.2,bevelSegments:2,steps:1}),material('#163f38',.92),[0,0,-2]);
+ const topGeo=new THREE.ShapeGeometry(shape,12),uv=topGeo.attributes.uv,positions=topGeo.attributes.position;for(let i=0;i<uv.count;i++)uv.setXY(i,(positions.getX(i)+w/2)/w,(positions.getY(i)+h/2)/h);
+ const top=mesh(workbench,topGeo,new THREE.MeshStandardMaterial({map:matTexture,roughness:.94,bumpMap:grain,bumpScale:.025}),[0,0,-.09]);top.castShadow=false;
  for(const m of [cutting.material,top.material]){m.transparent=true;m.depthWrite=false;}
  const benchPos={
- 'Front enclosure':[-73,16,2,Math.PI], 'Rear enclosure':[7,16,2,0],
- 'GC9B72 display':[-75,-88,7,0], 'ESP32-S3 N16R8':[75,54,4,0],
- 'LiPo 505060':[85,-15,4,0], 'TP4056 + boost':[-10,-87,5,Math.PI],
- 'Ground bus + dividers':[23,-85,4,Math.PI],
- 'Tactile switch 1':[-22,-62,4,0], 'Tactile switch 2':[-7,-62,4,0], 'Tactile switch 3':[8,-62,4,0],
- 'Previous button':[62,-67,2.5,0], 'Menu button':[85,-67,2.5,0], 'Next button':[108,-67,2.5,0],
- 'Strap bar':[-65,103,2,0], 'Conference lanyard':[113,41,3,0], 'Ribbon harness':[45,103,5,0]
+ 'Front enclosure':[-128,12,2,Math.PI], 'Rear enclosure':[-48,12,2,0],
+ 'GC9B72 display':[100,49,7,0], 'ESP32-S3 N16R8':[29,42,4,0],
+ 'LiPo 505060':[28,-37,4,0], 'TP4056 + boost':[87,-29,5,Math.PI],
+ 'Ground bus + dividers':[124,-29,4,Math.PI],
+ 'Tactile switch 1':[83,-60,4,0], 'Tactile switch 2':[103,-60,4,0], 'Tactile switch 3':[123,-60,4,0],
+ 'Previous button':[80,-87,2.5,0], 'Menu button':[103,-87,2.5,0], 'Next button':[126,-87,2.5,0],
+ 'Strap bar':[-133,100,2,0], 'Conference lanyard':[166,0,3,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
- for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-26+insertIndex++*12,102,2.5,0];if(p.userData.name==='M2×12 screw')a=[60+screwIndex++*16,-112,6,0];if(p.userData.name==='Screw cap')a=[60+capIndex++*16,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
+ for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-85+insertIndex++*12,102,2.5,0];if(p.userData.name==='M2×12 screw')a=[-145+screwIndex++*16,-99,6,0];if(p.userData.name==='Screw cap')a=[-61+capIndex++*16,-98,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
+ const renderSettings=createRenderSettings({renderer,scene,camera,key,fill,rim,hemisphere,ao,mat,grade});
+ const partsInfo=createPartsInfo();
  function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));camera.aspect=w/h;camera.updateProjectionMatrix();updateTarget()};resize();addEventListener('resize',resize);
  const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down;
- canvas.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];if(active!==10)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(clickables)[0];if(hit){firmware.hold([1,4,2][hit.object.userData.button],true);canvas.setPointerCapture(e.pointerId);}});
- canvas.addEventListener('pointerup',e=>{firmware.release();if(active===7&&down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<10)cables.pick(e,camera,canvas)});
+ canvas.addEventListener('pointerdown',e=>{if(current<.35)inspectPart(e,true);down=[e.clientX,e.clientY];if(active!==10)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(clickables)[0];if(hit){firmware.hold([1,4,2][hit.object.userData.button],true);canvas.setPointerCapture(e.pointerId);}});
+ canvas.addEventListener('pointerup',e=>{firmware.release();if((active===7||active===8)&&down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<10)cables.pick(e,camera,canvas)});
  canvas.addEventListener('pointercancel',()=>firmware.release());canvas.addEventListener('lostpointercapture',()=>firmware.release());
+ function inspectPart(e,pin=false){if(current>.35)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hits=ray.intersectObjects([...animated,cables.group],true);if(hits.length){let p=hits[0].object;while(p&&!p.userData.name)p=p.parent;if(p){partsInfo.show(p.userData.name,e.clientX,e.clientY,pin);canvas.style.cursor='help';return;}}if(!partsInfo.pinned)partsInfo.hide();canvas.style.cursor='';}
+ canvas.addEventListener('pointermove',e=>{if(!partsInfo.pinned)inspectPart(e)});canvas.addEventListener('pointerleave',()=>partsInfo.hide());
  let stageBlend=-1;
  let lastTime=performance.now();
  function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
  front.position.set(47*opened,0,0);front.rotation.y=2.88*opened;back.position.set(-47*opened,0,0);back.rotation.y=-.13*opened;
+ document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);
  const fade=1-smooth(current,.32,1.12);workbench.visible=fade>.001;cutting.material.opacity=fade;top.material.opacity=fade;workbench.position.z=-45*leaveBench;workbench.scale.setScalar(1-.04*leaveBench);
- if(Math.abs(stageBlend-leaveBench)>.004||leaveBench===0&&stageBlend!==0||leaveBench===1&&stageBlend!==1){stageBlend=leaveBench;const mobile=innerWidth<=760;stage.style.left=lerp(mobile?0:10,mobile?0:43,leaveBench)+'%';stage.style.right=lerp(mobile?0:10,mobile?0:1,leaveBench)+'%';stage.style.top=lerp(mobile?39:37,mobile?57:9,leaveBench)+'%';stage.style.height=lerp(mobile?53:57,mobile?36:83,leaveBench)+'%';resize();}
+ if(Math.abs(stageBlend-leaveBench)>.004||leaveBench===0&&stageBlend!==0||leaveBench===1&&stageBlend!==1){stageBlend=leaveBench;const mobile=innerWidth<=760;stage.style.left=lerp(mobile?0:4,mobile?0:43,leaveBench)+'%';stage.style.right=lerp(mobile?0:4,mobile?0:1,leaveBench)+'%';stage.style.top=lerp(mobile?39:37,mobile?57:9,leaveBench)+'%';stage.style.height=lerp(mobile?53:57,mobile?36:83,leaveBench)+'%';resize();}
 
  for(const p of animated){const {home,offset,phase,bench,benchRotation,name}=p.userData;
  const entryStart=phase<=1?.3:phase-.18,entryEnd=Math.min(phase+.38,10),entry=smooth(current,entryStart,entryEnd);
@@ -180,12 +190,12 @@ try {
  p.scale.setScalar(Math.max(.001,size));
  const destination=home.clone().addScaledVector(offset,(1-entry)*.42);
  p.position.copy(bench).lerp(destination,leaveBench);p.rotation.y=lerp(benchRotation,0,leaveBench);p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,leaveBench):0;
- if(name==='Ribbon harness')p.scale.multiplyScalar(lerp(.42,1,leaveBench));
+ if(name==='Conference lanyard')p.scale.multiplyScalar(lerp(1,.5,leaveBench));
  }
- if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.66,lerp(-.11,.025,close),leaveBench),lerp(-.05,-.2,close),lerp(-.04,-.06,close));
- const widthNeeded=lerp(330,lerp(190,106,close),leaveBench),heightNeeded=lerp(275,lerp(180,198,close),leaveBench);
+ if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
+ const widthNeeded=lerp(540,lerp(190,120,close),leaveBench),heightNeeded=lerp(245,lerp(180,238,close),leaveBench);
  const dist=Math.max(heightNeeded,widthNeeded/camera.aspect)/(2*Math.tan(THREE.MathUtils.degToRad(16)));
- camera.position.set(lerp(14,lerp(85,24,close),leaveBench),lerp(30,lerp(38,12,close),leaveBench),dist);camera.lookAt(0,lerp(0,lerp(3,15,close),leaveBench),0);
+ camera.position.set(lerp(0,lerp(85,24,close),leaveBench),lerp(0,lerp(38,12,close),leaveBench),dist);camera.lookAt(0,lerp(0,lerp(3,33,close),leaveBench),0);
  }else controls.update();
  cables.update(current,dt);firmware.tick(dt,current>9.98);composer.render();
  }

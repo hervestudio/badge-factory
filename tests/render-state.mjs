@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { DEFAULTS, validateSettings } from '../dist/render-state.js';
+const edited={...DEFAULTS,exposure:.72,toneMapping:'AgX',ao:false,shellColor:'#8a42ef',zoom:1.2};
+const json=JSON.stringify({schema:'threeconf-render-settings',version:1,settings:edited});
+assert.deepEqual(validateSettings(JSON.parse(json).settings),edited);
+assert.equal(validateSettings({exposure:99}).exposure,2.5);
+assert.equal(validateSettings({zoom:-2}).zoom,.6);
+for(const invalid of [{ao:'false'},{shellColor:'red'},{toneMapping:'Unknown'},{exposure:NaN}])assert.throws(()=>validateSettings(invalid));
+assert.deepEqual(validateSettings({}),DEFAULTS);
+console.log('Render settings: lossless JSON round-trip, defaults, bounds and invalid values verified.');
