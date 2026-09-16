@@ -71,8 +71,8 @@ try {
  const geos=await Promise.all(['shell-0','shell-1',...Array.from({length:7},(_,i)=>`cap-${i}`)].map(n=>loader.loadAsync(`assets/${n}.stl`)));
  geos[0].rotateY(Math.PI);geos[1].translate(-80,0,0);
  for(const g of geos){const a=g.attributes.position,n=g.attributes.normal,uv=new Float32Array(a.count*2);for(let i=0;i<a.count;i++){const x=Math.abs(n.getX(i)),y=Math.abs(n.getY(i)),z=Math.abs(n.getZ(i));uv[i*2]=(x>z?a.getY(i):a.getX(i))/10;uv[i*2+1]=(z>=x&&z>=y?a.getY(i):a.getZ(i))/10}g.setAttribute('uv',new THREE.BufferAttribute(uv,2))}
- const face=part(front,'Front enclosure',[0,0,0],[0,0,67],1);mesh(face,geos[0],mat.shell);
- const rear=part(back,'Rear enclosure',[0,0,-16],[0,0,-45],1);mesh(rear,geos[1],mat.rear);
+ const face=part(front,'Front enclosure',[0,0,0],[0,0,10],1);mesh(face,geos[0],mat.shell);
+ const rear=part(back,'Rear enclosure',[0,0,-16],[0,0,-8],1);mesh(rear,geos[1],mat.rear);
  // The two shells and all seven finish caps are tessellated from the supplied CAD.
  decal(face,53,23,[0,44,.08],(c,w,h)=>{c.fillStyle='#f2eddd';c.font=`${h*.51}px Dingos,Arial Black`;c.textBaseline='top';c.fillText('THREE',0,-h*.02,w*.9);c.fillText('CONF',0,h*.46,w*.8);c.fillStyle='#f1d128';c.beginPath();c.arc(w*.88,h*.67,h*.30,0,Math.PI*2);c.fill();c.save();c.translate(w*.88,h*.67);c.rotate(-.15);c.fillStyle='#171220';c.textAlign='center';c.textBaseline='middle';c.font=`${h*.26}px Dingos`;c.fillText('.JS',0,0);c.restore()});
  decal(face,39,14,[0,-53.7,.09],(c,w,h)=>{c.fillStyle='#f1d12c';c.beginPath();c.roundRect(0,0,w,h,22);c.fill();c.fillStyle='#221a2d';c.textAlign='center';c.font=`${h*.29}px Dingos`;c.fillText('BRUNO SIMON',w/2,h*.47,w*.87);c.font=`bold ${h*.17}px Arial`;c.fillText('THREE.JS JOURNEY',w/2,h*.74)});
@@ -93,13 +93,13 @@ try {
  for(let i=0;i<6;i++){box(display,1.2,2,.65,i%2?mat.silver:mat.chip,[-12+i*4,-20,-2.6]);wire(display,[[-11+i*4,-30,-2.25],[-11+i*4,-25,-2.25],[-8+i*3,-18,-2.25]],'#63899a',.12)}
  // DevKit with RF can, antenna, headers, USB connectors and surface components.
  const esp=part(back,'ESP32-S3 N16R8',[0,27.3,-12.5],[-11,22,38],6);
- box(esp,28.2,64.4,1.6,mat.pcb,[0,0,0]);box(esp,18,20,2.6,mat.silver,[0,12,2.1]);label(esp,'ESPRESSIF\nESP32-S3\nN16R8',16,16,[0,12,3.43],'#bbc1c7','#41474c');
+ box(esp,28.2,64.4,1.6,material('#16181c',.5),[0,0,0]);box(esp,18,20,2.6,mat.silver,[0,12,2.1]);label(esp,'ESPRESSIF\nESP32-S3\nN16R8',10,7.5,[0,12,3.43],'#c8cbd0','#43484e');
  box(esp,16,10,.2,mat.black,[0,26.3,.94]);
  for(let i=0;i<5;i++){box(esp,1,6,.12,mat.gold,[-6+i*3,27,1.1]);if(i<4)box(esp,3,1,.12,mat.gold,[-4.5+i*3,i%2?24.5:29.5,1.1])}
  for(let side of [-1,1])for(let i=0;i<22;i++){const x=side*12,y=27-i*2.54;cyl(esp,.82,.16,mat.gold,[x,y,1]);box(esp,.55,.55,3,mat.gold,[x,y,-1.7]);}
  box(esp,8,8,1.4,mat.chip,[0,-9,1.5]);for(let i=0;i<14;i++)box(esp,1.2,2,.8,i%3?mat.chip:mat.silver,[-8+(i%4)*5,-19+Math.floor(i/4)*6,1.1]);
  for(const x of [-6,6]){box(esp,8.2,6.4,2.5,mat.silver,[x,-28.8,2]);box(esp,6.7,.2,1.3,mat.black,[x,-32.1,2]);box(esp,3,4,1,mat.silver,[x,-20,1.5]);box(esp,1.5,2,1,mat.black,[x,-20,2.3])}
- label(esp,'ESP32-S3',15,3,[0,-3,1],'#163c33','#e8e6d9');
+ label(esp,'ESP32-S3',15,3,[0,-3,1],'#16181c','#c9ced6');
  // Landscape foil pouch on the rear shelf.
  const battery=part(back,'LiPo 505060',[0,-32.2,-11],[-8,-7,43],5);
  box(battery,60,50,4.8,mat.silver,[0,0,0]);box(battery,60,4,5,mat.yellow,[0,23,0]);box(battery,60,2,5,mat.yellow,[0,-24,0]);
@@ -152,16 +152,16 @@ try {
  const top=mesh(workbench,topGeo,new THREE.MeshStandardMaterial({map:matTexture,roughness:.94,bumpMap:grain,bumpScale:.025}),[0,0,-.09]);top.castShadow=false;
  for(const m of [cutting.material,top.material]){m.transparent=true;m.depthWrite=false;}
  const benchPos={
- 'Front enclosure':[-48,12,2,Math.PI], 'Rear enclosure':[-128,12,2,0],
- 'GC9B72 display':[122,49,7,0], 'ESP32-S3 N16R8':[33,42,4,0],
- 'LiPo 505060':[28,-37,4,0], 'TP4056 + boost':[98,-29,5,Math.PI],
- 'Ground bus + dividers':[148,-29,4,Math.PI],
- 'Tactile switch 1':[96,-60,4,0], 'Tactile switch 2':[118,-60,4,0], 'Tactile switch 3':[140,-60,4,0],
- 'Previous button':[93,-87,2.5,0], 'Menu button':[116,-87,2.5,0], 'Next button':[139,-87,2.5,0],
- 'Strap bar':[-133,100,2,0]
+ 'Front enclosure':[150,12,2,Math.PI], 'Rear enclosure':[48,12,2,0],
+ 'GC9B72 display':[-122,49,7,0], 'ESP32-S3 N16R8':[-33,42,4,0],
+ 'LiPo 505060':[-28,-37,4,0], 'TP4056 + boost':[-98,-29,5,Math.PI],
+ 'Ground bus + dividers':[-148,-29,4,Math.PI],
+ 'Tactile switch 1':[-140,-60,4,0], 'Tactile switch 2':[-118,-60,4,0], 'Tactile switch 3':[-96,-60,4,0],
+ 'Previous button':[-139,-87,2.5,0], 'Menu button':[-116,-87,2.5,0], 'Next button':[-93,-87,2.5,0],
+ 'Strap bar':[55,100,2,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
- for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-85+insertIndex++*12,102,2.5,0];if(p.userData.name==='M2×12 screw')a=[-145+screwIndex++*16,-99,6,0];if(p.userData.name==='Screw cap')a=[-61+capIndex++*16,-98,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
+ for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[120+insertIndex++*12,102,2.5,0];if(p.userData.name==='M2×12 screw')a=[97+screwIndex++*16,-99,6,0];if(p.userData.name==='Screw cap')a=[13+capIndex++*16,-98,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
  const renderSettings=createRenderSettings({renderer,scene,camera,key,fill,rim,hemisphere,ao,mat,grade});
  const partsInfo=createPartsInfo();
  function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));camera.aspect=w/h;camera.updateProjectionMatrix();updateTarget()};resize();addEventListener('resize',resize);
@@ -171,6 +171,7 @@ try {
  canvas.addEventListener('pointercancel',()=>{firmware.release();cables.endDrag();});canvas.addEventListener('lostpointercapture',()=>firmware.release());
  function inspectPart(e,pin=false){if(current>.35)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hits=ray.intersectObjects([...animated,cables.group],true);if(hits.length){let p=hits[0].object;while(p&&!p.userData.name)p=p.parent;if(p){partsInfo.show(p.userData.name,e.clientX,e.clientY,pin);canvas.style.cursor='help';return;}}if(!partsInfo.pinned)partsInfo.hide();canvas.style.cursor='';}
  canvas.addEventListener('pointermove',e=>{if(!partsInfo.pinned)inspectPart(e);if(active===7||active===8){cables.moveDrag(e,camera,canvas);const near=cables.hover(e,camera,canvas);canvas.style.cursor=cables.dragging?'grabbing':near?'grab':'';}});canvas.addEventListener('pointerleave',()=>partsInfo.hide());
+ const YAXIS=new THREE.Vector3(0,1,0),shellA=new THREE.Vector3(),shellB=new THREE.Vector3();
  let stageBlend=-1;
  let lastTime=performance.now();
  function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
@@ -187,7 +188,7 @@ try {
  const size=isShell?1:Math.max(benchVisibility,entry);
  p.scale.setScalar(Math.max(.001,size));
  const destination=home.clone().addScaledVector(offset,(1-entry)*.42);
- p.position.copy(bench).lerp(destination,leaveBench);p.rotation.y=lerp(benchRotation,0,leaveBench);p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,leaveBench):0;
+ if(isShell){const g=p.parent;shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,leaveBench).sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);}else p.position.copy(bench).lerp(destination,leaveBench);p.rotation.y=lerp(benchRotation,0,leaveBench);p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,leaveBench):0;
  }
  if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
  const widthNeeded=lerp(540,lerp(214,120,close),leaveBench),heightNeeded=lerp(245,lerp(200,221,close),leaveBench);

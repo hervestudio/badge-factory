@@ -136,8 +136,8 @@ export function createCables(root,{display,esp,battery,charger,strip,switches,sh
    let a=world(net.a),b=world(net.b),guide;
    if(current<.8){
     const r=net.ribbonIndex;
-    if(r!==undefined){a=V(-3+r*.9,100,3);b=V(32+r*.9,91,3);guide=new THREE.CatmullRomCurve3([a,V(8+r*.9,97,4),V(22+r*.9,96,4),b]);}
-    else {const lane=index-10;a=V(59+lane*.9,101,3);b=V(82+lane*.9,99,3);guide=new THREE.CatmullRomCurve3([a,V(64+lane*.9,92,3),V(77+lane*.9,92,3),b]);}
+    if(r!==undefined){a=V(3-r*.9,100,3);b=V(-32-r*.9,91,3);guide=new THREE.CatmullRomCurve3([a,V(-8-r*.9,97,4),V(-22-r*.9,96,4),b]);}
+    else {const lane=index-10;a=V(-59-lane*.9,101,3);b=V(-82-lane*.9,99,3);guide=new THREE.CatmullRomCurve3([a,V(-64-lane*.9,92,3),V(-77-lane*.9,92,3),b]);}
    } else if(net.ribbonIndex!==undefined){
     const lane=(net.ribbonIndex-4.5)*.9;
     const start=world(anchor(display,[0,-33,-.6],'')),end=world(anchor(esp,[-12,-10,1.2],''));
