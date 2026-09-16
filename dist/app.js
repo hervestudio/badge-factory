@@ -122,7 +122,7 @@ try {
  const buttonPositions=[[-19.802,-33.471],[0,-38.5],[19.802,-33.471]];
  buttonPositions.forEach(([x,y],i)=>{const sw=part(front,'Tactile switch '+(i+1),[x,y,-3],[i===0?-18:i===2?18:0,-8,-24],2);switches.push(sw);box(sw,6,6,3.5,mat.black,[0,0,-1.8]);box(sw,5.8,5.8,.5,mat.silver,[0,0,.2]);cyl(sw,1.7,1.3,mat.black,[0,0,1]);for(const sx of [-1,1])for(const sy of [-1,1])box(sw,.55,2.8,.45,mat.silver,[sx*3.2,sy*3.3,-1]);});
  // Two spools of silicone hook-up wire sit on the bench; runs are cut from them.
- for(const [name,color,spin] of [['Wire spool 1','#d5312b',.45],['Wire spool 2','#23262d',-.3]]){
+ for(const [name,color,spin] of [['Wire spool 1','#d5312b',.45],['Wire spool 2','#23262d',-2.3]]){
   const sp=part(front,name,[0,0,-30],[0,0,-20],5);sp.userData.benchOnly=true;
   const roll=new THREE.Group();sp.add(roll);roll.rotation.z=spin;
   for(const z of [-6.6,6.6])cyl(roll,14,1.8,mat.white,[0,0,z]);
@@ -168,7 +168,7 @@ try {
  'Ground bus + dividers':[-148,-29,4,Math.PI],
  'Tactile switch 1':[-140,-60,4,0], 'Tactile switch 2':[-118,-60,4,0], 'Tactile switch 3':[-96,-60,4,0],
  'Previous button':[-139,-87,2.5,0], 'Menu button':[-116,-87,2.5,0], 'Next button':[-93,-87,2.5,0],
- 'Strap bar':[55,100,2,0], 'Wire spool 1':[-64,90,7.5,.5], 'Wire spool 2':[-92,81,7.5,2.4]
+ 'Strap bar':[55,100,2,0], 'Wire spool 1':[-64,90,7.5,0], 'Wire spool 2':[-92,81,7.5,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
  for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[120+insertIndex++*12,102,2.5,0];if(p.userData.name==='M2×12 screw')a=[97+screwIndex++*16,-99,6,0];if(p.userData.name==='Screw cap')a=[13+capIndex++*16,-98,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
