@@ -28,6 +28,8 @@ export function createCables(root,{display,esp,battery,charger,strip,switches,sh
  const colliders=[
   {object:display,center:V(0,0,0),r:30.4},
   {object:esp,center:V(0,0,.6),half:V(14.6,32.6,3)},
+  {object:esp,center:V(-17,0,1),half:V(1.6,30,5)},
+  {object:esp,center:V(17,0,1),half:V(1.6,30,5)},
   {object:battery,center:V(0,0,0),half:V(30.6,25.6,3.2)},
   {object:charger,center:V(0,0,-1.2),half:V(12.6,9.6,2.9)},
   {object:strip,center:V(0,0,-.6),half:V(7,10.7,1.9)},
@@ -60,6 +62,23 @@ export function createCables(root,{display,esp,battery,charger,strip,switches,sh
     c.object.localToWorld(tmpW);root.worldToLocal(tmpW);
     tmpQ.copy(tmpW).sub(node).multiplyScalar(k);
     node.add(tmpQ);old.addScaledVector(tmpQ,.9);
+   }
+  }
+ }
+ // Wires push each other apart so no two ropes intersect.
+ const cellOf=(x,y,z)=>(Math.round(x)+512)+(Math.round(y)+512)*1024+(Math.round(z)+512)*1048576;
+ function crossNet(k){
+  const map=new Map();
+  for(const net of nets){if(net.shown<.5||!net.mesh.visible)continue;const r=net.ribbonIndex!==undefined?.45:.34;
+   for(let i=2;i<N-2;i++){const p=net.nodes[i];const c=cellOf(p.x,p.y,p.z);let bucket=map.get(c);if(!bucket)map.set(c,bucket=[]);bucket.push([net,i,r]);}}
+  for(const [c,bucket] of map){
+   for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(let dz=-1;dz<=1;dz++){
+    const other=map.get(c+dx+dy*1024+dz*1048576);if(!other)continue;
+    for(const [na,ia,ra] of bucket)for(const [nb,ib,rb] of other){
+     if(na===nb)continue;if(na.name>nb.name)continue;
+     const pa=na.nodes[ia],pb=nb.nodes[ib];delta.copy(pb).sub(pa);const d=delta.length(),minD=ra+rb;
+     if(d>1e-6&&d<minD){delta.multiplyScalar((minD-d)/d*.5*k);pb.add(delta);na.old[ia].addScaledVector(delta,-.8);pa.sub(delta);nb.old[ib].addScaledVector(delta,.8);}
+    }
    }
   }
  }
@@ -131,13 +150,15 @@ export function createCables(root,{display,esp,battery,charger,strip,switches,sh
   document.body.classList.toggle('wiring-view',inspecting);if(!inspecting)card.hidden=true;
   root.updateWorldMatrix(true,true);
   const step=Math.min(dt,1/30),closed=smooth(current,8.6,9.6);
+  if(closed<.99&&(current<.8||current>6.8))crossNet(1-closed);
   nets.forEach((net,index)=>{
    const bench=1-smooth(current,.3,.8),reveal=smooth(current,6.94+index*.009,7.14+index*.009);net.shown=Math.max(bench,reveal,index===selected&&current>6.8?1:0);net.mesh.visible=net.shown>.001;if(!net.mesh.visible){net.started=false;return}if(drag&&drag.net===net&&net.shown<.05)drag=null;
    let a=world(net.a),b=world(net.b),guide;
    if(current<.8){
+    const benchSink=85*smooth(current,.12,1.15);
     const r=net.ribbonIndex;
-    if(r!==undefined){a=V(3-r*.9,100,3);b=V(-32-r*.9,91,3);guide=new THREE.CatmullRomCurve3([a,V(-8-r*.9,97,4),V(-22-r*.9,96,4),b]);}
-    else {const lane=index-10;a=V(-59-lane*.9,101,3);b=V(-82-lane*.9,99,3);guide=new THREE.CatmullRomCurve3([a,V(-64-lane*.9,92,3),V(-77-lane*.9,92,3),b]);}
+    if(r!==undefined){a=V(3-r*.9,100-benchSink,3);b=V(-32-r*.9,91-benchSink,3);guide=new THREE.CatmullRomCurve3([a,V(-8-r*.9,97-benchSink,4),V(-22-r*.9,96-benchSink,4),b]);}
+    else {const lane=index-10;a=V(-59-lane*.9,101-benchSink,3);b=V(-82-lane*.9,99-benchSink,3);guide=new THREE.CatmullRomCurve3([a,V(-64-lane*.9,92-benchSink,3),V(-77-lane*.9,92-benchSink,3),b]);}
    } else if(net.ribbonIndex!==undefined){
     const lane=(net.ribbonIndex-4.5)*.9;
     const start=world(anchor(display,[0,-33,-.6],'')),end=world(anchor(esp,[-12,-10,1.2],''));
