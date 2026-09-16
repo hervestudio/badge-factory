@@ -176,9 +176,9 @@ try {
  let lastTime=performance.now();
  function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
- front.position.set(47*opened,0,0);front.rotation.y=2.88*opened;back.position.set(-47*opened,0,0);back.rotation.y=-.13*opened;
+ const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=2.88*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
  document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);
- const fade=1-smooth(current,.32,1.12);workbench.visible=fade>.001;cutting.material.opacity=fade;top.material.opacity=fade;workbench.position.z=-45*leaveBench;workbench.scale.setScalar(1-.04*leaveBench);
+ const fade=1-smooth(current,.32,1.12);workbench.visible=fade>.001;cutting.material.opacity=fade;top.material.opacity=fade;workbench.position.set(0,-85*leaveBench,-45*leaveBench);workbench.scale.setScalar(1-.04*leaveBench);
  const stageClose=smooth(current,8.7,10),stageKey=leaveBench+stageClose;if(Math.abs(stageBlend-stageKey)>.004||stageKey===0&&stageBlend!==0||stageKey===2&&stageBlend!==2){stageBlend=stageKey;const mobile=innerWidth<=760;stage.style.left=lerp(mobile?0:4,mobile?0:38,leaveBench)+'%';stage.style.right=lerp(mobile?0:4,mobile?0:1,leaveBench)+'%';const top0=lerp(mobile?39:37,mobile?55:6,leaveBench),h0=lerp(mobile?53:57,mobile?42:89,leaveBench);stage.style.top=lerp(top0,mobile?56:1,stageClose)+'%';stage.style.height=lerp(h0,mobile?42:99,stageClose)+'%';resize();}
 
  for(const p of animated){const {home,offset,phase,bench,benchRotation,name}=p.userData;
@@ -188,7 +188,7 @@ try {
  const size=isShell?1:Math.max(benchVisibility,entry);
  p.scale.setScalar(Math.max(.001,size));
  const destination=home.clone().addScaledVector(offset,(1-entry)*.42);
- if(isShell){const g=p.parent;shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,leaveBench).sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);}else p.position.copy(bench).lerp(destination,leaveBench);p.rotation.y=lerp(benchRotation,0,leaveBench);p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,leaveBench):0;
+ if(isShell){const g=p.parent;shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,leaveBench).sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);}else {p.position.copy(bench).lerp(destination,leaveBench);p.position.y-=85*leaveBench*(1-entry);}p.rotation.y=lerp(benchRotation,0,leaveBench);p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,leaveBench):0;
  }
  if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
  const widthNeeded=lerp(540,lerp(214,120,close),leaveBench),heightNeeded=lerp(245,lerp(200,221,close),leaveBench);
