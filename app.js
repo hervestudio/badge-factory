@@ -108,10 +108,10 @@ try {
 
  // USB-C charger and boost board; no SD module or power switch in this revision.
  const charger=part(front,'TP4056 + boost',[5.5,-55.9,-5.2],[15,-16,-33],4);
- box(charger,24,18,1.1,mat.pcb,[0,0,0]);box(charger,7,7,3,mat.chip,[-5,1,-2]);box(charger,5,4,1.1,mat.chip,[5,2,-1.3]);
+ box(charger,24,18,1.1,material('#1d3f8c',.5),[0,0,0]);box(charger,7,7,3,mat.chip,[-5,1,-2]);box(charger,5,4,1.1,mat.chip,[5,2,-1.3]);box(charger,1.3,1.1,.5,material('#e04338',.35),[1.8,-6.5,-1.4]);box(charger,1.3,1.1,.5,material('#3f7de0',.35),[4,-6.5,-1.4]);
  const usb=box(charger,8.5,6,3.1,mat.silver,[-5.5,-8,-2]);box(charger,6.9,.2,1.8,mat.black,[-5.5,-11.1,-2]);
  for(let i=0;i<4;i++){cyl(charger,1,.2,mat.gold,[-9+i*6,7,-.65]);box(charger,1.3,2,.8,mat.silver,[-8+i*5,-3,-1])}
- const powerText=label(charger,'TP4056  5V',17,3,[0,0,-3.6],'#193e32','#eee9dc');powerText.rotation.y=Math.PI;
+ const powerText=label(charger,'TP4056  5V',17,3,[0,0,-3.6],'#1d3f8c','#e9edf7');powerText.rotation.y=Math.PI;
  // Stripboard and the four flat 100 kOhm resistors.
  const strip=part(front,'Ground bus + dividers',[-16.4,-51.5,-2.5],[ -15,-7,-44],6.8);
  box(strip,12.7,20.3,1.2,material('#94713c'),[0,0,0]);
