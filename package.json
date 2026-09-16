@@ -1,0 +1,16 @@
+{
+  "name": "three-conf-badge-assembly",
+  "version": "1.0.0",
+  "description": "Scroll-driven 3D assembly guide using original speaker badge CAD",
+  "scripts": {
+    "dev": "python3 -m http.server 4173 --bind 127.0.0.1 --directory dist",
+    "check": "node --check dist/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "three": "^0.180.0"
+  }
+}
