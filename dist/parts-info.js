@@ -26,5 +26,5 @@ export function createPartsInfo(){const card=document.querySelector('#part-detai
  function show(name,x,y,pin=false){const info=PARTS[name];if(!info)return;card.hidden=false;pinned=pin;card.querySelector('strong').textContent=info[0];card.querySelector('p').textContent=info[1];card.querySelector('a').href=info[2];card.style.left=Math.max(12,Math.min(x+15,innerWidth-300))+'px';card.style.top=Math.max(85,Math.min(y+15,innerHeight-235))+'px';select.value=name;}
  select.onchange=()=>show(select.value,innerWidth/2-145,innerHeight-250,true);
  card.querySelector('button').onclick=()=>{pinned=false;card.hidden=true;};
- return {show,hide(force=false){if(force||!pinned)card.hidden=true;},get pinned(){return pinned;}};
+ return {show,hide(force=false){if(force||!pinned){card.hidden=true;if(force)pinned=false;}},get pinned(){return pinned;}};
 }
