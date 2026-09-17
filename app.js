@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
 import { material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar } from './parts.js';
 import { STLLoader } from './vendor/STLLoader.js';
+import { loadGLB } from './glb.js';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -61,7 +62,9 @@ try {
  controls=new OrbitControls(camera,canvas);controls.enabled=false;controls.enableDamping=true;controls.enableZoom=false;controls.enablePan=false;controls.target.set(0,7,0);controls.minPolarAngle=.22;controls.maxPolarAngle=Math.PI-.22;
  await document.fonts.load('16px Dingos');
  const loader=new STLLoader();
- const geos=await Promise.all(['shell-0','shell-1',...Array.from({length:7},(_,i)=>`cap-${i}`)].map(n=>loader.loadAsync(`assets/${n}.stl`)));
+ const [geos,menuCap]=await Promise.all([Promise.all(['shell-0','shell-1',...Array.from({length:7},(_,i)=>`cap-${i}`)].map(n=>loader.loadAsync(`assets/${n}.stl`))),loadGLB('assets/menu-cap.glb')]);
+ // The centre cap is a modelled part: unit radius, face at y=0 looking down -y, inlay recessed into it. Re-seat it face-up at z=0, 6.75 mm radius like the printed caps.
+ for(const {geometry} of menuCap){geometry.rotateX(-Math.PI/2);geometry.rotateZ(Math.PI);geometry.scale(6.75,6.75,6.75);}
  geos[0].rotateY(Math.PI);geos[1].translate(-80,0,0);
  for(const g of geos){const a=g.attributes.position,n=g.attributes.normal,uv=new Float32Array(a.count*2);for(let i=0;i<a.count;i++){const x=Math.abs(n.getX(i)),y=Math.abs(n.getY(i)),z=Math.abs(n.getZ(i));uv[i*2]=(x>z?a.getY(i):a.getX(i))/10;uv[i*2+1]=(z>=x&&z>=y?a.getY(i):a.getZ(i))/10}g.setAttribute('uv',new THREE.BufferAttribute(uv,2))}
  const face=part(front,'Front enclosure',[0,0,0],[0,0,10],1);mesh(face,geos[0],mat.shell);
@@ -100,7 +103,7 @@ try {
   buildSpool(sp,color,spin);
  }
  // Finish caps use connected components from small_parts.stl, preserving engravings.
- buttonPositions.forEach(([x,y],i)=>{const cap=part(front,['Previous button','Menu button','Next button'][i],[x,y,1.5],[i===0?-14:i===2?14:0,-8,92],10);const g=geos[i===1?2:i===0?3:4].clone();g.rotateY(Math.PI);const m=mesh(cap,g,i===1?mat.yellow:mat.shell);m.userData.button=i;clickables.push(m);
+ buttonPositions.forEach(([x,y],i)=>{const cap=part(front,['Previous button','Menu button','Next button'][i],[x,y,1.5],[i===0?-14:i===2?14:0,-8,92],10);if(i===1){for(const {geometry,material} of menuCap){const m=mesh(cap,geometry,material);m.userData.button=i;clickables.push(m);}return;}const g=geos[i===0?3:4].clone();g.rotateY(Math.PI);const m=mesh(cap,g,mat.shell);m.userData.button=i;clickables.push(m);
  decal(cap,10,10,[0,0,.02],(c,w,h)=>{c.strokeStyle='#21192b';c.lineWidth=w*.10;c.lineCap='round';c.lineJoin='round';if(i===1){c.lineWidth=w*.055;c.beginPath();c.arc(w/2,h/2,w*.40,0,Math.PI*2);c.stroke();c.beginPath();c.arc(w/2,h*.49,w*.26,.15,Math.PI-.15);c.stroke();c.fillStyle='#21192b';for(let q of [.35,.65]){c.beginPath();c.arc(w*q,h*.36,w*.045,0,Math.PI*2);c.fill()}}else{c.beginPath();c.moveTo(w*.3,h*(i===0?.58:.42));c.lineTo(w*.5,h*(i===0?.38:.62));c.lineTo(w*.7,h*(i===0?.58:.42));c.stroke()}});
  });
  for(const x of [-26,26])for(const y of [-60,60]){
