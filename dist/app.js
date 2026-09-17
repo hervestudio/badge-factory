@@ -162,7 +162,7 @@ try {
  const top=mesh(workbench,topGeo,new THREE.MeshStandardMaterial({map:matTexture,roughness:.94,bumpMap:grain,bumpScale:.025}),[0,0,-.09]);top.castShadow=false;
  for(const m of [cutting.material,top.material]){m.transparent=true;m.depthWrite=false;}
  const benchPos={
- 'Front enclosure':[131,31,2,Math.PI], 'Rear enclosure':[57,26,2,0],
+ 'Front enclosure':[131,28,2,Math.PI], 'Rear enclosure':[57,28,2,0],
  'GC9B72 display':[-155,36,7,0], 'ESP32-S3 N16R8':[-26,36,4,0],
  'LiPo 505060':[-31,-41,4,0], 'TP4056 + boost':[-108,-28,5,Math.PI],
  'Ground bus + dividers':[-177,-42,4,Math.PI],
@@ -210,7 +210,7 @@ try {
  const size=isShell?1:Math.max(benchVisibility,entry);
  p.scale.setScalar(Math.max(.001,size));
  const destination=home.clone().addScaledVector(offset,(1-entry)*.42);
- if(isShell){const g=p.parent,tShell=name==='Front enclosure'?smooth(leaveBench,.3,1):smooth(leaveBench,0,.7);shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,tShell).sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);p.rotation.y=lerp(benchRotation,0,tShell)-(1-tShell)*g.rotation.y;}else if(entry>0){p.position.copy(destination);p.position.y-=55*(1-entry);}else{shellA.copy(bench);shellA.y-=160*leaveBench;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);if(!isShell){p.rotation.y=entry>0?lerp(benchRotation,0,entry):benchRotation-p.parent.rotation.y;p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,entry):0;}
+ if(isShell){const g=p.parent,tShell=name==='Front enclosure'?smooth(leaveBench,.3,1):smooth(leaveBench,0,.7);shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,tShell).sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);p.rotation.y=tShell>=1?0:lerp(benchRotation,name==='Front enclosure'?2.88:-.13,tShell)-g.rotation.y;}else if(entry>0){p.position.copy(destination);p.position.y-=55*(1-entry);}else{shellA.copy(bench);shellA.y-=160*leaveBench;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);if(!isShell){p.rotation.y=entry>0?lerp(benchRotation,0,entry):benchRotation-p.parent.rotation.y;p.rotation.x=name==='M2×12 screw'?lerp(Math.PI/2,0,entry):0;}
  }
  if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
  const widthNeeded=lerp(540,lerp(214,120,close),leaveBench),heightNeeded=lerp(245,lerp(200,221,close),leaveBench);
