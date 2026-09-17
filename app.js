@@ -51,7 +51,7 @@ try {
  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();
  scene.environment=pmrem.fromScene(room,.04).texture;scene.environmentIntensity=.32;room.dispose();pmrem.dispose();
  const key=new THREE.DirectionalLight(0xffefd9,2.9);key.position.set(-130,160,220);key.castShadow=true;
- key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-180,right:180,top:180,bottom:-180,near:5,far:700});key.shadow.bias=-.00012;key.shadow.normalBias=.14;key.shadow.radius=3;scene.add(key);
+ key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-180,right:180,top:180,bottom:-180,near:5,far:700});key.shadow.bias=-.0002;key.shadow.normalBias=.4;key.shadow.radius=3;scene.add(key);
  const fill=new THREE.DirectionalLight(0xdcdfff,.42);fill.position.set(170,30,110);scene.add(fill);
  const rim=new THREE.DirectionalLight(0xcbb7ff,1.15);rim.position.set(30,100,-150);scene.add(rim);
  mat.shell=new THREE.MeshPhysicalMaterial({color:'#9465d3',roughness:.56,metalness:0,clearcoat:.14,clearcoatRoughness:.5});
@@ -103,8 +103,8 @@ try {
  label(esp,'ESP32-S3',15,3,[0,-3,1],'#16181c','#c9ced6');
  // Landscape foil pouch on the rear shelf.
  const battery=part(back,'LiPo 505060',[0,-32.2,-11],[-8,-7,43],5);
- box(battery,60,50,4.8,mat.silver,[0,0,0]);box(battery,60,4,5,mat.yellow,[0,23,0]);box(battery,60,2,5,mat.yellow,[0,-24,0]);
- for(const x of [-29.5,29.5])box(battery,1,49,5,mat.yellow,[x,0,0]);
+ box(battery,60,50,4.8,mat.silver,[0,0,0]);box(battery,60.8,4.6,5.4,mat.yellow,[0,23.1,0]);box(battery,60.8,2.6,5.4,mat.yellow,[0,-24.1,0]);
+ for(const x of [-29.9,29.9])box(battery,1.4,50.6,5.4,mat.yellow,[x,0,0]);
  decal(battery,47,29,[0,0,2.43],(c,w,h)=>{c.fillStyle='#c7c9cd';c.fillRect(0,0,w,h);c.fillStyle='#42464c';c.font=`${h*.12}px monospace`;c.textAlign='center';['Li-ion POLYMER','505060   3.7 V','2000 mAh   7.4 Wh','+                  −'].forEach((t,i)=>c.fillText(t,w/2,h*(.25+i*.16)));});
 
  // USB-C charger and boost board; no SD module or power switch in this revision.
@@ -229,6 +229,7 @@ try {
  function inspectPart(e,pin=false){if(current>.35)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hits=ray.intersectObjects([...animated,cables.group],true);if(hits.length){let p=hits[0].object;while(p&&!p.userData.name)p=p.parent;if(p){hoveredName=p.userData.name;hoveredIsPart=!!p.userData.bench;hoveredPartRef=hoveredIsPart?p:null;hoveredHit.copy(hits[0].point);if(!hoveredIsPart)hoveredAnchor.copy(hits[0].point);canvas.style.cursor=hoveredIsPart?'grab':'';return;}}if(!peek.hidden){const pb=peek.getBoundingClientRect();if(e.clientX>pb.left-24&&e.clientX<pb.right+24&&e.clientY>pb.top-20&&e.clientY<pb.bottom+44){canvas.style.cursor='';return;}}hoveredName=null;hoveredPartRef=null;if(!partsInfo.pinned)partsInfo.hide();canvas.style.cursor='';}
  let peekSticky=false;
  peek.addEventListener('pointerenter',()=>peekSticky=true);
+ document.addEventListener('pointerdown',e=>{if(partCard.hidden)return;const t=e.target;if(t.closest&&(t.closest('#part-detail')||t.closest('#peek')||t.closest('.parts-picker')))return;partsInfo.hide(true);},true);
  peek.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();const n=peek.dataset.name;if(n)partsInfo.show(n,e.clientX,e.clientY+18,true);});
  canvas.addEventListener('pointermove',e=>{
  if(dragPart&&current<.35){
