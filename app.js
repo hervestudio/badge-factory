@@ -162,16 +162,16 @@ try {
  const top=mesh(workbench,topGeo,new THREE.MeshStandardMaterial({map:matTexture,roughness:.94,bumpMap:grain,bumpScale:.025}),[0,0,-.09]);top.castShadow=false;
  for(const m of [cutting.material,top.material]){m.transparent=true;m.depthWrite=false;}
  const benchPos={
- 'Front enclosure':[170,8,2,Math.PI], 'Rear enclosure':[80,8,2,0],
- 'GC9B72 display':[-164,22,7,0], 'ESP32-S3 N16R8':[-13,47,4,0],
- 'LiPo 505060':[-16,-45,4,0], 'TP4056 + boost':[-111,-40,5,Math.PI],
- 'Ground bus + dividers':[-192,-54,4,Math.PI],
- 'Tactile switch 1':[-179,-84,4,0], 'Tactile switch 2':[-143,-84,4,0], 'Tactile switch 3':[-113,-84,4,0],
- 'Previous button':[-185,-103,2.5,0], 'Menu button':[-152,-103,2.5,0], 'Next button':[-119,-103,2.5,0],
- 'Strap bar':[83,107,2,0], 'Wire spool 1':[-48,103,7.5,0], 'Wire spool 2':[-80,98,7.5,0]
+ 'Front enclosure':[131,31,2,Math.PI], 'Rear enclosure':[57,26,2,0],
+ 'GC9B72 display':[-155,36,7,0], 'ESP32-S3 N16R8':[-26,36,4,0],
+ 'LiPo 505060':[-31,-41,4,0], 'TP4056 + boost':[-108,-28,5,Math.PI],
+ 'Ground bus + dividers':[-177,-42,4,Math.PI],
+ 'Tactile switch 1':[-141,-71,4,0], 'Tactile switch 2':[-121,-70,4,0], 'Tactile switch 3':[-101,-70,4,0],
+ 'Previous button':[-191,-103,2.5,0], 'Menu button':[-163,-101,2.5,0], 'Next button':[-128,-100,2.5,0],
+ 'Strap bar':[64,112,2,0], 'Wire spool 1':[-65,55,7.5,0], 'Wire spool 2':[-96,70,7.5,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
- for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-55+insertIndex++*21,-102,2.5,0];if(p.userData.name==='M2×12 screw')a=[132+screwIndex++*20,-100,6,0];if(p.userData.name==='Screw cap')a=[44+capIndex++*25,-98,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
+ for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-65+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=[122+screwIndex++*20,-90,6,0];if(p.userData.name==='Screw cap')a=[32+capIndex++*25,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
  const renderSettings=createRenderSettings({renderer,scene,camera,key,fill,rim,hemisphere,ao,mat,grade});
  const partsInfo=createPartsInfo();
  function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));camera.aspect=w/h;camera.updateProjectionMatrix();updateTarget()};resize();addEventListener('resize',resize);

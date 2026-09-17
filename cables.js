@@ -157,7 +157,7 @@ export function createCables(root,{display,esp,battery,charger,strip,switches,sh
    if(current<.8){
     const benchSink=160*smooth(current,.12,1.15);
     const r=net.ribbonIndex;
-    if(r!==undefined){const y=96+(r-4.5)*.92-benchSink;a=V(6,y,1.05);b=V(-24.4,y,2.6);guide=new THREE.CatmullRomCurve3([a,V(-6,y,1.05),V(-18,y,1.05),V(-27.5,y,1.05),V(-30.7,y,4.2),V(-27.5,y,7.4),V(-24.6,y,4.6),b]);}
+    if(r!==undefined){const y=99+(r-4.5)*.92-benchSink;a=V(-4,y,1.05);b=V(-34.4,y,2.6);guide=new THREE.CatmullRomCurve3([a,V(-16,y,1.05),V(-28,y,1.05),V(-37.5,y,1.05),V(-40.7,y,4.2),V(-37.5,y,7.4),V(-34.6,y,4.6),b]);}
     else {const lane=index-10;a=V(-59-lane*.9,101-benchSink,3);b=V(-82-lane*.9,99-benchSink,3);guide=new THREE.CatmullRomCurve3([a,V(-64-lane*.9,92-benchSink,3),V(-77-lane*.9,92-benchSink,3),b]);}
    } else if(net.ribbonIndex!==undefined){
     const lane=(net.ribbonIndex-4.5)*.9;
