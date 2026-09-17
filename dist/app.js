@@ -179,6 +179,23 @@ try {
  // Parts can be picked up and rearranged on the cutting mat.
  let dragPart=null,partDragging=false,dragStart=null;
  const dragPlane=new THREE.Plane(),dragPoint=new THREE.Vector3(),dragLocal=new THREE.Vector3(),dragNormal=new THREE.Vector3(),dragQuat=new THREE.Quaternion(),dragOff={x:0,y:0};
+ // Half-extents of each part's footprint on the mat, for drag collisions.
+ const FOOT={'Front enclosure':[35,69],'Rear enclosure':[35,69],'GC9B72 display':[32,38],'ESP32-S3 N16R8':[16,34],'LiPo 505060':[32,27],'TP4056 + boost':[14,11],'Ground bus + dividers':[9,12],'Tactile switch 1':[5,5],'Tactile switch 2':[5,5],'Tactile switch 3':[5,5],'Previous button':[6.5,6.5],'Menu button':[6.5,6.5],'Next button':[6.5,6.5],'M2 brass insert':[3,3],'M2×12 screw':[3,8],'Screw cap':[4.5,4.5],'Strap bar':[17,3.5],'Wire spool 1':[15.5,15.5],'Wire spool 2':[15.5,15.5]};
+ function resolveBench(moving){
+  const items=animated.filter(q=>q.userData.bench&&FOOT[q.userData.name]);
+  for(let it=0;it<3;it++)for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
+   const A=items[i],B=items[j],fa=FOOT[A.userData.name],fb=FOOT[B.userData.name],pa=A.userData.bench,pb=B.userData.bench;
+   const ox=fa[0]+fb[0]-Math.abs(pa.x-pb.x),oy=fa[1]+fb[1]-Math.abs(pa.y-pb.y);
+   if(ox<=0||oy<=0)continue;
+   let dx=0,dy=0;
+   if(ox<oy)dx=(pa.x<pb.x?1:-1)*ox;else dy=(pa.y<pb.y?1:-1)*oy;
+   if(A===moving&&B===moving)continue;
+   if(A===moving){pb.x+=dx;pb.y+=dy;}
+   else if(B===moving){pa.x-=dx;pa.y-=dy;}
+   else{pa.x-=dx/2;pa.y-=dy/2;pb.x+=dx/2;pb.y+=dy/2;}
+   pa.x=clamp(pa.x,-194,194);pa.y=clamp(pa.y,-104,104);pb.x=clamp(pb.x,-194,194);pb.y=clamp(pb.y,-104,104);
+  }
+ }
  function benchPartAt(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);for(const h of ray.intersectObjects(animated,true)){let p=h.object;while(p&&!p.userData.name)p=p.parent;if(p&&p.userData.bench)return {p,point:h.point};}return null;}
  canvas.addEventListener('pointerdown',e=>{if(current<.35){inspectPart(e,true);const hit=benchPartAt(e);if(hit){dragPart=hit.p;partDragging=false;dragStart=[e.clientX,e.clientY];dragPlane.setFromNormalAndCoplanarPoint(dragNormal.set(0,0,1).applyQuaternion(badge.getWorldQuaternion(dragQuat)),hit.point);badge.worldToLocal(dragLocal.copy(hit.point));dragOff.x=dragLocal.x-dragPart.userData.bench.x;dragOff.y=dragLocal.y-dragPart.userData.bench.y;canvas.setPointerCapture(e.pointerId);}}down=[e.clientX,e.clientY];if((active===7||active===8)&&cables.startDrag(e,camera,canvas)){canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';}if(active!==10)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(clickables)[0];if(hit){firmware.hold([1,4,2][hit.object.userData.button],true);canvas.setPointerCapture(e.pointerId);}});
  canvas.addEventListener('pointerup',e=>{dragPart=null;partDragging=false;canvas.style.cursor='';firmware.release();cables.endDrag();if((active===7||active===8)&&down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<10)cables.pick(e,camera,canvas)});
@@ -188,7 +205,7 @@ try {
  if(dragPart&&current<.35){
   if(!partDragging&&Math.hypot(e.clientX-dragStart[0],e.clientY-dragStart[1])>4){partDragging=true;partsInfo.hide(true);}
   if(partDragging){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);
-   if(ray.ray.intersectPlane(dragPlane,dragPoint)){badge.worldToLocal(dragLocal.copy(dragPoint));dragPart.userData.bench.x=clamp(dragLocal.x-dragOff.x,-194,194);dragPart.userData.bench.y=clamp(dragLocal.y-dragOff.y,-104,104);}
+   if(ray.ray.intersectPlane(dragPlane,dragPoint)){badge.worldToLocal(dragLocal.copy(dragPoint));dragPart.userData.bench.x=clamp(dragLocal.x-dragOff.x,-194,194);dragPart.userData.bench.y=clamp(dragLocal.y-dragOff.y,-104,104);resolveBench(dragPart);}
    hoveredName=dragPart.userData.name;canvas.style.cursor='grabbing';e.preventDefault();return;}}
  if(!partsInfo.pinned)inspectPart(e);if(active===7||active===8){cables.moveDrag(e,camera,canvas);const near=cables.hover(e,camera,canvas);canvas.style.cursor=cables.dragging?'grabbing':near?'grab':'';}});canvas.addEventListener('pointerleave',()=>{hoveredName=null;partsInfo.hide();});
  const YAXIS=new THREE.Vector3(0,1,0),shellA=new THREE.Vector3(),shellB=new THREE.Vector3();
