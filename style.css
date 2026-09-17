@@ -44,7 +44,7 @@ body.intro .hero .copy .start.w{display:inline-flex}
 @font-face{font-family:DingosBold;src:url('assets/DingosBold.otf');font-display:swap}
 #cover-bg{position:fixed;inset:0;z-index:1;background:linear-gradient(162deg,#574189 -4%,#b79fec 75%);pointer-events:none}
 #cover-space{height:120vh}
-#cover{position:fixed;inset:0;z-index:2;color:#fff;text-align:center}
+#cover{position:fixed;inset:0;z-index:1;color:#fff;text-align:center}
 #cover.gone{pointer-events:none}
 body.on-cover #stage{pointer-events:none}
 .cover-inner{position:absolute;left:5%;right:5%;top:50%;transform:translateY(calc(-56% + var(--cover-y,0px)))}

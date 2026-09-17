@@ -7,6 +7,7 @@ import * as CANNON from './vendor/cannon-es.js';
 import { material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar } from './parts.js';
 import { STLLoader } from './vendor/STLLoader.js';
 import { loadGLB } from './glb.js';
+import { detectPerformance, createAdaptiveRatio } from './perf.js';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -39,7 +40,7 @@ $('#inspect').onclick=()=>setInspect(!inspect);
 $('#replay').onclick=()=>{setInspect(false);scrollTo({top:0,behavior:reduced?'instant':'smooth'})};
 
 try {
- renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth>1500?1.25:1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});const perf=detectPerformance(renderer.getContext());renderer.setPixelRatio(perf.dpr);console.info(`[badge] ${perf.gpu} → tier ${perf.tier}, pixel ratio ${perf.dpr} (${perf.reason})`);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
  const hemisphere=new THREE.HemisphereLight(0xe8edff,0x574339,.22);scene.add(hemisphere);
  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();
  scene.environment=pmrem.fromScene(room,.04).texture;scene.environmentIntensity=.32;room.dispose();pmrem.dispose();
@@ -180,6 +181,7 @@ try {
  addEventListener('pointermove',e=>{parallax.tx=e.clientX/innerWidth*2-1;parallax.ty=e.clientY/innerHeight*2-1;},{passive:true});
  const renderSettings=createRenderSettings({renderer,scene,camera,key,fill,rim,hemisphere,ao,mat,grade});
  const partsInfo=createPartsInfo();
+ const adaptive=createAdaptiveRatio(perf.dpr,(dpr,median)=>{renderer.setPixelRatio(dpr);resize();console.info(`[badge] frames at ${median.toFixed(1)} ms, pixel ratio lowered to ${dpr}`);});
  function resize(){const w=stage.clientWidth,h=stage.clientHeight;for(const c of copies)c.style.setProperty('--stick',Math.max(78,h*.58-c.offsetHeight-6)+'px');renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));updateTarget()};resize();addEventListener('resize',resize);
  const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down;
  // Parts can be picked up and rearranged on the cutting mat.
@@ -253,7 +255,7 @@ try {
  if(!reduced&&scrollY<10){document.body.classList.add('intro');const cta=$('#cover-cta'),credit=$('.cover-credit');cta.classList.add('w');cta.style.setProperty('--i',26);credit.classList.add('w');credit.style.setProperty('--i',30);setTimeout(()=>document.body.classList.add('intro-in'),250);for(const el of document.querySelectorAll('#cover .cover-eyebrow,#cover .cover-title,#cover .cover-lede')){let i=0;const walk=n=>{for(const c of [...n.childNodes]){if(c.nodeType===3){const frag=document.createDocumentFragment();for(const w of c.textContent.split(/(\s+)/)){if(!w)continue;if(/^\s+$/.test(w)){frag.append(w);continue;}const s=document.createElement('span');s.className='w';s.style.setProperty('--i',i++);s.textContent=w;frag.append(s);}c.replaceWith(frag);}else if(c.nodeType===1&&c.tagName!=='BR')walk(c);}};walk(el);}}
  const touch=()=>{dirty=true;inputAt=performance.now();};for(const ev of ['pointermove','pointerdown','pointerup','wheel','touchmove','keydown'])addEventListener(ev,touch,{passive:true});addEventListener('resize',touch);addEventListener('scroll',touch,{passive:true});
  function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;if(capState.bornAt<0)capState.bornAt=time+450;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
- fpsTicks++;if(time-fpsAt>500){const f=Math.round(fpsTicks*1000/(time-fpsAt));if(fpsEl)fpsEl.textContent=fpsRenders<fpsTicks*.6?`${f} fps · idle`:`${f} fps`;fpsTicks=0;fpsRenders=0;fpsAt=time;}
+ fpsTicks++;if(time-fpsAt>500){const f=Math.round(fpsTicks*1000/(time-fpsAt));if(fpsEl)fpsEl.textContent=(fpsRenders<fpsTicks*.6?`${f} fps · idle`:`${f} fps`)+` · ×${renderer.getPixelRatio()}`;fpsTicks=0;fpsRenders=0;fpsAt=time;}
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=2.88*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
  document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
@@ -304,7 +306,7 @@ try {
  // Render on demand: when nothing moves, drop to a slow idle cadence to keep the GPU cool.
  const physicsAwake=current<.35&&(partDragging||physParts.some(p=>p.userData.body.sleepState!==2));
  const busy=dirty||time-inputAt<700||inspect||partDragging||physicsAwake||Math.abs(current-target)>5e-4||Math.abs(parallax.x-parallax.tx)+Math.abs(parallax.y-parallax.ty)>2e-3||(current>6.7&&current<9.7)||current>9.9;
- if(busy||time-lastRender>(coverT<1?32:250)){composer.render();lastRender=time;fpsRenders++;dirty=false;}
+ if(busy||time-lastRender>(coverT<1?32:250)){composer.render();if(busy)adaptive.frame(time);else adaptive.reset();lastRender=time;fpsRenders++;dirty=false;}
  }
  $('#loading').classList.add('hidden');updateTarget();requestAnimationFrame(frame);
 } catch(error){console.error(error);$('#loading').textContent='The 3D view could not load. Reload the page to try again; the assembly guide is available below.';$('#loading').classList.add('error')}
