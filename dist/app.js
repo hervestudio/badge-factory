@@ -4,6 +4,7 @@ import { FirmwareDisplay } from './emulator-display.js';
 import { createCables } from './cables.js';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
+import { material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar } from './parts.js';
 import { STLLoader } from './vendor/STLLoader.js';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -25,16 +26,7 @@ const clamp=THREE.MathUtils.clamp,lerp=THREE.MathUtils.lerp;
 const smooth=(v,a,b)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(32,1,5,1500);
 const badge=new THREE.Group(),front=new THREE.Group(),back=new THREE.Group();badge.add(front,back);scene.add(badge);
-const material=(color,roughness=.5,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
-const mat={shell:material('#ad91e0',.72),yellow:material('#f2d22f',.55),pcb:material('#163c33',.66),blue:material('#1d4474',.6),chip:material('#1a1b23',.65),silver:material('#bdc3cc',.3,.72),gold:material('#d2aa55',.36,.7),white:material('#f1ede5'),black:material('#151321',.65)};
-function mesh(parent,geometry,m,pos=[0,0,0]){const o=new THREE.Mesh(geometry,m);o.castShadow=!m.transparent;o.receiveShadow=true;o.position.fromArray(pos);parent.add(o);return o}
-function box(parent,w,h,d,m,pos){return mesh(parent,(Math.min(w,h,d)>=1?new RoundedBoxGeometry(w,h,d,2,Math.min(.55,Math.min(w,h,d)*.16)):new THREE.BoxGeometry(w,h,d)),m,pos)}
-function cyl(parent,r,h,m,pos){const g=new THREE.CylinderGeometry(r,r,h,48);g.rotateX(Math.PI/2);return mesh(parent,g,m,pos)}
 function part(parent,name,pos,offset,phase){const g=new THREE.Group();g.position.fromArray(pos);g.userData={name,home:new THREE.Vector3(...pos),offset:new THREE.Vector3(...offset),phase};parent.add(g);animated.push(g);return g}
-function texture(w,h,paint){const c=document.createElement('canvas');c.width=w;c.height=h;paint(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t}
-function decal(parent,w,h,pos,paint,res=512){const t=texture(res,Math.round(res*h/w),paint);const o=mesh(parent,new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,transparent:true,depthWrite:false,roughness:.64,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4}),pos);o.position.z+=Math.sign(o.position.z||1)*.12;return o}
-function wire(parent,points,color,r=.37){return mesh(parent,new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),32,r,6,false),material(color,.62))}
-function label(parent,text,w,h,pos,bg='#edf0e3',fg='#24252a'){return decal(parent,w,h,pos,(c,W,H)=>{c.fillStyle=bg;c.fillRect(0,0,W,H);c.fillStyle=fg;c.textAlign='center';c.textBaseline='middle';c.font=`bold ${H*.32}px monospace`;text.split('\n').forEach((s,i,a)=>c.fillText(s,W/2,H*(i+1)/(a.length+1),W*.93))})}
 
 function updateTarget(){const y=scrollY+innerHeight*.18;let i=0;while(i<chapters.length-1&&y>=chapters[i+1].offsetTop)i++;const start=chapters[i].offsetTop;const next=chapters[i+1]?.offsetTop??start+chapters[i].offsetHeight;target=i===10?10:clamp(i+(y-start)/(next-start),0,10);if(scrollY<10)target=0;
  const a=clamp(Math.floor(target+.15),0,10);if(active!==a){active=a;$('#step-label').textContent=names[a];$('#step-count').textContent=String(a).padStart(2,'0')+' / 10';document.querySelectorAll('.step-nav a').forEach((el,j)=>{el.classList.toggle('active',j===a);if(j===a)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current')});$('#view-label').textContent=a===0?'ON THE CUTTING MAT':a===10?'ASSEMBLED / DRAG TO EXPLORE':a===9?'CLOSING THE ENCLOSURE':'OPEN ASSEMBLY / '+String(a).padStart(2,'0');if(a!==10&&inspect)setInspect(false)}$('#progress').style.width=(target*10)+'%';}
@@ -79,58 +71,33 @@ try {
  decal(face,39,14,[0,-53.7,.09],(c,w,h)=>{c.fillStyle='#f1d12c';c.beginPath();c.roundRect(0,0,w,h,22);c.fill();c.fillStyle='#221a2d';c.textAlign='center';c.font=`${h*.29}px Dingos`;c.fillText('BRUNO SIMON',w/2,h*.47,w*.87);c.font=`bold ${h*.17}px Arial`;c.fillText('THREE.JS JOURNEY',w/2,h*.74)});
  // Display module, modeled to the measured CAD footprint.
  const display=part(front,'GC9B72 display',[0,3,-3.64],[4,4,-38],3);
- cyl(display,29.62,1.6,mat.blue,[0,0,-1.4]);box(display,30.5,13,1.6,mat.blue,[0,-30.7,-1.4]);
- cyl(display,27.96,2.5,material('#0c0c18',.2,.12),[0,0,.4]);
  const screenCv=document.createElement('canvas');screenCv.width=screenCv.height=360;screenCtx=screenCv.getContext('2d');screenTexture=new THREE.CanvasTexture(screenCv);screenTexture.colorSpace=THREE.SRGBColorSpace;
- screenMesh=mesh(display,new THREE.CircleGeometry(26.8,96),new THREE.MeshBasicMaterial({map:screenTexture,toneMapped:false}),[0,0,1.82]);
- for(let i=0;i<10;i++){cyl(display,.7,.3,mat.gold,[-11.43+i*2.54,-33, -.45]);box(display,.65,3,.65,mat.gold,[-11.43+i*2.54,-34.5,-2.6])}
+ screenMesh=buildDisplay(display,new THREE.MeshBasicMaterial({map:screenTexture,toneMapped:false}));
  const firmware=new FirmwareDisplay(screenCtx,screenTexture);
  firmware.bind($('#prev-screen'),1);firmware.bind($('#next-screen'),2);firmware.bind($('#menu-screen'),4);
  const keys={ArrowLeft:1,ArrowUp:1,ArrowRight:2,ArrowDown:2,' ':4,Enter:4};
  canvas.addEventListener('keydown',e=>{if(active===10&&keys[e.key]){e.preventDefault();firmware.hold(keys[e.key],true)}});canvas.addEventListener('keyup',e=>{if(keys[e.key]){e.preventDefault();firmware.hold(keys[e.key],false)}});addEventListener('blur',()=>firmware.release());
- // Silkscreen and components on the display PCB's reverse side.
- const displaySilk=label(display,'TFT 2.1 0_10\nGC9B72   360×360',36,10,[0,13,-2.24],'#204d75','#cad4df');displaySilk.rotation.y=Math.PI;
- box(display,8,6,1,mat.chip,[0,-14,-2.6]);
- for(let i=0;i<6;i++){box(display,1.2,2,.65,i%2?mat.silver:mat.chip,[-12+i*4,-20,-2.6]);wire(display,[[-11+i*4,-30,-2.25],[-11+i*4,-25,-2.25],[-8+i*3,-18,-2.25]],'#63899a',.12)}
  // DevKit with RF can, antenna, headers, USB connectors and surface components.
  const esp=part(back,'ESP32-S3 N16R8',[0,27.3,-12.5],[-11,22,38],6);
- box(esp,28.2,64.4,1.6,material('#16181c',.5),[0,0,0]);box(esp,18,20,2.6,mat.silver,[0,12,2.1]);label(esp,'ESPRESSIF\nESP32-S3\nN16R8',10,7.5,[0,12,3.43],'#c8cbd0','#43484e');
- box(esp,16,10,.2,mat.black,[0,26.3,.94]);
- for(let i=0;i<5;i++){box(esp,1,6,.12,mat.gold,[-6+i*3,27,1.1]);if(i<4)box(esp,3,1,.12,mat.gold,[-4.5+i*3,i%2?24.5:29.5,1.1])}
- for(let side of [-1,1])for(let i=0;i<22;i++){const x=side*12,y=27-i*2.54;cyl(esp,.82,.16,mat.gold,[x,y,1]);box(esp,.55,.55,3,mat.gold,[x,y,-1.7]);}
- box(esp,8,8,1.4,mat.chip,[0,-9,1.5]);for(let i=0;i<14;i++)box(esp,1.2,2,.8,i%3?mat.chip:mat.silver,[-8+(i%4)*5,-19+Math.floor(i/4)*6,1.1]);
- for(const x of [-6,6]){box(esp,8.2,6.4,2.5,mat.silver,[x,-28.8,2]);box(esp,6.7,.2,1.3,mat.black,[x,-32.1,2]);box(esp,3,4,1,mat.silver,[x,-20,1.5]);box(esp,1.5,2,1,mat.black,[x,-20,2.3])}
- label(esp,'ESP32-S3',15,3,[0,-3,1],'#16181c','#c9ced6');
+ buildESP(esp);
  // Landscape foil pouch on the rear shelf.
  const battery=part(back,'LiPo 505060',[0,-32.2,-11],[-8,-7,43],5);
- box(battery,60,50,4.8,mat.silver,[0,0,0]);box(battery,60.8,4.6,5.4,mat.yellow,[0,23.1,0]);box(battery,60.8,2.6,5.4,mat.yellow,[0,-24.1,0]);
- for(const x of [-29.9,29.9])box(battery,1.4,50.6,5.4,mat.yellow,[x,0,0]);
- decal(battery,47,29,[0,0,2.43],(c,w,h)=>{c.fillStyle='#c7c9cd';c.fillRect(0,0,w,h);c.fillStyle='#42464c';c.font=`${h*.12}px monospace`;c.textAlign='center';['Li-ion POLYMER','505060   3.7 V','2000 mAh   7.4 Wh','+                  −'].forEach((t,i)=>c.fillText(t,w/2,h*(.25+i*.16)));});
+ buildBattery(battery);
 
  // USB-C charger and boost board; no SD module or power switch in this revision.
  const charger=part(front,'TP4056 + boost',[5.5,-55.9,-5.2],[15,-16,-33],4);
- box(charger,24,18,1.1,material('#16181c',.5),[0,0,0]);box(charger,7,7,3,mat.chip,[-5,1,-2]);box(charger,5,4,1.1,mat.chip,[5,2,-1.3]);box(charger,1.3,1.1,.5,material('#e04338',.35),[1.8,-6.5,-1.4]);box(charger,1.3,1.1,.5,material('#3f7de0',.35),[4,-6.5,-1.4]);
- const usb=box(charger,8.5,6,3.1,mat.silver,[-5.5,-8,-2]);box(charger,6.9,.2,1.8,mat.black,[-5.5,-11.1,-2]);
- for(let i=0;i<4;i++){cyl(charger,1,.2,mat.gold,[-9+i*6,7,-.65]);box(charger,1.3,2,.8,mat.silver,[-8+i*5,-3,-1])}
- const powerText=label(charger,'TP4056  5V',17,3,[0,0,-3.6],'#16181c','#c9ced6');powerText.rotation.y=Math.PI;
+ buildCharger(charger);
  // Stripboard and the four flat 100 kOhm resistors.
  const strip=part(front,'Ground bus + dividers',[-16.4,-51.5,-2.5],[ -15,-7,-44],6.8);
- box(strip,12.7,20.3,1.2,material('#94713c'),[0,0,0]);
- for(let i=0;i<5;i++){box(strip,1.4,19,.1,mat.gold,[-5.08+i*2.54,0,-.66]);for(let j=0;j<8;j++){const hole=cyl(strip,.43,.15,mat.black,[-5.08+i*2.54,-8.89+j*2.54,-.76]);}}
- for(let i=0;i<4;i++){const x=-5.08+i*2.54,y=-6+i*4;box(strip,1.8,1.5,1.4,material('#acd4df'),[x+1.27,y,-1.5]);wire(strip,[[x,y,-.8],[x+.5,y,-1.5],[x+2,y,-1.5],[x+2.54,y,-.8]],'#c0c4c6',.13)}
+ buildStrip(strip);
  // Three actual tactile switches behind the separate print caps.
  const switches=[];
  const buttonPositions=[[-19.802,-33.471],[0,-38.5],[19.802,-33.471]];
- buttonPositions.forEach(([x,y],i)=>{const sw=part(front,'Tactile switch '+(i+1),[x,y,-3],[i===0?-18:i===2?18:0,-8,-24],2);switches.push(sw);box(sw,6,6,3.5,mat.black,[0,0,-1.8]);box(sw,5.8,5.8,.5,mat.silver,[0,0,.2]);cyl(sw,1.7,1.3,mat.black,[0,0,1]);for(const sx of [-1,1])for(const sy of [-1,1])box(sw,.55,2.8,.45,mat.silver,[sx*3.2,sy*3.3,-1]);});
+ buttonPositions.forEach(([x,y],i)=>{const sw=part(front,'Tactile switch '+(i+1),[x,y,-3],[i===0?-18:i===2?18:0,-8,-24],2);switches.push(sw);buildSwitch(sw);});
  // Two spools of silicone hook-up wire sit on the bench; runs are cut from them.
  for(const [name,color,spin] of [['Wire spool 1','#d5312b',.45],['Wire spool 2','#23262d',-2.3]]){
   const sp=part(front,name,[0,0,-30],[0,0,-20],5);sp.userData.benchOnly=true;
-  const roll=new THREE.Group();sp.add(roll);roll.rotation.z=spin;
-  for(const z of [-6.6,6.6])cyl(roll,14,1.8,mat.white,[0,0,z]);
-  cyl(roll,11.6,11,material(color,.6),[0,0,0]);
-  cyl(roll,4.4,15.4,mat.white,[0,0,0]);
-  for(const z of [-2.8,.4,3.1])mesh(roll,new THREE.TorusGeometry(11.6,.5,10,48),material(color,.5),[0,0,z]);
-  wire(roll,[[11.4,0,3],[16.5,3.5,-.5],[21.5,8,-4],[26,13,-6.7]],color,.6);
+  buildSpool(sp,color,spin);
  }
  // Finish caps use connected components from small_parts.stl, preserving engravings.
  buttonPositions.forEach(([x,y],i)=>{const cap=part(front,['Previous button','Menu button','Next button'][i],[x,y,1.5],[i===0?-14:i===2?14:0,-8,92],10);const g=geos[i===1?2:i===0?3:4].clone();g.rotateY(Math.PI);const m=mesh(cap,g,i===1?mat.yellow:mat.shell);m.userData.button=i;clickables.push(m);
@@ -141,7 +108,7 @@ try {
  const screw=part(front,'M2×12 screw',[x,y,-5.4],[0,0,60],9.3);cyl(screw,1,10,mat.silver,[0,0,0]);const cone=new THREE.CylinderGeometry(1.9,1,1.8,24);cone.rotateX(Math.PI/2);mesh(screw,cone,mat.silver,[0,0,5]);box(screw,2,.4,.12,mat.black,[0,0,5.95]);
  const cap=part(front,'Screw cap',[x,y,1.1],[x*.3,y*.14,92],10);const g=geos[5].clone();g.rotateY(Math.PI);mesh(cap,g,mat.shell);
  }
- const bar=part(back,'Strap bar',[0,63.8,-8],[0,20,25],9);const bg=new THREE.CylinderGeometry(1.5,1.5,29.4,24);bg.rotateZ(Math.PI/2);mesh(bar,bg,mat.silver);
+ const bar=part(back,'Strap bar',[0,63.8,-8],[0,20,25],9);buildStrapBar(bar);
  const cables=createCables(badge,{display,esp,battery,charger,strip,switches,shellFront:face,shellRear:rear});
  // The opening is a real, lit cutting mat with a metric grid and laid-out parts.
  const workbench=new THREE.Group();badge.add(workbench);
