@@ -36,3 +36,6 @@ footer{z-index:8}
  .finale .copy{position:relative;top:auto}
 }
 @media(max-width:760px){#toggle-render,#render-panel{display:none}#fps{top:82px;right:14px}}
+body.intro .hero .copy .w{display:inline-block;opacity:0;transform:translateY(.4em);filter:blur(5px)}
+body.intro-in .hero .copy .w{opacity:1;transform:none;filter:blur(0);transition:opacity .6s ease,transform .8s cubic-bezier(.16,.8,.2,1),filter .6s ease;transition-delay:calc(var(--i)*42ms)}
+body.intro .hero .copy .start.w{display:inline-flex}
