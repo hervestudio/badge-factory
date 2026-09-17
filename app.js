@@ -32,7 +32,7 @@ function box(parent,w,h,d,m,pos){return mesh(parent,(Math.min(w,h,d)>=1?new Roun
 function cyl(parent,r,h,m,pos){const g=new THREE.CylinderGeometry(r,r,h,48);g.rotateX(Math.PI/2);return mesh(parent,g,m,pos)}
 function part(parent,name,pos,offset,phase){const g=new THREE.Group();g.position.fromArray(pos);g.userData={name,home:new THREE.Vector3(...pos),offset:new THREE.Vector3(...offset),phase};parent.add(g);animated.push(g);return g}
 function texture(w,h,paint){const c=document.createElement('canvas');c.width=w;c.height=h;paint(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t}
-function decal(parent,w,h,pos,paint,res=512){const t=texture(res,Math.round(res*h/w),paint);return mesh(parent,new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,transparent:true,depthWrite:false,roughness:.64,polygonOffset:true,polygonOffsetFactor:-2}),pos)}
+function decal(parent,w,h,pos,paint,res=512){const t=texture(res,Math.round(res*h/w),paint);const o=mesh(parent,new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,transparent:true,depthWrite:false,roughness:.64,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4}),pos);o.position.z+=Math.sign(o.position.z||1)*.12;return o}
 function wire(parent,points,color,r=.37){return mesh(parent,new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),32,r,6,false),material(color,.62))}
 function label(parent,text,w,h,pos,bg='#edf0e3',fg='#24252a'){return decal(parent,w,h,pos,(c,W,H)=>{c.fillStyle=bg;c.fillRect(0,0,W,H);c.fillStyle=fg;c.textAlign='center';c.textBaseline='middle';c.font=`bold ${H*.32}px monospace`;text.split('\n').forEach((s,i,a)=>c.fillText(s,W/2,H*(i+1)/(a.length+1),W*.93))})}
 
@@ -208,13 +208,13 @@ try {
  const FOOT={'Front enclosure':[35,69],'Rear enclosure':[35,69],'GC9B72 display':[32,38],'ESP32-S3 N16R8':[16,34],'LiPo 505060':[32,27],'TP4056 + boost':[14,11],'Ground bus + dividers':[9,12],'Tactile switch 1':[5,5],'Tactile switch 2':[5,5],'Tactile switch 3':[5,5],'Previous button':[6.5,6.5],'Menu button':[6.5,6.5],'Next button':[6.5,6.5],'M2 brass insert':[3,3],'M2×12 screw':[3,8],'Screw cap':[4.5,4.5],'Strap bar':[17,3.5],'Wire spool 1':[15.5,15.5],'Wire spool 2':[15.5,15.5]};
  const TOPH={'Front enclosure':9,'Rear enclosure':9,'GC9B72 display':8,'ESP32-S3 N16R8':7,'LiPo 505060':7.5,'TP4056 + boost':6,'Ground bus + dividers':4,'Tactile switch 1':6,'Tactile switch 2':6,'Tactile switch 3':6,'Previous button':3.5,'Menu button':3.5,'Next button':3.5,'M2 brass insert':5,'M2×12 screw':2.4,'Screw cap':2.5,'Strap bar':5,'Wire spool 1':15.5,'Wire spool 2':15.5};
  // Rigid-body workbench: every part is a box on the mat (mm units), with walls at the mat edges.
- const physWorld=new CANNON.World({gravity:new CANNON.Vec3(0,0,-6000)});physWorld.allowSleep=true;
- physWorld.defaultContactMaterial.friction=.32;physWorld.defaultContactMaterial.restitution=.04;
+ const physWorld=new CANNON.World({gravity:new CANNON.Vec3(0,0,-2600)});physWorld.allowSleep=true;physWorld.solver.iterations=28;physWorld.solver.tolerance=.0005;
+ physWorld.defaultContactMaterial.friction=.4;physWorld.defaultContactMaterial.restitution=0;physWorld.defaultContactMaterial.contactEquationStiffness=4e7;physWorld.defaultContactMaterial.contactEquationRelaxation=5;physWorld.defaultContactMaterial.frictionEquationStiffness=2e7;physWorld.defaultContactMaterial.frictionEquationRelaxation=5;
  physWorld.addBody(new CANNON.Body({mass:0,shape:new CANNON.Plane()}));
  for(const [x,y,hx,hy] of [[0,122,230,6],[0,-122,230,6],[214,0,6,140],[-214,0,6,140]]){const w=new CANNON.Body({mass:0,shape:new CANNON.Box(new CANNON.Vec3(hx,hy,60))});w.position.set(x,y,60);physWorld.addBody(w);}
  const physParts=[];
  for(const p of animated){const nm=p.userData.name,f=FOOT[nm];if(!p.userData.bench||!f)continue;const h=TOPH[nm];
-  const body=new CANNON.Body({mass:nm.includes('enclosure')?4:Math.max(.3,f[0]*f[1]*h/800),shape:new CANNON.Box(new CANNON.Vec3(f[0],f[1],h/2)),linearDamping:.4,angularDamping:.55,allowSleep:true,sleepSpeedLimit:8,sleepTimeLimit:.5});
+  const body=new CANNON.Body({mass:nm.includes('enclosure')?4:Math.max(.3,f[0]*f[1]*h/800),shape:new CANNON.Box(new CANNON.Vec3(f[0],f[1],h/2)),linearDamping:.55,angularDamping:.75,allowSleep:true,sleepSpeedLimit:22,sleepTimeLimit:.35});
   body.position.set(p.userData.bench.x,p.userData.bench.y,h/2);physWorld.addBody(body);
   p.userData.body=body;p.userData.originOffset=new CANNON.Vec3(0,0,p.userData.z0-h/2);p.userData.benchQuat=new THREE.Quaternion();physParts.push(p);}
  function syncPhysics(){for(const p of physParts){const b=p.userData.body,w=b.quaternion.vmult(p.userData.originOffset);p.userData.bench.set(b.position.x+w.x,b.position.y+w.y,b.position.z+w.z);p.userData.benchQuat.set(b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w);}}
@@ -242,7 +242,7 @@ try {
   brushPlane.setFromNormalAndCoplanarPoint(dragNormal.set(0,0,1).applyQuaternion(badge.getWorldQuaternion(dragQuat)),hoveredHit);
   const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);
   if(ray.ray.intersectPlane(brushPlane,dragPoint)){badge.worldToLocal(dragLocal.copy(dragPoint));
-   if(brushPrev.part===hoveredPartRef){const b=hoveredPartRef.userData.body,m=b.mass;let ix=(dragLocal.x-brushPrev.x)*m*22,iy=(dragLocal.y-brushPrev.y)*m*22;const L=Math.hypot(ix,iy),cap=m*240;if(L>cap){ix*=cap/L;iy*=cap/L;}
+   if(brushPrev.part===hoveredPartRef){const b=hoveredPartRef.userData.body,m=b.mass;let ix=(dragLocal.x-brushPrev.x)*m*16,iy=(dragLocal.y-brushPrev.y)*m*16;const L=Math.hypot(ix,iy),cap=m*180;if(L>cap){ix*=cap/L;iy*=cap/L;}
     badge.worldToLocal(shellA.copy(hoveredHit));b.wakeUp();b.applyImpulse(new CANNON.Vec3(ix,iy,0),new CANNON.Vec3(shellA.x-b.position.x,shellA.y-b.position.y,Math.min(shellA.z-b.position.z,b.shapes[0].halfExtents.z)));}
    brushPrev.part=hoveredPartRef;brushPrev.x=dragLocal.x;brushPrev.y=dragLocal.y;}
  }else brushPrev.part=null;
@@ -255,7 +255,7 @@ try {
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=2.88*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
  document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
  if(partDragging&&dragPart&&dragPart.userData.body){const b=dragPart.userData.body,tz=TOPH[dragPart.userData.name]/2+26;b.wakeUp();let vx=(dragTarget.x-b.position.x)*14,vy=(dragTarget.y-b.position.y)*14;const L=Math.hypot(vx,vy),cap=900;if(L>cap){vx*=cap/L;vy*=cap/L;}b.velocity.set(vx,vy,(tz-b.position.z)*14);b.angularVelocity.set(0,0,0);b.quaternion.set(0,0,0,1);}
- physWorld.step(1/60,Math.min(dt,.05),4);syncPhysics();}
+ physWorld.step(1/120,Math.min(dt,.05),8);syncPhysics();}
  workbench.visible=current<1.12;cutting.material.opacity=1;top.material.opacity=1;workbench.position.set(0,-260*leaveBench,0);workbench.rotation.x=-.85*leaveBench;const matC=Math.cos(workbench.rotation.x),matS=Math.sin(workbench.rotation.x);
  const stageClose=smooth(current,8.7,10),stageKey=leaveBench+stageClose;if(hoveredName&&current<.35&&!partDragging&&!inspect){peek.dataset.name=hoveredName;if(hoveredPartRef){shellB.set(hoveredPartRef.userData.bench.x,hoveredPartRef.userData.bench.y,hoveredPartRef.userData.bench.z+(TOPH[hoveredName]||6)+4);badge.localToWorld(shellB);}else shellB.copy(hoveredAnchor);shellB.project(camera);const r2=canvas.getBoundingClientRect();peek.style.left=(r2.left+(shellB.x+1)*r2.width/2)+'px';peek.style.top=(r2.top+(1-shellB.y)*r2.height/2-34)+'px';peek.hidden=false;}else if(!peekSticky||current>=.35)peek.hidden=true;
  if(Math.abs(stageBlend-stageKey)>.004||stageKey===0&&stageBlend!==0||stageKey===2&&stageBlend!==2){stageBlend=stageKey;const mobile=innerWidth<=760;stage.style.left=lerp(mobile?0:4,mobile?0:38,leaveBench)+'%';stage.style.right=lerp(mobile?0:4,mobile?0:1,leaveBench)+'%';const top0=lerp(mobile?39:37,mobile?55:6,leaveBench),h0=lerp(mobile?53:57,mobile?42:89,leaveBench);stage.style.top=lerp(top0,mobile?56:1,stageClose)+'%';stage.style.height=lerp(h0,mobile?42:99,stageClose)+'%';resize();}
