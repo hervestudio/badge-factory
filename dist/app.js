@@ -163,7 +163,7 @@ try {
  for(const m of [cutting.material,top.material]){m.transparent=true;m.depthWrite=false;}
  const benchPos={
  'Front enclosure':[150,12,2,Math.PI], 'Rear enclosure':[48,12,2,0],
- 'GC9B72 display':[-122,49,7,0], 'ESP32-S3 N16R8':[-33,42,4,0],
+ 'GC9B72 display':[-152,18,7,0], 'ESP32-S3 N16R8':[-33,42,4,0],
  'LiPo 505060':[-28,-37,4,0], 'TP4056 + boost':[-98,-29,5,Math.PI],
  'Ground bus + dividers':[-148,-29,4,Math.PI],
  'Tactile switch 1':[-140,-60,4,0], 'Tactile switch 2':[-118,-60,4,0], 'Tactile switch 3':[-96,-60,4,0],
@@ -171,7 +171,7 @@ try {
  'Strap bar':[55,100,2,0], 'Wire spool 1':[-64,90,7.5,0], 'Wire spool 2':[-92,81,7.5,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
- for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[120+insertIndex++*12,102,2.5,0];if(p.userData.name==='M2×12 screw')a=[97+screwIndex++*16,-99,6,0];if(p.userData.name==='Screw cap')a=[13+capIndex++*16,-98,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
+ for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[99,52-insertIndex++*21,2.5,0];if(p.userData.name==='M2×12 screw')a=[97+screwIndex++*16,-99,6,0];if(p.userData.name==='Screw cap')a=[13+capIndex++*16,-98,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
  const renderSettings=createRenderSettings({renderer,scene,camera,key,fill,rim,hemisphere,ao,mat,grade});
  const partsInfo=createPartsInfo();
  function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));camera.aspect=w/h;camera.updateProjectionMatrix();updateTarget()};resize();addEventListener('resize',resize);
