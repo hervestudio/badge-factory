@@ -1,42 +1,255 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Assembly & soldering guide — Three Conf badge</title><link rel="stylesheet" href="style.css?v=5"><style>body{background:#f5f4f0}header{position:relative;height:100px}main{max-width:1000px;padding:40px 30px 100px;margin:auto}.doc-title{font-size:clamp(42px,6vw,72px);max-width:850px}.doc-lede{max-width:720px;font-size:18px;line-height:1.7;color:#6c6674}.doc-nav{display:flex;flex-wrap:wrap;gap:20px;padding:22px 0;border-block:1px solid #d9d0e3;margin:35px 0}.doc-nav a{font:12px monospace;color:#7554a4}.doc-section{margin:70px 0;scroll-margin-top:25px}.doc-section h2{font-size:36px;letter-spacing:-.04em}.doc-section h3{font-size:22px;margin:35px 0 15px}.doc-section p,.doc-section li{line-height:1.85;font-size:15px}.doc-section li{margin:8px 0}.tags{display:flex;flex-wrap:wrap;gap:8px}.tags span{background:#e7def0;border-radius:5px;font:12px monospace;padding:10px}.note{padding:18px 24px;background:#eee7f4;border-left:3px solid #9b7bc6;border-radius:0 6px 6px 0}.warning{background:#faf0d6;border-color:#cba94d}table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:14px 12px;border-bottom:1px solid #dbd3e3;text-align:left;line-height:1.65}th{font:11px monospace;text-transform:uppercase;letter-spacing:.05em;color:#776485}tbody tr:nth-child(2n){background:#efeaf255}.table-scroll{overflow-x:auto}.doc-section a,.doc-footer a{color:#7953b5;text-decoration:underline}.diagram{padding:25px;background:#fff;border:1px solid #e0d7e7;border-radius:8px;margin:22px 0;overflow-x:auto}.diagram pre{font:13px/1.8 monospace;white-space:pre}.caption{font-size:12px!important;color:#817389}.steps{list-style:none;padding:0;counter-reset:step}.steps>li{counter-increment:step;padding:22px 24px;border:1px solid #dcd3e4;margin:15px 0;border-radius:8px;background:#faf8fb}.steps h3{margin:0 0 12px;font-size:20px}.steps h3:before{content:counter(step,decimal-leading-zero);font:13px monospace;color:#9474b6;margin-right:15px}.doc-check{display:flex;align-items:start;gap:12px;margin:12px 0;line-height:1.6}.doc-check input{margin-top:5px;accent-color:#9975dc}code{font-size:13px;background:#eee7f4;padding:3px 5px;border-radius:3px}.doc-footer{font:12px/1.8 monospace;color:#756b80;border-top:1px solid #d9d0e3;padding-top:24px}.doc-section svg{width:100%;height:auto;min-width:560px}.print{border:1px solid #d1c5df;background:none;padding:10px 14px;border-radius:5px}@media print{header,.doc-nav,.print{display:none}main{padding:0}.doc-section{break-inside:avoid;margin:25px 0}body{background:white}.steps>li{break-inside:avoid}}@media(max-width:600px){main{padding:22px 20px 65px}.doc-section h2{font-size:30px}th,td{padding:10px 7px}.diagram{padding:12px}}</style></head><body>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Plan de montage &amp; soudure — Badge threejs.paris</title><link rel="stylesheet" href="style.css?v=8">
+<style>body{background:#f5f4f0}header{position:relative;height:100px}main{max-width:1000px;padding:40px 30px 100px;margin:auto}
+:root{--ground:#f5f4f0;--panel:#ffffff;--ink:#26232d;--muted:#6c6674;--line:#dbd3e3;--accent:#7953b5;--accent-bg:#eee7f4;--pink:#a4569b;--danger:#b3372f;--danger-bg:#faece9;--ok:#2c7a4b;--chip-bg:#e7def0}
+main{color:var(--ink)}
+.doc-title{font-size:clamp(42px,6vw,72px);max-width:850px}.doc-lede{max-width:720px;font-size:18px;line-height:1.7;color:#6c6674}
+.doc-nav{display:flex;flex-wrap:wrap;gap:20px;padding:22px 0;border-block:1px solid #d9d0e3;margin:35px 0}.doc-nav a{font:12px monospace;color:#7554a4}
+.tags{display:flex;flex-wrap:wrap;gap:8px}.tags span{background:#e7def0;border-radius:5px;font:12px monospace;padding:10px}
+h2{font-size:36px;letter-spacing:-.04em;margin:70px 0 14px;scroll-margin-top:25px}h3{font-size:22px;margin:35px 0 15px}
+main p,main li{line-height:1.85;font-size:15px}
+.gpio{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:13px;background:var(--chip-bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:nowrap}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel);margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}th{text-align:left;font:11px monospace;text-transform:uppercase;letter-spacing:.05em;color:#776485;padding:12px 14px;border-bottom:1px solid var(--line)}
+td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}tr:last-child td{border-bottom:none}td.num{font-variant-numeric:tabular-nums}
+.wire{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:7px;border:1px solid rgba(0,0,0,.35)}
+.note{color:var(--muted);font-size:13.5px}
+.callout{border-radius:10px;padding:14px 18px;margin:18px 0;border:1px solid var(--line);background:var(--panel)}
+.callout.danger{background:var(--danger-bg);border-color:var(--danger)}.callout.danger strong{color:var(--danger)}
+.callout.tip{background:var(--accent-bg);border-color:var(--accent)}.callout p{margin:6px 0}
+ol.steps{counter-reset:step;list-style:none;padding:0;margin:18px 0;display:flex;flex-direction:column;gap:14px}
+ol.steps>li{counter-increment:step;position:relative;padding:18px 20px 18px 66px;background:#faf8fb;border:1px solid #dcd3e4;border-radius:10px}
+ol.steps>li::before{content:counter(step,decimal-leading-zero);position:absolute;left:18px;top:19px;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font:700 12px monospace}
+ol.steps b{display:block;margin-bottom:4px;font-size:16px}ol.steps p,ol.steps ul{margin:6px 0;font-size:14.5px}ol.steps ul{padding-left:18px}ol.steps li li{margin:3px 0}
+.check{list-style:none;padding:0;margin:14px 0}.check li{padding:9px 14px 9px 40px;position:relative;background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:8px;font-size:14.5px}
+.check li::before{content:"☐";position:absolute;left:14px;color:var(--accent);font-size:17px;top:7px}
+.flow{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:13.5px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;overflow-x:auto;white-space:pre;line-height:1.7}
+figure{margin:20px 0}figure svg{width:100%;height:auto;display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px}figcaption{color:var(--muted);font-size:13px;margin-top:6px}
+main a{color:var(--accent);text-decoration:underline}
+footer.doc-footer{font:12px/1.8 monospace;color:#756b80;border-top:1px solid #d9d0e3;padding-top:24px;margin-top:50px;position:static;display:block}
+.print{border:1px solid #d1c5df;background:none;padding:10px 14px;border-radius:5px}
+@media print{header,.doc-nav,.print{display:none}main{padding:0}body{background:white}ol.steps>li,figure{break-inside:avoid}}
+@media(max-width:600px){main{padding:22px 20px 65px}h2{font-size:30px}th,td{padding:10px 7px}}</style></head>
+<body>
 <header><a class="wordmark" href="index.html"><img src="assets/three-conf-logo.svg" width="100" height="40" alt="Three.js Conf"></a><a class="header-link" href="index.html">Back to the 3D assembly <span>↗</span></a></header>
-<main><p class="eyebrow">THREEJS.PARIS BADGE · WORKSHOP</p><h1 class="doc-title">Assembly &<br><em>soldering guide.</em></h1><p class="doc-lede">Complete pin-by-pin wiring and assembly order, from the empty shell to a closed, flashed badge. For the <b>Medium enclosure (66 × 134 mm)</b>. The Short and Long versions use the same wiring; only the battery model and placement change.</p><div class="tags"><span>ESP32-S3 DevKitC N16R8</span><span>GC9B72 · 2.1″ · 360 × 360 · SPI</span><span>TP4056 + 5 V boost · USB-C</span><span>LiPo 505060 · 2000 mAh</span><span>3 × 6 × 6 × 5 mm switches</span></div>
-<nav class="doc-nav"><a href="#tools">00 Tools</a><a href="#wiring">01 Wiring</a><a href="#assembly">02 Assembly</a><a href="#checks">03 Checks</a><a href="#flash">04 Flashing</a><button class="print" onclick="window.print()">Print / Save PDF</button></nav>
-<p class="note">English translation of the supplied <a href="https://claude.ai/code/artifact/2f3f80b4-be6a-4256-8994-c7800f24ea67" target="_blank" rel="noopener">assembly document</a>. Its later workshop corrections take precedence over older notes: use route-specific wire lengths and M2 × 12 mm screws. The original step list’s generic 10–12 cm wires and M2 × 10 screws are superseded below.</p>
-<section class="doc-section" id="tools"><p class="eyebrow">00 / PREPARATION</p><h2>Materials & tools</h2><p>Use 28–30 AWG silicone wire. Cut <b>for each route</b>: making every wire 10–12 cm long leaves too much cable to close the enclosure. Close the halves like a book, hinging along the cable-window side. <b>No wire should run over the ESP32.</b> Group wires by destination with Kapton tape every 3 cm.</p><div class="table-scroll"><table><thead><tr><th>Route</th><th>Cut length</th></tr></thead><tbody><tr><td>Display → ESP32</td><td>5–6 cm</td></tr><tr><td>Stripboard → ESP32</td><td>7–8 cm</td></tr><tr><td>TP4056 OUT → ESP32</td><td>6–7 cm</td></tr><tr><td>Battery → TP4056</td><td>5 cm</td></tr><tr><td>Buttons → stripboard</td><td>3–4 cm</td></tr></tbody></table></div><ul><li>Four 100 kΩ resistors; four M2 brass inserts; four M2 × 12 mm countersunk screws. The 8.75 mm front requires 12 mm screws; 10 mm screws engage only about 1.2 mm of the inserts.</li><li>Steel strap bar, Ø3 × 29.4 mm; thin double-sided battery tape; cyanoacrylate glue for the caps.</li><li>Fine-tip soldering iron, solder, Ø1.5–2 mm heat-shrink tubing, wire stripper, knife for sacrificial membranes and an insert-setting iron.</li></ul><p>See the <a href="https://docs.google.com/spreadsheets/d/1InVfUqUMoApTDr02GGZ7CWCyKzVZiWv7K0hK1Q5fXj0/edit#gid=2008436455" target="_blank" rel="noopener">component purchase list</a> for supplier references. The Medium model here follows the guide’s 505060 battery, rather than the older 503040 entry in that list.</p></section>
-<section class="doc-section" id="wiring"><p class="eyebrow">01 / CONNECTIONS</p><h2>Wiring overview</h2><div class="diagram"><pre>USB-C ──▶ TP4056 ── B+ / B− ──▶ LiPo battery (505060)
-              │
-              ├── OUT+ ──▶ DevKit 5V
-              └── OUT− ──▶ DevKit GND
-                              │
-                         board regulator
-                              │
-                              └── 3V3 ──▶ Display VCC
+<main><p class="eyebrow">BADGE THREEJS.PARIS · ATELIER</p><h1 class="doc-title">Plan de montage<br><em>&amp; soudure.</em></h1><p class="doc-lede">Câblage broche à broche et ordre d'assemblage complet, de la coque nue au badge fermé et flashé. Valable pour la coque <b>Medium (66 × 134)</b> — identique pour Short/Long, seuls l'emplacement et le modèle de batterie changent.</p><div class="tags"><span>ESP32-S3 DevKitC N16R8</span><span>Écran GC9B72 2,1&Prime; 360×360 SPI</span><span>TP4056 + boost 5 V USB-C</span><span>LiPo 505060 · 2000 mAh</span><span>3 × switch 6×6×5</span></div>
+<nav class="doc-nav"><a href="#tools">00 Matériel</a><a href="#wiring">01 Câblage</a><a href="#assembly">02 Assemblage</a><a href="#checks">03 Check-list</a><a href="#flash">04 Flasher</a><button class="print" onclick="window.print()">Imprimer / PDF</button></nav>
+<h2 id="tools">0 · Matériel &amp; outils</h2>
+  <p>Fil silicone AWG 28-30 — <b>longueurs PAR TRAJET</b> (retour de montage : 10-12 cm uniformes = impossible à fermer !) : écran→ESP <b>5-6 cm</b> · languette→ESP <b>7-8 cm</b> · TP OUT→ESP <b>6-7 cm</b> · batterie→TP <b>5 cm</b> · boutons→languette <b>3-4 cm</b>. Fermeture « en livre », charnière côté fenêtres passe-fils ; RIEN ne passe au-dessus de l'ESP ; grouper les fils par destination (kapton tous les 3 cm). 4 × résistances 100 kΩ, 4 × inserts laiton M2, 4 × vis <b>M2×12</b> tête fraisée (12 mm requis depuis la façade épaissie à 8,75 — les M2×10 ne prennent plus que ~1,2 mm dans l'insert), tige acier Ø3 × 29,4 mm (sangle), double-face fin (batterie), colle cyano (capuchons). Outils : fer + panne fine, étain, gaine thermo Ø1,5-2, pince à dénuder, cutter (membranes), fer pour inserts.</p>
 
-TP4056 rear IN+ / VBUS ──▶ Stripboard strip 5</pre></div><p class="caption">Figure 1 — Power: OUT+ and OUT− go directly to the DevKit’s 5V and GND pins. This power return does not pass through the stripboard. Battery tabs face upwards: red is positive, black is negative.</p><div class="note warning"><b>Never do these things</b><ul><li>Do not connect the DevKit’s native USB port: GPIO 19/20 (D−/D+) are used for buttons. Flash over Wi-Fi OTA.</li><li>Never connect B+ directly to a GPIO: 4.2 V exceeds the 3.6 V absolute maximum. Use the 100 kΩ / 100 kΩ divider.</li><li>Respect the TP4056 battery polarity, B+ and B−. Reversing it destroys the protection.</li></ul></div><p>Available hook-up wire colours: red, black, yellow, green and blue. Mark duplicate wires with a black marker ring near both ends; dashed lines in the original diagrams represent these identifying rings. The display uses a complete 10-way, 1.27 mm-pitch QWORK rainbow ribbon: each signal has its own colour, so no marker rings are needed.</p>
-<h3>GC9B72 display — four-wire SPI, ten-way ribbon</h3><p>Solder the ribbon intact, in the module’s pad order. Keep it flat, without crossed conductors. The <b>white SDO wire is not connected</b>: it aligns with GPIO 46, which remains empty; trim it flush. The selected GPIOs cover consecutive header rows 13–20. Brown continues two rows farther to GND, skipping 5V; only red separates to reach 3V3 near the top of the header.</p><p class="note warning">Badges wired before 14 August used SCLK 12 / MOSI 11 / DC 13 / RST 14. Rework those four wires at the ESP32 to the updated mapping below so all badges use the same firmware.</p><div class="table-scroll"><table><thead><tr><th>Display pad order</th><th>ESP32-S3</th><th>Ribbon colour</th><th>Note</th></tr></thead><tbody><tr><td>GND</td><td>GND</td><td>Brown</td><td>Ground</td></tr><tr><td>VCC</td><td>3V3</td><td>Red</td><td>Display logic supply</td></tr><tr><td>SCL / SCLK</td><td>GPIO 14</td><td>Orange</td><td>40 MHz SPI clock</td></tr><tr><td>SDA / MOSI</td><td>GPIO 13</td><td>Yellow</td><td>SPI data</td></tr><tr><td>RST</td><td>GPIO 12</td><td>Green</td><td>Reset</td></tr><tr><td>DC</td><td>GPIO 11</td><td>Blue</td><td>Data / command</td></tr><tr><td>CS</td><td>GPIO 10</td><td>Violet</td><td>Chip select</td></tr><tr><td>BL</td><td>GPIO 9</td><td>Grey</td><td>Backlight: off in sleep. Do not connect directly to 3V3. Badges 1–3 use GPIO 4; both pins remain supported by the firmware.</td></tr><tr><td>SDO</td><td>Not connected</td><td>White</td><td>Unused SPI output; the display is write-only</td></tr><tr><td>TE</td><td>GPIO 3</td><td>Black</td><td>59.5 Hz tearing synchronization</td></tr></tbody></table></div><p class="caption">Figure 2 — The ten-way ribbon follows the display pads from brown to black. White stops before the ESP32. Cut length: 6 cm. The original ground-bus diagram also permits the display ground on the common GND strip; the interactive ribbon follows the direct ESP32 GND route described above.</p>
-<h3>Buttons — three 6 × 6 × 5 mm switches</h3><table><thead><tr><th>Button</th><th>ESP32-S3</th><th>Colour</th><th>Function</th></tr></thead><tbody><tr><td>Up / previous</td><td>GPIO 20</td><td>Blue</td><td>Previous; held during power-on enters OTA mode</td></tr><tr><td>Down / next</td><td>GPIO 19</td><td>Green</td><td>Next</td></tr><tr><td>Centre</td><td>GPIO 21</td><td>Yellow</td><td>Short press: menu/action. Hold 2 seconds: power off. Press again: wake.</td></tr><tr><td>Common ground × 3</td><td>GND</td><td>Black</td><td>One wire from each switch to the stripboard GND bus; inputs use internal pull-ups.</td></tr></tbody></table><p>Each switch’s other contact goes to its GPIO. Route the bundle through the <b>upper-left cable window</b> in the ESP32 retaining wall.</p>
-<h3>Power & charging — TP4056</h3><table><thead><tr><th>TP4056</th><th>Destination</th><th>Colour</th><th>Note</th></tr></thead><tbody><tr><td>B+</td><td>Battery +</td><td>Red</td><td>Battery tabs face upwards</td></tr><tr><td>B−</td><td>Battery −</td><td>Black</td><td>Negative terminal</td></tr><tr><td>OUT+</td><td>DevKit 5V</td><td>Red</td><td>Boosted 5 V output</td></tr><tr><td>OUT−</td><td>DevKit GND</td><td>Black</td><td>Direct power return</td></tr></tbody></table>
-<h3>Battery gauge — optional, recommended</h3><table><thead><tr><th>Signal</th><th>Circuit</th><th>ESP32-S3</th><th>Result</th></tr></thead><tbody><tr><td>Battery level</td><td>B+ → 100 kΩ → midpoint → 100 kΩ → GND</td><td>GPIO 1 at midpoint</td><td>Divides a maximum 4.2 V into 2.1 V</td></tr><tr><td>Charging detection</td><td>TP4056 VBUS → 100 kΩ → midpoint → 100 kΩ → GND</td><td>GPIO 2 at midpoint</td><td>Shows the charging bolt</td></tr></tbody></table><p>Without the dividers, the badge still works; its menu simply displays <code>--%</code>.</p>
-<h3>Stripboard — common ground and two dividers</h3><p>Cut <b>5 strips × 8 holes (12.7 × 20.3 mm)</b> from the Rademacher board. Score the hard-paper substrate along the holes with a knife, then snap it cleanly. The board fits the rimmed seat at the lower right of the front shell’s interior; secure it by friction or a small glue dot.</p><p>Lay the four resistor bodies <b>flat</b>, spanning neighbouring strips. The complete assembly is about 4 mm high. Upright resistors are about 11 mm high and exceed the 5.4 mm available below the back shell; this was confirmed during assembly on 13 August. Nothing should float loose inside the case.</p><table><thead><tr><th>Strip</th><th>Net</th><th>Soldered connections</th></tr></thead><tbody><tr><td>1</td><td>Battery B+</td><td>Wire from TP4056 B+; R1 leg</td></tr><tr><td>2</td><td>Midpoint 1</td><td>GPIO 1; legs of R1 and R2</td></tr><tr><td>3</td><td>Common GND bus</td><td>ESP GND; three button grounds; display ground if routed through the bus; legs of R2 and R4</td></tr><tr><td>4</td><td>Midpoint 2</td><td>GPIO 2; legs of R3 and R4</td></tr><tr><td>5</td><td>TP4056 VBUS</td><td>Wire from rear IN+ pad; R3 leg. Do not use VO+, which is permanently powered. Verify 0 V unplugged / approximately 5 V with USB connected.</td></tr></tbody></table>
-<div class="diagram"><pre>Strip 1        Strip 2         Strip 3        Strip 4        Strip 5
-  B+           GPIO 1            GND          GPIO 2          VBUS
-  │               │               │              │              │
-  ├── R1 100 kΩ ──┤               │              │              │
-                  ├── R2 100 kΩ ──┤              │              │
-                                  ├── R4 100 kΩ ─┤              │
-                                                 ├── R3 100 kΩ ─┤
-                                  │
-                   ┌──────────────┼──────────────┐
-                Previous        Centre          Next
-                 ground         ground         ground</pre></div><p class="caption">Figure 3 — Button grounds join the central strip. The two dividers stay on the stripboard; only their two sensing wires travel to the ESP32. The original guide uses yellow/green for the ADC wires and blue for VBUS, with identifying rings where colours repeat.</p><p>R1 = R2 = R3 = R4 = 100 kΩ. The central GND strip keeps every resistor bridge one strip wide. Wires leave through the side notches of the seat. No capacitors are required: ADC filtering is handled in software, validated on the first two badges.</p></section>
-<section class="doc-section" id="assembly"><p class="eyebrow">02 / AT THE BENCH</p><h2>Assembly order</h2><p>The sequence below preserves the source guide. The 3D story places final cable connection after the ESP32 so every destination is visible.</p><ol class="steps"><li><h3>Prepare the shells</h3>Open the seven sacrificial membranes in the front shell with a knife or fine screwdriver: three button counterbores and four screw seats. Heat-set the four M2 inserts into the rear posts at approximately 200 °C. Keep them vertical and flush.</li><li><h3>Prepare the wires</h3>Cut and tin each wire using the route lengths in section 00. Cut the five-strip, eight-hole board; solder the four resistors and lay them flat, keeping the total height around 4 mm. Solder its wires using the strip table, then clip or glue the board into its seat. Tin the display and TP4056 pads.</li><li><h3>Install the switches</h3>Insert each switch from outside through its Ø8.8 mm front opening into its cradle, with the plunger facing forwards. Bend the legs towards the back and through the support-plate slots. Solder only after insertion. Connect the three grounds to the shared bus and one signal wire to each switch. Route the bundle towards the upper-left window.<div class="diagram"><pre>OUTSIDE                               INSIDE
-Printed cap → plunger → front shell → switch body in cradle
-                                       │
-                           folded legs through support slots
-                                       │
-                                solder here AFTER insertion</pre></div><p class="caption">Figure 4 — Button station cross-section: insert the switch from the front; folded legs pass through the support slots and are soldered from inside.</p></li><li><h3>Fit the display</h3>Place it in the circular seat with the connector tab pointing down into the notch. It rests on the lower stops on both sides. Solder the ten-way ribbon in pad order; leave white disconnected at the ESP32. Route it through the ESP wall windows.</li><li><h3>Install the TP4056</h3>Slide the board into the pocket at the bottom of the front shell, aligning USB-C with the edge opening. It rests on the support wall and fits beneath the two retaining stops. Solder B+, B−, OUT+ and OUT− through the central access window between the stops.</li><li><h3>Fit the battery in the rear shell</h3>Lay the pouch landscape on its shelf, above the screw posts, with tabs facing upwards. Secure it with double-sided tape. Route its leads to the TP4056 through the space above the battery.</li><li><h3>Fit the ESP32 in the rear shell</h3>The DevKit sits between its two retaining walls, located at the top under the strap header. Connect common GND, 5 V from OUT+, the display, buttons and sensing dividers, in that order. Keep all wires off the mating plane.</li><li><h3>Test before closing</h3>Use the checklist below. All checks can be performed with the enclosure open.</li><li><h3>Close the enclosure</h3>Put the Ø3 × 29.4 mm steel bar in the strap cradle spanning both halves. Bring the shells together like a book while tucking the wires inside. Secure with four M2 × 12 mm countersunk screws. Thread the strap through the slot and around the bar.</li><li><h3>Finish</h3>Glue the four screw caps into their recesses with cyanoacrylate, recessed squares visible. Put a small glue dot inside each button-cap sleeve and fit the three caps to the plungers. Check every button still clicks.</li></ol></section>
-<section class="doc-section" id="checks"><p class="eyebrow">03 / VERIFICATION</p><h2>Before closing</h2><label class="doc-check"><input type="checkbox"> Boot: Three Conf splash and loader, then Idle Rainbow.</label><label class="doc-check"><input type="checkbox"> All three buttons respond: next, previous, menu. Hold centre to power off; press again to wake.</label><label class="doc-check"><input type="checkbox"> The battery percentage is plausible, rather than --%, when the dividers are connected.</label><label class="doc-check"><input type="checkbox"> USB-C charging lights the TP4056 LED and shows the charging bolt on screen.</label><label class="doc-check"><input type="checkbox"> The display is clear, without abnormal tearing; TE is connected.</label><label class="doc-check"><input type="checkbox"> Hold Up at boot: the badge-threejs OTA Wi-Fi network appears.</label><label class="doc-check"><input type="checkbox"> No wire is pinched at the seam and no solder joint touches the ESP32 shield.</label></section>
-<section class="doc-section" id="flash"><p class="eyebrow">04 / FIRMWARE</p><h2>Flash without a cable</h2><p>Choose <b>OTA flash mode</b> in the menu, or hold Up during power-on. Connect to Wi-Fi <code>badge-threejs</code>, password <code>threejs2026</code>, then run:</p><div class="diagram"><pre>pio run -e ota -t upload
-# Badge IP: 192.168.4.1</pre></div><p>To leave flash mode without uploading, hold the centre button.</p><p><b>Quick reminders:</b> battery thickness must not exceed 5 mm. Speaker photo/menu pairing is configured in the firmware using <code>tools/photo2header.py</code>. The source guide estimates 8–10 hours of runtime with the 505060 battery and approximately 2½ hours to recharge at 1 A.</p></section>
-<div class="doc-footer">Threejs.paris badge · Medium 66 × 134 mm · English edition of the supplied assembly and soldering guide, including its workshop corrections.<br><a href="https://claude.ai/code/artifact/2f3f80b4-be6a-4256-8994-c7800f24ea67" target="_blank" rel="noopener">Original French document</a> · <a href="index.html">Return to the interactive badge</a></div></main></body></html>
+  <h2 id="wiring">1 · Câblage — vue d'ensemble</h2>
+  <div class="flow">USB-C ──▶ TP4056 ──B+/B−──▶ Batterie LiPo (505060)
+                │
+                └──OUT+ ──▶ broche 5V du DevKit      OUT− ──▶ GND
+                                 │
+                                 └─(régulateur carte)─▶ 3V3 ─▶ écran VCC</div>
+  <figure><svg viewBox="0 0 720 250" font-family="-apple-system,sans-serif" font-size="13">
+    <g fill="none" stroke-width="3">
+      <rect x="30" y="90" width="90" height="70" rx="8" stroke="var(--line)" fill="var(--chip-bg)"/>
+      <rect x="220" y="60" width="130" height="130" rx="8" stroke="var(--line)" fill="var(--chip-bg)"/>
+      <rect x="480" y="30" width="200" height="90" rx="8" stroke="var(--line)" fill="var(--chip-bg)"/>
+      <rect x="480" y="160" width="200" height="60" rx="8" stroke="var(--line)" fill="var(--chip-bg)"/>
+      <path d="M120 125 H220" stroke="var(--muted)" stroke-dasharray="4 4"/>
+      <path d="M350 85 C420 85 420 60 480 60" stroke="#d0342c"/>
+      <path d="M350 110 C420 110 420 95 480 95" stroke="#444"/>
+      <path d="M350 150 C420 150 420 175 480 175" stroke="#d0342c"/>
+      <path d="M350 175 C420 175 420 200 480 200" stroke="#444"/>
+    </g>
+    <text x="75" y="120" text-anchor="middle" fill="var(--ink)" font-weight="600">USB-C</text>
+    <text x="75" y="140" text-anchor="middle" fill="var(--muted)" font-size="11">charge</text>
+    <text x="285" y="90" text-anchor="middle" fill="var(--ink)" font-weight="600">TP4056</text>
+    <text x="285" y="108" text-anchor="middle" fill="var(--muted)" font-size="11">+ boost 5 V</text>
+    <text x="358" y="80" fill="var(--muted)" font-size="11">B+</text>
+    <text x="358" y="106" fill="var(--muted)" font-size="11">B−</text>
+    <text x="358" y="146" fill="var(--muted)" font-size="11">OUT+</text>
+    <text x="358" y="172" fill="var(--muted)" font-size="11">OUT−</text>
+    <text x="580" y="60" text-anchor="middle" fill="var(--ink)" font-weight="600">Batterie LiPo 505060</text>
+    <text x="580" y="80" text-anchor="middle" fill="var(--muted)" font-size="11">languettes vers le HAUT</text>
+    <text x="580" y="100" text-anchor="middle" fill="var(--muted)" font-size="11">rouge = B+ · noir = B−</text>
+    <text x="580" y="185" text-anchor="middle" fill="var(--ink)" font-weight="600">ESP32-S3 DevKit</text>
+    <text x="580" y="205" text-anchor="middle" fill="var(--muted)" font-size="11">rouge → broche 5V · noir → GND</text>
+    <text x="285" y="215" text-anchor="middle" fill="var(--muted)" font-size="11">pad IN+ (au DOS) → languette bande 5 (bleu)</text>
+  </svg><figcaption>Fig. 1 — Alimentation : la paire OUT+/OUT− part directement aux broches 5V/GND du DevKit (retour de puissance), jamais par la languette.</figcaption></figure>
+
+  <div class="callout danger">
+    <p><strong>⚠ À ne jamais faire</strong></p>
+    <p>• <b>Ne jamais brancher l'USB natif du DevKit</b> : les GPIO 19/20 (D−/D+) servent de boutons. Tout le flash passe par l'OTA Wi-Fi.</p>
+    <p>• <b>Ne jamais relier B+ directement à un GPIO</b> : 4,2 V &gt; 3,6 V max absolu. Toujours via le pont diviseur 100 k / 100 k.</p>
+    <p>• Respecter la polarité batterie au niveau du TP4056 (B+ / B−) — une inversion détruit la protection.</p>
+  </div>
+
+  <p class="note">Palette de fils disponible : <span class="wire" style="background:#d0342c"></span>rouge <span class="wire" style="background:#222"></span>noir <span class="wire" style="background:#e8b820"></span>jaune <span class="wire" style="background:#2c9a4b"></span>vert <span class="wire" style="background:#2b6cb0"></span>bleu. Les doublons portent une <b>bague de feutre noir</b> près de chaque extrémité (pointillés sur les schémas). <b>Écran :</b> nappe arc-en-ciel 10 fils au pas de 1,27 (QWORK) soudée entière — chaque signal a sa couleur, <b>aucune bague nécessaire</b> (voir Fig. 2).</p>
+
+  <h3>Écran GC9B72 (SPI 4 fils) — nappe 10 fils</h3>
+  <p class="note">La nappe se soude <b>entière et dans l'ordre des pads du module</b> (elle reste à plat, pas de croisement). Seul le fil <b>blanc (SDO)</b> reste en l'air — il tombe pile en face de <span class="gpio">GPIO 46</span> (broche laissée vide) : le couper au ras. Côté ESP, les GPIO sont choisis pour que la nappe couvre les <b>lignes 13 à 20 du peigne, contiguës et sans croisement</b> ; le marron continue 2 lignes plus bas vers GND (sauter le 5V), seul le rouge remonte vers le 3V3 en haut du peigne. <b>⚠ Badges câblés avant le 14/08 :</b> ancien mapping SCLK 12 / MOSI 11 / DC 13 / RST 14 → reprendre ces 4 fils côté ESP pour les mettre au nouveau standard (firmware unique).</p>
+  <div class="tablewrap"><table>
+    <tr><th>Pad écran (ordre module)</th><th>ESP32-S3</th><th>Fil de nappe</th><th>Note</th></tr>
+    <tr><td>GND</td><td><span class="gpio">GND</span></td><td><span class="wire" style="background:#8b572a"></span>marron</td><td class="note"></td></tr>
+    <tr><td>VCC</td><td><span class="gpio">3V3</span></td><td><span class="wire" style="background:#d0342c"></span>rouge</td><td class="note">alim logique écran</td></tr>
+    <tr><td>SCL <span class="note">(= SCLK)</span></td><td><span class="gpio">GPIO 14</span></td><td><span class="wire" style="background:#e8720c"></span>orange</td><td class="note">SPI 40 MHz</td></tr>
+    <tr><td>SDA <span class="note">(= MOSI)</span></td><td><span class="gpio">GPIO 13</span></td><td><span class="wire" style="background:#e8b820"></span>jaune</td><td class="note"></td></tr>
+    <tr><td>RST</td><td><span class="gpio">GPIO 12</span></td><td><span class="wire" style="background:#2c9a4b"></span>vert</td><td class="note"></td></tr>
+    <tr><td>DC</td><td><span class="gpio">GPIO 11</span></td><td><span class="wire" style="background:#2b6cb0"></span>bleu</td><td class="note"></td></tr>
+    <tr><td>CS</td><td><span class="gpio">GPIO 10</span></td><td><span class="wire" style="background:#7b4bc9"></span>violet</td><td class="note"></td></tr>
+    <tr><td>BL</td><td><span class="gpio">GPIO 9</span></td><td><span class="wire" style="background:#9aa0a6"></span>gris</td><td class="note">rétroéclairage — coupé en veille, <b>pas</b> sur 3V3 direct · badges 1-3 câblés sur GPIO 4, toujours supporté (les 2 broches sont pilotées)</td></tr>
+    <tr><td>SDO</td><td class="note">— non câblé</td><td><span class="wire" style="background:#eee;border:1px solid #999"></span>blanc</td><td class="note">sortie SPI inutilisée (écran en écriture seule)</td></tr>
+    <tr><td>TE</td><td><span class="gpio">GPIO 3</span></td><td><span class="wire" style="background:#222"></span>noir</td><td class="note">synchro anti-tearing (59,5 Hz)</td></tr>
+  </table></div>
+
+    <figure><svg viewBox="0 0 720 310" font-family="-apple-system,sans-serif" font-size="13">
+    <rect x="20" y="25" width="90" height="260" rx="8" stroke="var(--line)" fill="var(--chip-bg)" stroke-width="3"/>
+    <rect x="615" y="25" width="85" height="260" rx="8" stroke="var(--line)" fill="var(--chip-bg)" stroke-width="3"/>
+    <text x="65" y="160" text-anchor="middle" fill="var(--ink)" font-weight="600" transform="rotate(-90 65 160)">ÉCRAN GC9B72</text>
+    <text x="657" y="160" text-anchor="middle" fill="var(--ink)" font-weight="600" transform="rotate(90 657 160)">ESP32-S3</text>
+    <path d="M185 52 H535" stroke="#8b572a" stroke-width="3" fill="none"/><path d="M185 77 H535" stroke="#d0342c" stroke-width="3" fill="none"/><path d="M185 102 H535" stroke="#e8720c" stroke-width="3" fill="none"/><path d="M185 127 H535" stroke="#e8b820" stroke-width="3" fill="none"/><path d="M185 152 H535" stroke="#2c9a4b" stroke-width="3" fill="none"/><path d="M185 177 H535" stroke="#2b6cb0" stroke-width="3" fill="none"/><path d="M185 202 H535" stroke="#7b4bc9" stroke-width="3" fill="none"/><path d="M185 227 H535" stroke="#9aa0a6" stroke-width="3" fill="none"/><path d="M185 252 H535" stroke="#cfcfcf" stroke-width="3" fill="none" stroke-dasharray="8 5"/><path d="M185 277 H535" stroke="#333" stroke-width="3" fill="none"/>
+    <text x="175" y="56" text-anchor="end" fill="var(--ink)">GND</text><text x="545" y="56" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GND</text><text x="175" y="81" text-anchor="end" fill="var(--ink)">VCC</text><text x="545" y="81" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">3V3</text><text x="175" y="106" text-anchor="end" fill="var(--ink)">SCL (SCLK)</text><text x="545" y="106" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 14</text><text x="175" y="131" text-anchor="end" fill="var(--ink)">SDA (MOSI)</text><text x="545" y="131" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 13</text><text x="175" y="156" text-anchor="end" fill="var(--ink)">RST</text><text x="545" y="156" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 12</text><text x="175" y="181" text-anchor="end" fill="var(--ink)">DC</text><text x="545" y="181" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 11</text><text x="175" y="206" text-anchor="end" fill="var(--ink)">CS</text><text x="545" y="206" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 10</text><text x="175" y="231" text-anchor="end" fill="var(--ink)">BL</text><text x="545" y="231" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 9</text><text x="175" y="256" text-anchor="end" fill="var(--ink)">SDO</text><text x="545" y="256" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">non câblé</text><text x="175" y="281" text-anchor="end" fill="var(--ink)">TE</text><text x="545" y="281" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 3</text>
+  </svg><figcaption>Fig. 2 — Écran : nappe arc-en-ciel 10 fils, soudée dans l'ordre des pads du module (marron → noir). Pointillés = SDO (blanc), non câblé côté ESP. Longueur de coupe : 6 cm.</figcaption></figure>
+
+  <h3>Boutons (switchs 6×6×5) — 4 fils</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Bouton</th><th>ESP32-S3</th><th>Couleur</th><th>Rôle</th></tr>
+    <tr><td>Haut (prev)</td><td><span class="gpio">GPIO 20</span></td><td><span class="wire" style="background:#2b6cb0"></span>bleu</td><td class="note">précédent · maintenu à l'allumage = mode OTA</td></tr>
+    <tr><td>Bas (next)</td><td><span class="gpio">GPIO 19</span></td><td><span class="wire" style="background:#2c9a4b"></span>vert</td><td class="note">suivant</td></tr>
+    <tr><td>Centre</td><td><span class="gpio">GPIO 21</span></td><td><span class="wire" style="background:#e8b820"></span>jaune</td><td class="note">court = menu/action · long 2 s = extinction · réveil</td></tr>
+    <tr><td>Commun ×3</td><td><span class="gpio">GND</span></td><td><span class="wire" style="background:#222"></span>noir</td><td class="note">un fil par switch vers la bande GND de la languette (pull-up internes)</td></tr>
+  </table></div>
+  <p class="note">L'autre patte de chaque switch part vers son GPIO. Les fils sortent par la fenêtre passe-fils <b>haut-gauche</b> du mur ESP.</p>
+
+  <h3>Alimentation / charge — TP4056</h3>
+  <div class="tablewrap"><table>
+    <tr><th>TP4056</th><th>Vers</th><th>Couleur</th><th>Note</th></tr>
+    <tr><td>B+</td><td>Batterie +</td><td><span class="wire" style="background:#d0342c"></span>rouge</td><td class="note">languettes de la batterie orientées vers le <b>haut</b></td></tr>
+    <tr><td>B−</td><td>Batterie −</td><td><span class="wire" style="background:#222"></span>noir</td><td class="note"></td></tr>
+    <tr><td>OUT+</td><td><span class="gpio">5V</span> du DevKit</td><td><span class="wire" style="background:#d0342c"></span>rouge</td><td class="note">sortie boost 5 V</td></tr>
+    <tr><td>OUT−</td><td><span class="gpio">GND</span></td><td><span class="wire" style="background:#222"></span>noir</td><td class="note"></td></tr>
+  </table></div>
+
+  <h3>Jauge batterie (option, mais recommandée) — 4 × 100 kΩ</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Signal</th><th>Montage</th><th>ESP32-S3</th><th>Note</th></tr>
+    <tr><td>Niveau batterie</td><td>B+ → 100 k → <b>point milieu</b> → 100 k → GND</td><td><span class="gpio">GPIO 1</span> au point milieu</td><td class="note">divise 4,2 V max en 2,1 V</td></tr>
+    <tr><td>Détection charge</td><td>VBUS TP4056 (5 V USB) → 100 k → <b>point milieu</b> → 100 k → GND</td><td><span class="gpio">GPIO 2</span> au point milieu</td><td class="note">affiche l'éclair de charge</td></tr>
+  </table></div>
+  <p class="note">Sans ces ponts, le badge fonctionne et affiche simplement <span class="gpio">--%</span> dans le menu.</p>
+
+  <h3>Languette stripboard — bus GND + ponts diviseurs</h3>
+  <p>Découper <b>5 bandes × 8 trous</b> (12,7 × 20,3 mm) dans la plaque Rademacher (papier dur : entaille au cutter le long des trous, casse nette). Elle se loge dans l'<b>assise à rebords</b> en bas à droite de la façade (point de colle ou friction). Les 4 résistances se soudent <b>corps couché à plat</b> (~4 mm de haut), à cheval entre bandes voisines — debout (~11 mm) elles dépassent les 5,4 mm disponibles sous le dos (retour montage 2026-08-13). Plus rien ne flotte dans le boîtier.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Bande</th><th>Réseau</th><th>Ce qui s'y soude</th></tr>
+    <tr><td class="num">1</td><td>B+ batterie</td><td class="note">fil depuis B+ du TP4056 · patte de R1</td></tr>
+    <tr><td class="num">2</td><td>Point milieu 1</td><td class="note">fil vers <span class="gpio">GPIO 1</span> · pattes de R1 et R2</td></tr>
+    <tr><td class="num">3</td><td><b>GND (bus commun)</b></td><td class="note">fil vers GND ESP · GND des 3 boutons · GND écran · pattes de R2 et R4</td></tr>
+    <tr><td class="num">4</td><td>Point milieu 2</td><td class="note">fil vers <span class="gpio">GPIO 2</span> · pattes de R3 et R4</td></tr>
+    <tr><td class="num">5</td><td>VBUS TP4056</td><td class="note">fil depuis le pad <b>IN+</b> du TP4056 — <b>au dos de la carte</b> · patte de R3. ⚠ PAS « VO+ » (sortie boost, toujours alimentée). Test : 0 V débranché / ~5 V USB branché</td></tr>
+  </table></div>
+  <figure><svg viewBox="0 0 720 350" font-family="-apple-system,sans-serif" font-size="13">
+    <rect x="30" y="30" width="52" height="52" rx="6" stroke="var(--line)" fill="var(--chip-bg)" stroke-width="3"/>
+    <rect x="30" y="100" width="52" height="52" rx="6" stroke="var(--line)" fill="var(--chip-bg)" stroke-width="3"/>
+    <rect x="30" y="170" width="52" height="52" rx="6" stroke="var(--line)" fill="var(--chip-bg)" stroke-width="3"/>
+    <text x="95" y="50" fill="var(--ink)">HAUT</text><text x="95" y="120" fill="var(--ink)">BAS</text><text x="95" y="190" fill="var(--ink)">CENTRE</text>
+    <rect x="590" y="30" width="110" height="200" rx="8" stroke="var(--line)" fill="var(--chip-bg)" stroke-width="3"/>
+    <text x="645" y="55" text-anchor="middle" fill="var(--ink)" font-weight="600">ESP32-S3</text>
+    <g fill="none" stroke-width="3">
+      <path d="M82 48 C300 48 400 75 590 75" stroke="#2b6cb0"/>
+      <path d="M82 118 C300 118 400 105 590 105" stroke="#2c9a4b"/>
+      <path d="M82 188 C300 170 400 135 590 135" stroke="#e8b820"/>
+      <path d="M56 82 V262 H300" stroke="#444"/>
+      <path d="M56 152 V262" stroke="#444"/>
+      <path d="M56 222 V262" stroke="#444"/>
+      <path d="M540 236 C570 236 575 165 590 165" stroke="#e8b820"/>
+      <path d="M540 288 C575 288 578 195 590 195" stroke="#2c9a4b"/>
+      <path d="M540 262 C600 262 660 250 660 230" stroke="#444"/>
+      <path d="M300 210 C260 210 250 300 220 315" stroke="#d0342c"/>
+      <path d="M300 314 C260 314 250 330 220 333" stroke="#2b6cb0"/>
+    </g>
+    <text x="598" y="79" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 20</text>
+    <text x="598" y="109" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 19</text>
+    <text x="598" y="139" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 21</text>
+    <text x="598" y="169" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 1</text>
+    <text x="598" y="199" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GPIO 2</text>
+    <text x="640" y="222" fill="var(--ink)" font-family="ui-monospace,Menlo,monospace" font-size="12">GND</text>
+    <rect x="300" y="210" width="240" height="14" rx="3" fill="#b0762f" opacity="0.85"/><text x="292" y="222" text-anchor="end" fill="var(--ink)" font-size="12">1 · B+</text><rect x="300" y="236" width="240" height="14" rx="3" fill="#b0762f" opacity="0.85"/><text x="292" y="248" text-anchor="end" fill="var(--ink)" font-size="12">2 · GPIO 1</text><rect x="300" y="262" width="240" height="14" rx="3" fill="#b0762f" opacity="0.85"/><text x="292" y="274" text-anchor="end" fill="var(--ink)" font-size="12">3 · GND (bus)</text><rect x="300" y="288" width="240" height="14" rx="3" fill="#b0762f" opacity="0.85"/><text x="292" y="300" text-anchor="end" fill="var(--ink)" font-size="12">4 · GPIO 2</text><rect x="300" y="314" width="240" height="14" rx="3" fill="#b0762f" opacity="0.85"/><text x="292" y="326" text-anchor="end" fill="var(--ink)" font-size="12">5 · VBUS</text>
+    <rect x="455" y="217" width="12" height="20" rx="3" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/><text x="473" y="232" fill="var(--muted)" font-size="11">R1</text><rect x="495" y="243" width="12" height="20" rx="3" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/><text x="513" y="258" fill="var(--muted)" font-size="11">R2</text><rect x="455" y="295" width="12" height="20" rx="3" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/><text x="473" y="310" fill="var(--muted)" font-size="11">R3</text><rect x="495" y="269" width="12" height="20" rx="3" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/><text x="513" y="284" fill="var(--muted)" font-size="11">R4</text>
+    
+    <circle cx="313" cy="217" r="3" fill="var(--panel)"/><circle cx="344" cy="217" r="3" fill="var(--panel)"/><circle cx="375" cy="217" r="3" fill="var(--panel)"/><circle cx="406" cy="217" r="3" fill="var(--panel)"/><circle cx="437" cy="217" r="3" fill="var(--panel)"/><circle cx="468" cy="217" r="3" fill="var(--panel)"/><circle cx="499" cy="217" r="3" fill="var(--panel)"/><circle cx="530" cy="217" r="3" fill="var(--panel)"/><circle cx="313" cy="243" r="3" fill="var(--panel)"/><circle cx="344" cy="243" r="3" fill="var(--panel)"/><circle cx="375" cy="243" r="3" fill="var(--panel)"/><circle cx="406" cy="243" r="3" fill="var(--panel)"/><circle cx="437" cy="243" r="3" fill="var(--panel)"/><circle cx="468" cy="243" r="3" fill="var(--panel)"/><circle cx="499" cy="243" r="3" fill="var(--panel)"/><circle cx="530" cy="243" r="3" fill="var(--panel)"/><circle cx="313" cy="269" r="3" fill="var(--panel)"/><circle cx="344" cy="269" r="3" fill="var(--panel)"/><circle cx="375" cy="269" r="3" fill="var(--panel)"/><circle cx="406" cy="269" r="3" fill="var(--panel)"/><circle cx="437" cy="269" r="3" fill="var(--panel)"/><circle cx="468" cy="269" r="3" fill="var(--panel)"/><circle cx="499" cy="269" r="3" fill="var(--panel)"/><circle cx="530" cy="269" r="3" fill="var(--panel)"/><circle cx="313" cy="295" r="3" fill="var(--panel)"/><circle cx="344" cy="295" r="3" fill="var(--panel)"/><circle cx="375" cy="295" r="3" fill="var(--panel)"/><circle cx="406" cy="295" r="3" fill="var(--panel)"/><circle cx="437" cy="295" r="3" fill="var(--panel)"/><circle cx="468" cy="295" r="3" fill="var(--panel)"/><circle cx="499" cy="295" r="3" fill="var(--panel)"/><circle cx="530" cy="295" r="3" fill="var(--panel)"/><circle cx="313" cy="321" r="3" fill="var(--panel)"/><circle cx="344" cy="321" r="3" fill="var(--panel)"/><circle cx="375" cy="321" r="3" fill="var(--panel)"/><circle cx="406" cy="321" r="3" fill="var(--panel)"/><circle cx="437" cy="321" r="3" fill="var(--panel)"/><circle cx="468" cy="321" r="3" fill="var(--panel)"/><circle cx="499" cy="321" r="3" fill="var(--panel)"/><circle cx="530" cy="321" r="3" fill="var(--panel)"/>
+    <text x="150" y="318" fill="var(--muted)" font-size="11">← B+ (TP4056)</text>
+    <text x="150" y="337" fill="var(--muted)" font-size="11">← VBUS (TP4056)</text>
+    <text x="370" y="200" text-anchor="middle" fill="var(--muted)" font-size="11">languette 5 bandes × 8 trous — resistances soudees puis couchees a plat</text>
+  </svg><figcaption>Fig. 3 — Boutons et languette : un fil noir par switch rejoint la bande GND ; les ponts diviseurs vivent sur la languette, seuls deux fils de mesure (jaune/vert) remontent vers l'ESP. (Condensateurs supprimés de la nomenclature : le filtrage ADC est logiciel.)</figcaption></figure>
+
+  <p class="note">R1 = R2 = R3 = R4 = 100 kΩ, à cheval sur bandes voisines puis <b>couchées à plat</b>. (Pas de condensateurs : le filtrage est fait en logiciel — validé sur les 2 premiers badges.) La bande GND au centre : tout l'encadre et ne fait que des sauts d'une bande. Les fils sortent par les échancrures des flancs de l'assise.</p>
+
+  <h2 id="assembly">2 · Ordre d'assemblage</h2>
+  <ol class="steps">
+    <li><b>Préparer les coques</b>
+      <p>Percer les <b>7 membranes sacrificielles</b> de la façade au cutter/tournevis fin : 3 lamages de boutons + 4 sièges de vis. Poser les 4 <b>inserts M2</b> au fer (~200 °C) dans les fûts du dos — bien verticaux, affleurants.</p></li>
+    <li><b>Préparer les fils</b>
+      <p>Couper et étamer tous les fils (10-12 cm). Découper la languette stripboard 5 bandes × 8 trous, souder les 4 résistances puis <b>coucher leurs corps à plat</b> (hauteur totale ~4 mm : la couche du boîtier fait 5,4 mm), souder les fils (voir tableau dédié), puis la clipser/coller dans son assise. Étamer les pads de l'écran et du TP4056.</p></li>
+    <li><b>Monter les switchs</b>
+      <p>Insérer chaque switch <b>par l'extérieur</b> à travers son trou Ø8,8 de la façade, plonger vers l'avant, dans son berceau. Replier les pattes vers l'arrière : elles débouchent par les fentes des plaques d'appui. Souder <i>après</i> insertion : le fil GND commun chaîne les trois, puis un fil signal par switch. Faire cheminer le toron vers la fenêtre haut-gauche</p>
+      <figure><svg viewBox="0 0 720 300" font-family="-apple-system,sans-serif" font-size="12">
+        <rect x="60" y="200" width="600" height="34" fill="var(--chip-bg)" stroke="var(--line)" stroke-width="2"/>
+        <rect x="300" y="198" width="120" height="38" fill="var(--ground)"/>
+        <rect x="150" y="120" width="24" height="80" fill="var(--chip-bg)" stroke="var(--line)" stroke-width="2"/>
+        <rect x="546" y="120" width="24" height="80" fill="var(--chip-bg)" stroke="var(--line)" stroke-width="2"/>
+        <rect x="150" y="96" width="420" height="26" fill="var(--chip-bg)" stroke="var(--line)" stroke-width="2"/>
+        <rect x="255" y="94" width="42" height="30" fill="var(--ground)"/>
+        <rect x="423" y="94" width="42" height="30" fill="var(--ground)"/>
+        <rect x="300" y="122" width="120" height="78" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="2"/>
+        <rect x="342" y="200" width="36" height="30" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="2"/>
+        <rect x="318" y="230" width="84" height="16" rx="6" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/>
+        <g fill="none" stroke="#444" stroke-width="3">
+          <path d="M300 190 H278 V88"/>
+          <path d="M420 190 H442 V88"/>
+        </g>
+        <circle cx="278" cy="84" r="7" fill="#b0762f"/>
+        <circle cx="442" cy="84" r="7" fill="#b0762f"/>
+        <g fill="none" stroke="var(--muted)" stroke-width="1.5">
+          <path d="M360 250 V270"/><path d="M200 240 V262"/><path d="M360 60 V90"/><path d="M278 60 V74"/>
+        </g>
+        <text x="360" y="285" text-anchor="middle" fill="var(--muted)">capuchon collé sur le plongeur (extérieur)</text>
+        <text x="200" y="276" text-anchor="middle" fill="var(--muted)">façade (imprimée face au plateau)</text>
+        <text x="360" y="52" text-anchor="middle" fill="var(--muted)">plafond d'appui + piliers</text>
+        <text x="278" y="52" text-anchor="middle" fill="var(--muted)">soudure ici, APRÈS insertion</text>
+        <text x="360" y="166" text-anchor="middle" fill="var(--ink)" font-weight="600">switch 6×6</text>
+        <text x="360" y="182" text-anchor="middle" fill="var(--muted)" font-size="10">inséré par l'EXTÉRIEUR (trou Ø8,8)</text>
+        <text x="130" y="164" text-anchor="end" fill="var(--muted)">murs du berceau</text>
+      </svg><figcaption>Fig. 4 — Coupe d'un poste bouton : le switch entre par la façade, ses pattes repliées traversent les fentes du plafond et se soudent côté intérieur.</figcaption></figure></li>
+    <li><b>Poser l'écran</b>
+      <p>Présenter l'écran dans son anneau, <b>languette du connecteur vers le bas</b> (l'encoche de l'anneau est prévue pour). Il repose sur la butée basse des deux côtés. Souder la nappe (10 fils dans l'ordre des pads, blanc non câblé) et la faire passer par les fenêtres des murs ESP.</p></li>
+    <li><b>Installer le TP4056</b>
+      <p>Glisser la carte dans sa poche en bas de la façade, connecteur USB-C dans l'ouverture de la tranche. Elle repose sur le muret support et se cale sous les deux freins. Souder B+/B−/OUT+/OUT− (fenêtre d'accès au centre, entre les freins).</p></li>
+    <li><b>Poser la batterie</b> <span class="note">(coque dos)</span>
+      <p>Batterie <b>couchée en paysage</b> sur son étagère, au-dessus des fûts de vis, <b>languettes vers le haut</b>. La fixer au double-face. Router les fils vers le TP4056 par l'espace au-dessus de la batterie.</p></li>
+    <li><b>Poser l'ESP32</b> <span class="note">(coque dos)</span>
+      <p>Le DevKit se cale entre ses deux murs, calé en haut sous le bandeau. Raccorder dans l'ordre : GND commun, 5V (depuis OUT+), écran, boutons, ponts de jauge. Vérifier qu'aucun fil ne passe sur le plan de joint.</p></li>
+    <li><b>Tester avant de fermer</b>
+      <p>Voir la check-list ci-dessous — tout se teste boîtier ouvert.</p></li>
+    <li><b>Fermer le boîtier</b>
+      <p>Poser la tige acier Ø3 dans son berceau de sangle (à cheval sur les deux demi-coques). Rapprocher les coques en rentrant les fils, visser les 4 × M2×10 fraisées. Passer la sangle dans la fente et autour de la barre.</p></li>
+    <li><b>Finitions</b>
+      <p>Coller les 4 capuchons de vis dans leurs lamages (cyano, carré creusé visible). Coller les 3 capuchons de boutons sur les plongeurs (point de cyano dans le logement du manchon). Vérifier le clic de chaque bouton.</p></li>
+  </ol>
+
+  <h2 id="checks">3 · Check-list avant fermeture</h2>
+  <ul class="check">
+    <li>Boot : splash « Three Conf » + loader, puis Idle Rainbow</li>
+    <li>Les 3 boutons répondent (suivant / précédent / menu) — appui long centre = extinction, re-appui = réveil</li>
+    <li>Jauge batterie : % plausible dans le menu (pas <b>--%</b> si les ponts sont câblés)</li>
+    <li>Charge : brancher l'USB-C → LED du TP4056 allumée + éclair à l'écran</li>
+    <li>Écran net, pas de tearing anormal (TE branché)</li>
+    <li>Mode OTA : maintenir « haut » à l'allumage → réseau <span class="gpio">badge-threejs</span> visible</li>
+    <li>Aucun fil pincé au plan de joint, aucune soudure qui touche le blindage de l'ESP</li>
+  </ul>
+
+  <h2 id="flash">4 · Flasher (sans câble)</h2>
+  <p>Menu → <b>OTA flash mode</b> (ou maintenir « haut » à l'allumage). Se connecter au Wi-Fi <span class="gpio">badge-threejs</span> / <span class="gpio">threejs2026</span> puis :</p>
+  <div class="flow">pio run -e ota -t upload        # IP 192.168.4.1</div>
+  <p class="note">Sortie du mode flash sans flasher : appui long sur le bouton central.</p>
+
+  <div class="callout tip">
+    <p><b>Rappels rapides</b> — batterie : max 5 mm d'épaisseur ; l'appairage photo/menu du speaker se règle dans le firmware (<span class="gpio">tools/photo2header.py</span>) ; autonomie ~8-10 h avec la 505060, recharge ~2 h 30 à 1 A.</p>
+  </div>
+
+  <footer class="doc-footer">Badge threejs.paris — plan de montage v1 · coque Medium 66×134 · pins du firmware <span class="gpio">src/main.cpp</span> (à jour au 2026-08-05)</footer>
+</main>
+</body></html>
