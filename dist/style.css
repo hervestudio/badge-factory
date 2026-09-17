@@ -11,3 +11,5 @@ footer{z-index:8}
 @media(max-width:760px){.hero{height:100svh;min-height:760px}}
 
 #peek{position:fixed;z-index:26;width:30px;height:30px;border-radius:50%;border:1px solid #d0c4de;background:#fffefa;color:#5d4a78;display:grid;place-items:center;box-shadow:0 4px 14px #2f204025;transform:translate(-50%,-100%);cursor:pointer;padding:0}#peek:hover{background:#efe7fa}#peek[hidden]{display:none}
+
+#stage{left:0!important;right:0!important;top:0!important;height:100%!important;width:100%}
