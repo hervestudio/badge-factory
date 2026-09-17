@@ -18,7 +18,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 
 const $=s=>document.querySelector(s),canvas=$('#scene'),stage=$('#stage');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const chapters=[...document.querySelectorAll('.chapter')];
+const chapters=[...document.querySelectorAll('.chapter')],copies=[...document.querySelectorAll('.chapter .copy')];
 const names=['THE MAKER’S WORKBENCH','PREPARE THE SHELLS','FIT THE SWITCHES','SEAT THE DISPLAY','INSTALL THE CHARGER','PLACE THE BATTERY','CONNECT THE ESP32','WIRE THE CONNECTIONS','TEST IT OPEN','CLOSE THE ENCLOSURE','READY FOR THREE CONF'];
 let current=0,target=0,active=-1,inspect=false,renderer,screenTexture,screenCtx,screenMesh,hoveredName=null;
 const animated=[],clickables=[];
@@ -38,7 +38,7 @@ $('#inspect').onclick=()=>setInspect(!inspect);
 $('#replay').onclick=()=>{setInspect(false);scrollTo({top:0,behavior:reduced?'instant':'smooth'})};
 
 try {
- renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth>1500?1.25:1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
  const hemisphere=new THREE.HemisphereLight(0xe8edff,0x574339,.22);scene.add(hemisphere);
  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();
  scene.environment=pmrem.fromScene(room,.04).texture;scene.environmentIntensity=.32;room.dispose();pmrem.dispose();
@@ -52,7 +52,7 @@ try {
  grain.colorSpace=THREE.NoColorSpace;grain.wrapS=grain.wrapT=THREE.RepeatWrapping;grain.repeat.set(1,1);
  mat.shell.bumpMap=grain;mat.shell.bumpScale=.055;mat.rear=mat.shell.clone();mat.rear.color.copy(mat.yellow.color);
  const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));
- const ao=new GTAOPass(scene,camera,512,512);ao.updateGtaoMaterial({radius:5,thickness:2,distanceExponent:1.8,distanceFallOff:1,samples:12,screenSpaceRadius:false});ao.updatePdMaterial({radius:4,depthPhi:2,normalPhi:4});ao.blendIntensity=.85;
+ const ao=new GTAOPass(scene,camera,512,512);ao.updateGtaoMaterial({radius:5,thickness:2,distanceExponent:1.8,distanceFallOff:1,samples:8,screenSpaceRadius:false});ao.updatePdMaterial({radius:4,depthPhi:2,normalPhi:4});ao.blendIntensity=.85;
  const originalVisibility=ao._overrideVisibility.bind(ao);ao._overrideVisibility=()=>{originalVisibility();scene.traverseVisible(o=>{if(o.isMesh&&o.material.transparent){ao._visibilityCache.push(o);o.visible=false}})};
  composer.addPass(ao);composer.addPass(new OutputPass());
  const grade=new ShaderPass({uniforms:{tDiffuse:{value:null},contrast:{value:1},saturation:{value:1}},vertexShader:'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform sampler2D tDiffuse; uniform float contrast; uniform float saturation; varying vec2 vUv; void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(.2126,.7152,.0722));c.rgb=mix(vec3(l),c.rgb,saturation);c.rgb=(c.rgb-.5)*contrast+.5;gl_FragColor=vec4(clamp(c.rgb,0.,1.),c.a);}'});composer.addPass(grade);
@@ -109,27 +109,37 @@ try {
  const cap=part(front,'Screw cap',[x,y,1.1],[x*.3,y*.14,92],10);const g=geos[5].clone();g.rotateY(Math.PI);mesh(cap,g,mat.shell);
  }
  const bar=part(back,'Strap bar',[0,63.8,-8],[0,20,25],9);buildStrapBar(bar);
- const cables=createCables(badge,{display,esp,battery,charger,strip,switches,shellFront:face,shellRear:rear});
+ const mobileBench=innerWidth<=760;
+ const cables=createCables(badge,{display,esp,battery,charger,strip,switches,shellFront:face,shellRear:rear,ribbonAt:mobileBench?[-20,166]:[-4,99]});
  // The opening is a real, lit cutting mat with a metric grid and laid-out parts.
  const workbench=new THREE.Group();badge.add(workbench);
- const matTexture=texture(2048,1280,(c,w,h)=>{
- c.fillStyle='#174b43';c.fillRect(0,0,w,h);const sx=w/420,sy=h/250;
+ const matW=mobileBench?260:420,matH=mobileBench?360:250;
+ const matTexture=texture(mobileBench?1300:2048,mobileBench?1800:1280,(c,w,h)=>{
+ c.fillStyle='#174b43';c.fillRect(0,0,w,h);const sx=w/matW,sy=h/matH;
  c.strokeStyle='#71998c';c.lineWidth=1;
- for(let x=10;x<420;x+=5){c.globalAlpha=x%10===0?.5:.22;c.beginPath();c.moveTo(x*sx,12*sy);c.lineTo(x*sx,236*sy);c.stroke()}
- for(let y=12;y<238;y+=5){c.globalAlpha=(y-12)%10===0?.5:.22;c.beginPath();c.moveTo(10*sx,y*sy);c.lineTo(410*sx,y*sy);c.stroke()}
- c.globalAlpha=.75;c.strokeStyle='#a5bca6';c.lineWidth=2;c.strokeRect(10*sx,12*sy,400*sx,225*sy);
+ for(let x=10;x<matW;x+=5){c.globalAlpha=x%10===0?.5:.22;c.beginPath();c.moveTo(x*sx,12*sy);c.lineTo(x*sx,(matH-14)*sy);c.stroke()}
+ for(let y=12;y<matH-12;y+=5){c.globalAlpha=(y-12)%10===0?.5:.22;c.beginPath();c.moveTo(10*sx,y*sy);c.lineTo((matW-10)*sx,y*sy);c.stroke()}
+ c.globalAlpha=.75;c.strokeStyle='#a5bca6';c.lineWidth=2;c.strokeRect(10*sx,12*sy,(matW-20)*sx,(matH-25)*sy);
  c.font='16px monospace';c.fillStyle='#bdd0b9';c.textAlign='center';
- for(let x=20;x<=400;x+=10)c.fillText(String(x),x*sx,9*sy);
- for(let y=22;y<=230;y+=10)c.fillText(String(y-12),5*sx,y*sy);
- c.textAlign='left';c.font='bold 20px monospace';c.fillText('THREE CONF / MAKER WORKBENCH',13*sx,245*sy);c.font='15px monospace';c.textAlign='right';c.fillText('SELF-HEALING · mm',407*sx,245*sy);
- c.globalAlpha=.3;c.lineWidth=1;c.beginPath();c.moveTo(10*sx,230*sy);c.lineTo(225*sx,15*sy);c.stroke();
+ for(let x=20;x<=matW-20;x+=10)c.fillText(String(x),x*sx,9*sy);
+ for(let y=22;y<=matH-20;y+=10)c.fillText(String(y-12),5*sx,y*sy);
+ c.textAlign='left';c.font='bold 20px monospace';c.fillText('THREE CONF / MAKER WORKBENCH',13*sx,(matH-5)*sy);c.font='15px monospace';c.textAlign='right';c.fillText('SELF-HEALING · mm',(matW-13)*sx,(matH-5)*sy);
+ c.globalAlpha=.3;c.lineWidth=1;c.beginPath();c.moveTo(10*sx,(matH-20)*sy);c.lineTo(matW*.54*sx,15*sy);c.stroke();
  });
- const shape=new THREE.Shape();const w=420,h=250,r=6;shape.moveTo(-w/2+r,-h/2);shape.lineTo(w/2-r,-h/2);shape.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);shape.lineTo(w/2,h/2-r);shape.quadraticCurveTo(w/2,h/2,w/2-r,h/2);shape.lineTo(-w/2+r,h/2);shape.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);shape.lineTo(-w/2,-h/2+r);shape.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);
+ const shape=new THREE.Shape();const w=matW,h=matH,r=6;shape.moveTo(-w/2+r,-h/2);shape.lineTo(w/2-r,-h/2);shape.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);shape.lineTo(w/2,h/2-r);shape.quadraticCurveTo(w/2,h/2,w/2-r,h/2);shape.lineTo(-w/2+r,h/2);shape.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);shape.lineTo(-w/2,-h/2+r);shape.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);
  const cutting=mesh(workbench,new THREE.ExtrudeGeometry(shape,{depth:1.7,bevelEnabled:true,bevelThickness:.2,bevelSize:.2,bevelSegments:2,steps:1}),material('#163f38',.92),[0,0,-2]);
  const topGeo=new THREE.ShapeGeometry(shape,12),uv=topGeo.attributes.uv,positions=topGeo.attributes.position;for(let i=0;i<uv.count;i++)uv.setXY(i,(positions.getX(i)+w/2)/w,(positions.getY(i)+h/2)/h);
  const top=mesh(workbench,topGeo,new THREE.MeshStandardMaterial({map:matTexture,roughness:.94,bumpMap:grain,bumpScale:.025}),[0,0,-.09]);top.castShadow=false;
  for(const m of [cutting.material,top.material]){m.transparent=true;m.depthWrite=false;}
- const benchPos={
+ const benchPos=mobileBench?{
+ 'Front enclosure':[44,-95,2,Math.PI], 'Rear enclosure':[-44,-95,2,0],
+ 'GC9B72 display':[-72,120,7,0], 'ESP32-S3 N16R8':[78,72,4,0],
+ 'LiPo 505060':[-66,60,4,0], 'TP4056 + boost':[10,72,5,Math.PI],
+ 'Ground bus + dividers':[10,44,4,Math.PI],
+ 'Tactile switch 1':[-50,8,4,0], 'Tactile switch 2':[-30,8,4,0], 'Tactile switch 3':[-10,8,4,0],
+ 'Previous button':[18,8,2.5,0], 'Menu button':[38,8,2.5,0], 'Next button':[58,8,2.5,0],
+ 'Strap bar':[98,8,2,0], 'Wire spool 1':[84,140,7.5,0], 'Wire spool 2':[40,140,7.5,0]
+ }:{
  'Front enclosure':[131,28,2,Math.PI], 'Rear enclosure':[57,28,2,0],
  'GC9B72 display':[-155,36,7,0], 'ESP32-S3 N16R8':[-26,36,4,0],
  'LiPo 505060':[-31,-41,4,0], 'TP4056 + boost':[-108,-28,5,Math.PI],
@@ -139,10 +149,10 @@ try {
  'Strap bar':[64,112,2,0], 'Wire spool 1':[-65,55,7.5,0], 'Wire spool 2':[-96,70,7.5,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
- for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-65+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=[122+screwIndex++*20,-90,1.2,0];if(p.userData.name==='Screw cap')a=[32+capIndex++*25,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.z0=a[2];p.userData.benchRotation=a[3];}
+ for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=mobileBench?[-114+insertIndex++*14,8,2.5,0]:[-65+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=mobileBench?[-100+screwIndex++*20,-172,1.2,0]:[122+screwIndex++*20,-90,1.2,0];if(p.userData.name==='Screw cap')a=mobileBench?[10+capIndex++*24,-172,2.2,0]:[32+capIndex++*25,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.z0=a[2];p.userData.benchRotation=a[3];}
  // Clay focus: while a part's card is open, everything else drops its materials.
  const clayMat=new THREE.MeshStandardMaterial({color:'#d6d1da',roughness:.92});
- const partCard=document.querySelector('#part-detail'),partSelect=document.querySelector('#part-select');
+ const partCard=document.querySelector('#part-detail'),partSelect=document.querySelector('#part-select'),partsPicker=document.querySelector('.parts-picker');
  let clayActive=null;
  function setClay(name){
   if(clayActive===name)return;
@@ -166,7 +176,7 @@ try {
  addEventListener('pointermove',e=>{parallax.tx=e.clientX/innerWidth*2-1;parallax.ty=e.clientY/innerHeight*2-1;},{passive:true});
  const renderSettings=createRenderSettings({renderer,scene,camera,key,fill,rim,hemisphere,ao,mat,grade});
  const partsInfo=createPartsInfo();
- function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));updateTarget()};resize();addEventListener('resize',resize);
+ function resize(){const w=stage.clientWidth,h=stage.clientHeight;for(const c of copies)c.style.setProperty('--stick',Math.max(78,h*.58-c.offsetHeight-6)+'px');renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));updateTarget()};resize();addEventListener('resize',resize);
  const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down;
  // Parts can be picked up and rearranged on the cutting mat.
  let dragPart=null,partDragging=false,dragStart=null;
@@ -178,7 +188,7 @@ try {
  const physWorld=new CANNON.World({gravity:new CANNON.Vec3(0,0,-2600)});physWorld.allowSleep=true;physWorld.solver.iterations=28;physWorld.solver.tolerance=.0005;
  physWorld.defaultContactMaterial.friction=.4;physWorld.defaultContactMaterial.restitution=0;physWorld.defaultContactMaterial.contactEquationStiffness=4e7;physWorld.defaultContactMaterial.contactEquationRelaxation=5;physWorld.defaultContactMaterial.frictionEquationStiffness=2e7;physWorld.defaultContactMaterial.frictionEquationRelaxation=5;
  physWorld.addBody(new CANNON.Body({mass:0,shape:new CANNON.Plane()}));
- for(const [x,y,hx,hy] of [[0,122,230,6],[0,-122,230,6],[214,0,6,140],[-214,0,6,140]]){const w=new CANNON.Body({mass:0,shape:new CANNON.Box(new CANNON.Vec3(hx,hy,60))});w.position.set(x,y,60);physWorld.addBody(w);}
+ for(const [x,y,hx,hy] of [[0,matH/2-3,matW/2+20,6],[0,-(matH/2-3),matW/2+20,6],[matW/2+4,0,6,matH/2+15],[-(matW/2+4),0,6,matH/2+15]]){const w=new CANNON.Body({mass:0,shape:new CANNON.Box(new CANNON.Vec3(hx,hy,60))});w.position.set(x,y,60);physWorld.addBody(w);}
  const physParts=[];
  for(const p of animated){const nm=p.userData.name,f=FOOT[nm];if(!p.userData.bench||!f)continue;const h=TOPH[nm];
   const body=new CANNON.Body({mass:nm.includes('enclosure')?4:Math.max(.3,f[0]*f[1]*h/800),shape:new CANNON.Box(new CANNON.Vec3(f[0],f[1],h/2)),linearDamping:.55,angularDamping:.75,allowSleep:true,sleepSpeedLimit:22,sleepTimeLimit:.35});
@@ -190,6 +200,8 @@ try {
  function benchPartAt(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);for(const h of ray.intersectObjects(animated,true)){let p=h.object;while(p&&!p.userData.name)p=p.parent;if(p&&p.userData.bench)return {p,point:h.point};}return null;}
  canvas.addEventListener('pointerdown',e=>{if(current<.35){inspectPart(e);const hit=benchPartAt(e);if(hit){dragPart=hit.p;partDragging=false;dragStart=[e.clientX,e.clientY];dragPlane.setFromNormalAndCoplanarPoint(dragNormal.set(0,0,1).applyQuaternion(badge.getWorldQuaternion(dragQuat)),hit.point);badge.worldToLocal(dragLocal.copy(hit.point));dragOff.x=dragLocal.x-dragPart.userData.bench.x;dragOff.y=dragLocal.y-dragPart.userData.bench.y;dragTarget.set(dragPart.userData.bench.x,dragPart.userData.bench.y);if(dragPart.userData.body)dragPart.userData.body.wakeUp();brushPrev.part=null;canvas.setPointerCapture(e.pointerId);}}down=[e.clientX,e.clientY];if((active===7||active===8)&&cables.startDrag(e,camera,canvas)){canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';}if(active!==10)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(clickables)[0];if(hit){firmware.hold([1,4,2][hit.object.userData.button],true);canvas.setPointerCapture(e.pointerId);}});
  canvas.addEventListener('pointerup',e=>{
+ if(e.pointerType==='touch'&&dragPart&&!partDragging&&current<.35){partsInfo.show(dragPart.userData.name,innerWidth/2-145,innerHeight-300,true);}
+ if(e.pointerType==='touch'){hoveredName=null;hoveredPartRef=null;peek.hidden=true;}
  dragPart=null;partDragging=false;canvas.style.cursor='';firmware.release();cables.endDrag();if((active===7||active===8)&&down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<10)cables.pick(e,camera,canvas)});
  canvas.addEventListener('pointercancel',()=>{dragPart=null;partDragging=false;firmware.release();cables.endDrag();});canvas.addEventListener('lostpointercapture',()=>firmware.release());
  const peek=document.querySelector('#peek');let hoveredAnchor=new THREE.Vector3(),hoveredIsPart=false,hoveredPartRef=null;
@@ -202,7 +214,7 @@ try {
  if(dragPart&&current<.35){
   if(!partDragging&&Math.hypot(e.clientX-dragStart[0],e.clientY-dragStart[1])>4){partDragging=true;partsInfo.hide(true);}
   if(partDragging){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);
-   if(ray.ray.intersectPlane(dragPlane,dragPoint)){badge.worldToLocal(dragLocal.copy(dragPoint));dragTarget.set(clamp(dragLocal.x-dragOff.x,-196,196),clamp(dragLocal.y-dragOff.y,-108,108));}
+   if(ray.ray.intersectPlane(dragPlane,dragPoint)){badge.worldToLocal(dragLocal.copy(dragPoint));dragTarget.set(clamp(dragLocal.x-dragOff.x,-(matW/2-14),matW/2-14),clamp(dragLocal.y-dragOff.y,-(matH/2-17),matH/2-17));}
    hoveredName=dragPart.userData.name;canvas.style.cursor='grabbing';e.preventDefault();return;}}
  if(!partsInfo.pinned)inspectPart(e);
  // Brushing: sliding the pointer across a part nudges it, as if grazed by a hand.
@@ -218,7 +230,10 @@ try {
  const YAXIS=new THREE.Vector3(0,1,0),XAXIS=new THREE.Vector3(1,0,0),shellA=new THREE.Vector3(),shellB=new THREE.Vector3(),qTmp=new THREE.Quaternion(),qFlip=new THREE.Quaternion(),qA=new THREE.Quaternion(),qB=new THREE.Quaternion();
  let stageBlend=-1;
  let lastTime=performance.now();
+ const fpsEl=document.querySelector('#fps');let fpsTicks=0,fpsRenders=0,fpsAt=performance.now(),lastRender=0,dirty=true,inputAt=0;
+ const touch=()=>{dirty=true;inputAt=performance.now();};for(const ev of ['pointermove','pointerdown','pointerup','wheel','touchmove','keydown'])addEventListener(ev,touch,{passive:true});addEventListener('resize',touch);addEventListener('scroll',touch,{passive:true});
  function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
+ fpsTicks++;if(time-fpsAt>500){const f=Math.round(fpsTicks*1000/(time-fpsAt));if(fpsEl)fpsEl.textContent=fpsRenders<fpsTicks*.6?`${f} fps · idle`:`${f} fps`;fpsTicks=0;fpsRenders=0;fpsAt=time;}
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=2.88*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
  document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
@@ -229,10 +244,12 @@ try {
  {// The canvas always fills the window; the framing rectangle is applied as a camera view offset, so nothing is ever cropped.
  const mobile=innerWidth<=760,W=stage.clientWidth,H=stage.clientHeight;
  const l=lerp(mobile?0:4,mobile?0:38,leaveBench),r=lerp(mobile?0:4,mobile?0:1,leaveBench);
- const top0=lerp(mobile?39:37,mobile?55:6,leaveBench),h0=lerp(mobile?53:57,mobile?42:89,leaveBench);
- const t=lerp(top0,mobile?56:1,stageClose),hh=lerp(h0,mobile?42:99,stageClose);
+ let benchTop=37,benchH=57;if(mobile){const heroBottom=copies[0].getBoundingClientRect().bottom,pickerTop=H-34-(partsPicker.offsetHeight||56);const t0=clamp(heroBottom+4,Math.max(78,pickerTop-4-W*1.3),H*.55);benchTop=t0/H*100;benchH=Math.max(pickerTop-t0-4,H*.3)/H*100;}
+ const top0=lerp(benchTop,mobile?58:6,leaveBench),h0=lerp(benchH,mobile?36:89,leaveBench);
+ const t=lerp(top0,mobile?56:1,stageClose),hh=lerp(h0,mobile?38:99,stageClose);
  const vx=W*l/100,vw=W*(100-l-r)/100,vy=H*t/100,vh=H*hh/100;
- camera.aspect=vw/vh;camera.setViewOffset(vw,vh,-vx,-vy,W,H);camera.updateProjectionMatrix();}
+ camera.aspect=vw/vh;camera.setViewOffset(vw,vh,-vx,-vy,W,H);camera.updateProjectionMatrix();
+ if(mobile){for(let i=0;i<copies.length;i++){const c=copies[i],rc=c.getBoundingClientRect();if(rc.bottom<0||rc.top>H)continue;c.style.opacity=i===0&&current<.35?'':clamp((vy+30-rc.bottom)/50,0,1);}}else if(copies[1].style.opacity!==''){for(const c of copies)c.style.opacity='';}}
 
  for(const p of animated){const {home,offset,phase,bench,benchRotation,name}=p.userData;
  p.userData.lift=0;
@@ -246,11 +263,15 @@ try {
  if(isShell){const g=p.parent,tShell=name==='Front enclosure'?smooth(leaveBench,.3,1):smooth(leaveBench,0,.7);shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,tShell);const arcT=Math.sin(Math.PI*tShell);shellA.y+=42*arcT;shellA.z+=34*arcT;shellA.sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);if(tShell>=1)p.rotation.set(0,0,0);else{qA.setFromAxisAngle(YAXIS,-g.rotation.y).multiply(p.userData.benchQuat).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation));qB.setFromAxisAngle(YAXIS,lerp(benchRotation,name==='Front enclosure'?2.88:-.13,tShell)-g.rotation.y);p.quaternion.slerpQuaternions(qA,qB,smooth(tShell,0,.35));}}else if(entry>0){p.position.copy(destination);p.position.y-=55*(1-entry);}else{shellA.copy(bench);const by=shellA.y,bz=shellA.z;shellA.y=by*matC-bz*matS-260*leaveBench;shellA.z=by*matS+bz*matC;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);if(!isShell){if(entry>0)p.rotation.set(name==='M2×12 screw'?lerp(Math.PI/2,0,entry):0,lerp(benchRotation,0,entry),0);else p.quaternion.setFromAxisAngle(XAXIS,workbench.rotation.x).multiply(qTmp.setFromAxisAngle(YAXIS,-p.parent.rotation.y)).multiply(p.userData.benchQuat||qA.identity()).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation)).multiply(qB.setFromAxisAngle(XAXIS,name==='M2×12 screw'?Math.PI/2:0));}
  }
  if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
- const widthNeeded=lerp(540,lerp(214,120,close),leaveBench),heightNeeded=lerp(245,lerp(200,221,close),leaveBench);
+ const widthNeeded=lerp(mobileBench?330:540,lerp(214,120,close),leaveBench),heightNeeded=lerp(mobileBench?392:245,lerp(200,221,close),leaveBench);
  const dist=Math.max(heightNeeded,widthNeeded/camera.aspect)/(2*Math.tan(THREE.MathUtils.degToRad(16)));
  parallax.x=lerp(parallax.x,parallax.tx,Math.min(1,dt*3.5));parallax.y=lerp(parallax.y,parallax.ty,Math.min(1,dt*3.5));const px=reduced?0:parallax.x,py=reduced?0:parallax.y;camera.position.set(lerp(0,lerp(85,24,close),leaveBench)+px*lerp(14,9,leaveBench),lerp(0,lerp(38,12,close),leaveBench)-py*lerp(9,6,leaveBench),dist);camera.lookAt(lerp(0,lerp(6,0,close),leaveBench)+px*lerp(4,2,leaveBench),lerp(0,lerp(-1,2,close),leaveBench)-py*lerp(3,2,leaveBench),0);
  }else controls.update();
- cables.update(current,dt);firmware.tick(dt,current>9.98);composer.render();
+ cables.update(current,dt);firmware.tick(dt,current>9.98);
+ // Render on demand: when nothing moves, drop to a slow idle cadence to keep the GPU cool.
+ const physicsAwake=current<.35&&(partDragging||physParts.some(p=>p.userData.body.sleepState!==2));
+ const busy=dirty||time-inputAt<700||inspect||partDragging||physicsAwake||Math.abs(current-target)>5e-4||Math.abs(parallax.x-parallax.tx)+Math.abs(parallax.y-parallax.ty)>2e-3||(current>6.7&&current<9.7)||current>9.9;
+ if(busy||time-lastRender>250){composer.render();lastRender=time;fpsRenders++;dirty=false;}
  }
  $('#loading').classList.add('hidden');updateTarget();requestAnimationFrame(frame);
 } catch(error){console.error(error);$('#loading').textContent='The 3D view could not load. Reload the page to try again; the assembly guide is available below.';$('#loading').classList.add('error')}
