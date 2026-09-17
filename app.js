@@ -222,7 +222,7 @@ try {
   brushPlane.setFromNormalAndCoplanarPoint(dragNormal.set(0,0,1).applyQuaternion(badge.getWorldQuaternion(dragQuat)),hoveredHit);
   const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);
   if(ray.ray.intersectPlane(brushPlane,dragPoint)){badge.worldToLocal(dragLocal.copy(dragPoint));
-   if(brushPrev.part===hoveredPartRef){const b=hoveredPartRef.userData.body,m=b.mass;let ix=(dragLocal.x-brushPrev.x)*m*16,iy=(dragLocal.y-brushPrev.y)*m*16;const L=Math.hypot(ix,iy),cap=m*180;if(L>cap){ix*=cap/L;iy*=cap/L;}
+   if(brushPrev.part===hoveredPartRef){const b=hoveredPartRef.userData.body,m=b.mass;const push=renderSettings.settings.hoverPush;let ix=(dragLocal.x-brushPrev.x)*m*16*push,iy=(dragLocal.y-brushPrev.y)*m*16*push;const L=Math.hypot(ix,iy),cap=m*180*push;if(L>cap){ix*=cap/L;iy*=cap/L;}
     badge.worldToLocal(shellA.copy(hoveredHit));b.wakeUp();b.applyImpulse(new CANNON.Vec3(ix,iy,0),new CANNON.Vec3(shellA.x-b.position.x,shellA.y-b.position.y,Math.min(shellA.z-b.position.z,b.shapes[0].halfExtents.z)));}
    brushPrev.part=hoveredPartRef;brushPrev.x=dragLocal.x;brushPrev.y=dragLocal.y;}
  }else brushPrev.part=null;
@@ -231,8 +231,11 @@ try {
  let stageBlend=-1;
  let lastTime=performance.now();
  const fpsEl=document.querySelector('#fps');let fpsTicks=0,fpsRenders=0,fpsAt=performance.now(),lastRender=0,dirty=true,inputAt=0;
+ // Opening: the camera drops in from above the bench and settles; the hero copy then fades in word by word.
+ let introStart=-1,introT=(reduced||scrollY>10)?1:0;const easeIntro=t=>t<.5?16*t*t*t*t*t:1-Math.pow(-2*t+2,5)/2,easeLand=t=>1-Math.pow(1-t,3);
+ if(introT<1){document.body.classList.add('intro');const start=document.querySelector('#intro .copy .start');start.classList.add('w');start.style.setProperty('--i',24);for(const el of document.querySelectorAll('#intro .copy .eyebrow,#intro .copy h1,#intro .copy .lede')){let i=0;const walk=n=>{for(const c of [...n.childNodes]){if(c.nodeType===3){const frag=document.createDocumentFragment();for(const w of c.textContent.split(/(\s+)/)){if(!w)continue;if(/^\s+$/.test(w)){frag.append(w);continue;}const s=document.createElement('span');s.className='w';s.style.setProperty('--i',i++);s.textContent=w;frag.append(s);}c.replaceWith(frag);}else if(c.nodeType===1&&c.tagName!=='BR')walk(c);}};walk(el);}}
  const touch=()=>{dirty=true;inputAt=performance.now();};for(const ev of ['pointermove','pointerdown','pointerup','wheel','touchmove','keydown'])addEventListener(ev,touch,{passive:true});addEventListener('resize',touch);addEventListener('scroll',touch,{passive:true});
- function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
+ function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;if(introT<1){if(introStart<0)introStart=time+350;introT=clamp((time-introStart)/2600,0,1);if(introT>.78)document.body.classList.add('intro-in');}current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
  fpsTicks++;if(time-fpsAt>500){const f=Math.round(fpsTicks*1000/(time-fpsAt));if(fpsEl)fpsEl.textContent=fpsRenders<fpsTicks*.6?`${f} fps · idle`:`${f} fps`;fpsTicks=0;fpsRenders=0;fpsAt=time;}
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=2.88*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
@@ -266,11 +269,12 @@ try {
  const widthNeeded=lerp(mobileBench?330:540,lerp(214,120,close),leaveBench),heightNeeded=lerp(mobileBench?392:245,lerp(200,221,close),leaveBench);
  const dist=Math.max(heightNeeded,widthNeeded/camera.aspect)/(2*Math.tan(THREE.MathUtils.degToRad(16)));
  parallax.x=lerp(parallax.x,parallax.tx,Math.min(1,dt*3.5));parallax.y=lerp(parallax.y,parallax.ty,Math.min(1,dt*3.5));const px=reduced?0:parallax.x,py=reduced?0:parallax.y;camera.position.set(lerp(0,lerp(85,24,close),leaveBench)+px*lerp(14,9,leaveBench),lerp(0,lerp(38,12,close),leaveBench)-py*lerp(9,6,leaveBench),dist);camera.lookAt(lerp(0,lerp(6,0,close),leaveBench)+px*lerp(4,2,leaveBench),lerp(0,lerp(-1,2,close),leaveBench)-py*lerp(3,2,leaveBench),0);
+ if(introT<1){const e=easeIntro(introT),th=lerp(1.12,0,e),r=dist*lerp(1.28,1,easeLand(introT)),tx=lerp(0,lerp(6,0,close),leaveBench)+px*lerp(4,2,leaveBench)*e,ty=(lerp(0,lerp(-1,2,close),leaveBench)-py*lerp(3,2,leaveBench))*e;camera.position.set(tx+(camera.position.x-tx)*e,ty+(camera.position.y-ty)*e+r*Math.sin(th),r*Math.cos(th));camera.lookAt(tx,ty,0);}
  }else controls.update();
  cables.update(current,dt);firmware.tick(dt,current>9.98);
  // Render on demand: when nothing moves, drop to a slow idle cadence to keep the GPU cool.
  const physicsAwake=current<.35&&(partDragging||physParts.some(p=>p.userData.body.sleepState!==2));
- const busy=dirty||time-inputAt<700||inspect||partDragging||physicsAwake||Math.abs(current-target)>5e-4||Math.abs(parallax.x-parallax.tx)+Math.abs(parallax.y-parallax.ty)>2e-3||(current>6.7&&current<9.7)||current>9.9;
+ const busy=dirty||introT<1||time-inputAt<700||inspect||partDragging||physicsAwake||Math.abs(current-target)>5e-4||Math.abs(parallax.x-parallax.tx)+Math.abs(parallax.y-parallax.ty)>2e-3||(current>6.7&&current<9.7)||current>9.9;
  if(busy||time-lastRender>250){composer.render();lastRender=time;fpsRenders++;dirty=false;}
  }
  $('#loading').classList.add('hidden');updateTarget();requestAnimationFrame(frame);
