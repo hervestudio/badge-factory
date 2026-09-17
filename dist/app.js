@@ -172,7 +172,7 @@ try {
  'Strap bar':[64,112,2,0], 'Wire spool 1':[-65,55,7.5,0], 'Wire spool 2':[-96,70,7.5,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
- for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-65+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=[122+screwIndex++*20,-90,6,0];if(p.userData.name==='Screw cap')a=[32+capIndex++*25,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.z0=a[2];p.userData.benchRotation=a[3];}
+ for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-65+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=[122+screwIndex++*20,-90,1.2,0];if(p.userData.name==='Screw cap')a=[32+capIndex++*25,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.z0=a[2];p.userData.benchRotation=a[3];}
  // Clay focus: while a part's card is open, everything else drops its materials.
  const clayMat=new THREE.MeshStandardMaterial({color:'#d6d1da',roughness:.92});
  const partCard=document.querySelector('#part-detail'),partSelect=document.querySelector('#part-select');
@@ -187,6 +187,16 @@ try {
   workbench.traverse(m=>{if(m.isMesh){m.userData.__om=m.material;m.material=clayMat;}});
   cables.group.traverse(m=>{if(m.isMesh){m.userData.__om=m.material;m.material=clayMat;}});
  }
+ // Hover glow on the exact part under the pointer (materials are shared, so clone per mesh).
+ let glowPart=null;
+ function setGlow(p){
+  if(glowPart===p)return;
+  if(glowPart)glowPart.traverse(m=>{if(m.isMesh&&m.userData.__hm){m.material.dispose();m.material=m.userData.__hm;delete m.userData.__hm;}});
+  glowPart=p;
+  if(p)p.traverse(m=>{if(m.isMesh&&!m.material.transparent&&!m.userData.__om){m.userData.__hm=m.material;const c=m.material.clone();c.emissive=new THREE.Color('#fff2dc');c.emissiveIntensity=.16;m.material=c;}});
+ }
+ const parallax={x:0,y:0,tx:0,ty:0};
+ addEventListener('pointermove',e=>{parallax.tx=e.clientX/innerWidth*2-1;parallax.ty=e.clientY/innerHeight*2-1;},{passive:true});
  const renderSettings=createRenderSettings({renderer,scene,camera,key,fill,rim,hemisphere,ao,mat,grade});
  const partsInfo=createPartsInfo();
  function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));camera.aspect=w/h;camera.updateProjectionMatrix();updateTarget()};resize();addEventListener('resize',resize);
@@ -196,7 +206,7 @@ try {
  const dragPlane=new THREE.Plane(),dragPoint=new THREE.Vector3(),dragLocal=new THREE.Vector3(),dragNormal=new THREE.Vector3(),dragQuat=new THREE.Quaternion(),dragOff={x:0,y:0};
  // Half-extents of each part's footprint on the mat, for drag collisions.
  const FOOT={'Front enclosure':[35,69],'Rear enclosure':[35,69],'GC9B72 display':[32,38],'ESP32-S3 N16R8':[16,34],'LiPo 505060':[32,27],'TP4056 + boost':[14,11],'Ground bus + dividers':[9,12],'Tactile switch 1':[5,5],'Tactile switch 2':[5,5],'Tactile switch 3':[5,5],'Previous button':[6.5,6.5],'Menu button':[6.5,6.5],'Next button':[6.5,6.5],'M2 brass insert':[3,3],'M2×12 screw':[3,8],'Screw cap':[4.5,4.5],'Strap bar':[17,3.5],'Wire spool 1':[15.5,15.5],'Wire spool 2':[15.5,15.5]};
- const TOPH={'Front enclosure':9,'Rear enclosure':9,'GC9B72 display':8,'ESP32-S3 N16R8':7,'LiPo 505060':7.5,'TP4056 + boost':6,'Ground bus + dividers':4,'Tactile switch 1':6,'Tactile switch 2':6,'Tactile switch 3':6,'Previous button':3.5,'Menu button':3.5,'Next button':3.5,'M2 brass insert':5,'M2×12 screw':3.5,'Screw cap':2.5,'Strap bar':5,'Wire spool 1':15.5,'Wire spool 2':15.5};
+ const TOPH={'Front enclosure':9,'Rear enclosure':9,'GC9B72 display':8,'ESP32-S3 N16R8':7,'LiPo 505060':7.5,'TP4056 + boost':6,'Ground bus + dividers':4,'Tactile switch 1':6,'Tactile switch 2':6,'Tactile switch 3':6,'Previous button':3.5,'Menu button':3.5,'Next button':3.5,'M2 brass insert':5,'M2×12 screw':2.4,'Screw cap':2.5,'Strap bar':5,'Wire spool 1':15.5,'Wire spool 2':15.5};
  // Rigid-body workbench: every part is a box on the mat (mm units), with walls at the mat edges.
  const physWorld=new CANNON.World({gravity:new CANNON.Vec3(0,0,-6000)});physWorld.allowSleep=true;
  physWorld.defaultContactMaterial.friction=.32;physWorld.defaultContactMaterial.restitution=.04;
@@ -243,8 +253,8 @@ try {
  function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=2.88*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
- document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);if(current<.35){
- if(partDragging&&dragPart&&dragPart.userData.body){const b=dragPart.userData.body,tz=TOPH[dragPart.userData.name]/2+9;b.wakeUp();let vx=(dragTarget.x-b.position.x)*14,vy=(dragTarget.y-b.position.y)*14;const L=Math.hypot(vx,vy),cap=900;if(L>cap){vx*=cap/L;vy*=cap/L;}b.velocity.set(vx,vy,(tz-b.position.z)*14);b.angularVelocity.set(0,0,0);b.quaternion.set(0,0,0,1);}
+ document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
+ if(partDragging&&dragPart&&dragPart.userData.body){const b=dragPart.userData.body,tz=TOPH[dragPart.userData.name]/2+26;b.wakeUp();let vx=(dragTarget.x-b.position.x)*14,vy=(dragTarget.y-b.position.y)*14;const L=Math.hypot(vx,vy),cap=900;if(L>cap){vx*=cap/L;vy*=cap/L;}b.velocity.set(vx,vy,(tz-b.position.z)*14);b.angularVelocity.set(0,0,0);b.quaternion.set(0,0,0,1);}
  physWorld.step(1/60,Math.min(dt,.05),4);syncPhysics();}
  workbench.visible=current<1.12;cutting.material.opacity=1;top.material.opacity=1;workbench.position.set(0,-260*leaveBench,0);workbench.rotation.x=-.85*leaveBench;const matC=Math.cos(workbench.rotation.x),matS=Math.sin(workbench.rotation.x);
  const stageClose=smooth(current,8.7,10),stageKey=leaveBench+stageClose;if(hoveredName&&current<.35&&!partDragging&&!inspect){peek.dataset.name=hoveredName;if(hoveredPartRef){shellB.set(hoveredPartRef.userData.bench.x,hoveredPartRef.userData.bench.y,hoveredPartRef.userData.bench.z+(TOPH[hoveredName]||6)+4);badge.localToWorld(shellB);}else shellB.copy(hoveredAnchor);shellB.project(camera);const r2=canvas.getBoundingClientRect();peek.style.left=(r2.left+(shellB.x+1)*r2.width/2)+'px';peek.style.top=(r2.top+(1-shellB.y)*r2.height/2-34)+'px';peek.hidden=false;}else if(!peekSticky||current>=.35)peek.hidden=true;
@@ -264,7 +274,7 @@ try {
  if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
  const widthNeeded=lerp(540,lerp(214,120,close),leaveBench),heightNeeded=lerp(245,lerp(200,221,close),leaveBench);
  const dist=Math.max(heightNeeded,widthNeeded/camera.aspect)/(2*Math.tan(THREE.MathUtils.degToRad(16)));
- camera.position.set(lerp(0,lerp(85,24,close),leaveBench),lerp(0,lerp(38,12,close),leaveBench),dist);camera.lookAt(lerp(0,lerp(6,0,close),leaveBench),lerp(0,lerp(-1,2,close),leaveBench),0);
+ parallax.x=lerp(parallax.x,parallax.tx,Math.min(1,dt*3.5));parallax.y=lerp(parallax.y,parallax.ty,Math.min(1,dt*3.5));const px=reduced?0:parallax.x,py=reduced?0:parallax.y;camera.position.set(lerp(0,lerp(85,24,close),leaveBench)+px*lerp(14,9,leaveBench),lerp(0,lerp(38,12,close),leaveBench)-py*lerp(9,6,leaveBench),dist);camera.lookAt(lerp(0,lerp(6,0,close),leaveBench)+px*lerp(4,2,leaveBench),lerp(0,lerp(-1,2,close),leaveBench)-py*lerp(3,2,leaveBench),0);
  }else controls.update();
  cables.update(current,dt);firmware.tick(dt,current>9.98);composer.render();
  }
