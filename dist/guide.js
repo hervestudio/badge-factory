@@ -114,7 +114,12 @@ const scenes={
  },
 };
 
+// Flat diagram by default; the 3D scene is built the first time a figure is switched to it.
 for(const el of document.querySelectorAll('figure[data-scene]')){
- const f=new Figure(el);
- scenes[el.dataset.scene](f).then(()=>{f.render();}).catch(err=>{console.error(err);el.classList.add('fig-failed');});
+ const flat=el.querySelector('.fig-flat'),stage=el.querySelector('.fig-stage'),buttons=[...el.querySelectorAll('.fig-switch button')];
+ let fig=null;
+ const show=view=>{buttons.forEach(b=>b.classList.toggle('on',b.dataset.view===view));flat.hidden=view==='3d';stage.hidden=view!=='3d';
+  if(view==='3d'&&!fig){fig=new Figure(el);scenes[el.dataset.scene](fig).then(()=>{fig.resize();fig.render();}).catch(err=>{console.error(err);el.classList.add('fig-failed');show('flat');});}
+  else if(view==='3d'&&fig){fig.resize();fig.visible=true;fig.loop();}};
+ buttons.forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
 }
