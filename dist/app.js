@@ -171,7 +171,21 @@ try {
  'Strap bar':[64,112,2,0], 'Wire spool 1':[-65,55,7.5,0], 'Wire spool 2':[-96,70,7.5,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
- for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-65+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=[122+screwIndex++*20,-90,6,0];if(p.userData.name==='Screw cap')a=[32+capIndex++*25,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.benchRotation=a[3];}
+ for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=[-65+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=[122+screwIndex++*20,-90,6,0];if(p.userData.name==='Screw cap')a=[32+capIndex++*25,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.z0=a[2];p.userData.benchRotation=a[3];}
+ // Clay focus: while a part's card is open, everything else drops its materials.
+ const clayMat=new THREE.MeshStandardMaterial({color:'#d6d1da',roughness:.92});
+ const partCard=document.querySelector('#part-detail'),partSelect=document.querySelector('#part-select');
+ let clayActive=null;
+ function setClay(name){
+  if(clayActive===name)return;
+  const restore=m=>{if(m.isMesh){if(m.userData.__om){m.material=m.userData.__om;delete m.userData.__om;}if(m.userData.__hid){m.visible=true;delete m.userData.__hid;}}};
+  for(const p of animated)p.traverse(restore);workbench.traverse(restore);cables.group.traverse(restore);
+  clayActive=name;
+  if(!name)return;
+  for(const p of animated){if(p.userData.name===name)continue;p.traverse(m=>{if(m.isMesh){if(m.material.transparent){m.userData.__hid=1;m.visible=false;}else{m.userData.__om=m.material;m.material=clayMat;}}});}
+  workbench.traverse(m=>{if(m.isMesh){m.userData.__om=m.material;m.material=clayMat;}});
+  cables.group.traverse(m=>{if(m.isMesh){m.userData.__om=m.material;m.material=clayMat;}});
+ }
  const renderSettings=createRenderSettings({renderer,scene,camera,key,fill,rim,hemisphere,ao,mat,grade});
  const partsInfo=createPartsInfo();
  function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));camera.aspect=w/h;camera.updateProjectionMatrix();updateTarget()};resize();addEventListener('resize',resize);
@@ -181,12 +195,15 @@ try {
  const dragPlane=new THREE.Plane(),dragPoint=new THREE.Vector3(),dragLocal=new THREE.Vector3(),dragNormal=new THREE.Vector3(),dragQuat=new THREE.Quaternion(),dragOff={x:0,y:0};
  // Half-extents of each part's footprint on the mat, for drag collisions.
  const FOOT={'Front enclosure':[35,69],'Rear enclosure':[35,69],'GC9B72 display':[32,38],'ESP32-S3 N16R8':[16,34],'LiPo 505060':[32,27],'TP4056 + boost':[14,11],'Ground bus + dividers':[9,12],'Tactile switch 1':[5,5],'Tactile switch 2':[5,5],'Tactile switch 3':[5,5],'Previous button':[6.5,6.5],'Menu button':[6.5,6.5],'Next button':[6.5,6.5],'M2 brass insert':[3,3],'M2×12 screw':[3,8],'Screw cap':[4.5,4.5],'Strap bar':[17,3.5],'Wire spool 1':[15.5,15.5],'Wire spool 2':[15.5,15.5]};
+ const TOPH={'Front enclosure':9,'Rear enclosure':9,'GC9B72 display':8,'ESP32-S3 N16R8':7,'LiPo 505060':7.5,'TP4056 + boost':6,'Ground bus + dividers':4,'Tactile switch 1':6,'Tactile switch 2':6,'Tactile switch 3':6,'Previous button':3.5,'Menu button':3.5,'Next button':3.5,'M2 brass insert':5,'M2×12 screw':3.5,'Screw cap':2.5,'Strap bar':5,'Wire spool 1':15.5,'Wire spool 2':15.5};
  function resolveBench(moving){
   const items=animated.filter(q=>q.userData.bench&&FOOT[q.userData.name]);
   for(let it=0;it<3;it++)for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
    const A=items[i],B=items[j],fa=FOOT[A.userData.name],fb=FOOT[B.userData.name],pa=A.userData.bench,pb=B.userData.bench;
    const ox=fa[0]+fb[0]-Math.abs(pa.x-pb.x),oy=fa[1]+fb[1]-Math.abs(pa.y-pb.y);
    if(ox<=0||oy<=0)continue;
+   const za=pa.z-A.userData.z0+(A===moving?9:0),zb=pb.z-B.userData.z0+(B===moving?9:0);
+   if(za>=TOPH[B.userData.name]-1||zb>=TOPH[A.userData.name]-1)continue;
    let dx=0,dy=0;
    if(ox<oy)dx=(pa.x<pb.x?1:-1)*ox;else dy=(pa.y<pb.y?1:-1)*oy;
    if(A===moving&&B===moving)continue;
@@ -198,10 +215,15 @@ try {
  }
  function benchPartAt(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);for(const h of ray.intersectObjects(animated,true)){let p=h.object;while(p&&!p.userData.name)p=p.parent;if(p&&p.userData.bench)return {p,point:h.point};}return null;}
  canvas.addEventListener('pointerdown',e=>{if(current<.35){inspectPart(e);const hit=benchPartAt(e);if(hit){dragPart=hit.p;partDragging=false;dragStart=[e.clientX,e.clientY];dragPlane.setFromNormalAndCoplanarPoint(dragNormal.set(0,0,1).applyQuaternion(badge.getWorldQuaternion(dragQuat)),hit.point);badge.worldToLocal(dragLocal.copy(hit.point));dragOff.x=dragLocal.x-dragPart.userData.bench.x;dragOff.y=dragLocal.y-dragPart.userData.bench.y;canvas.setPointerCapture(e.pointerId);}}down=[e.clientX,e.clientY];if((active===7||active===8)&&cables.startDrag(e,camera,canvas)){canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';}if(active!==10)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(clickables)[0];if(hit){firmware.hold([1,4,2][hit.object.userData.button],true);canvas.setPointerCapture(e.pointerId);}});
- canvas.addEventListener('pointerup',e=>{dragPart=null;partDragging=false;canvas.style.cursor='';firmware.release();cables.endDrag();if((active===7||active===8)&&down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<10)cables.pick(e,camera,canvas)});
+ canvas.addEventListener('pointerup',e=>{
+ if(partDragging&&dragPart&&FOOT[dragPart.userData.name]){const q=dragPart,fq=FOOT[q.userData.name],bq=q.userData.bench;let sup=0;
+  for(const o of animated){if(o===q)continue;const no=o.userData.name;if(!o.userData.bench||!FOOT[no])continue;const fo=FOOT[no],bo=o.userData.bench;
+   if(Math.abs(bq.x-bo.x)<fq[0]+fo[0]&&Math.abs(bq.y-bo.y)<fq[1]+fo[1])sup=Math.max(sup,bo.z-o.userData.z0+TOPH[no]);}
+  bq.z=q.userData.z0+sup;}
+ dragPart=null;partDragging=false;canvas.style.cursor='';firmware.release();cables.endDrag();if((active===7||active===8)&&down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<10)cables.pick(e,camera,canvas)});
  canvas.addEventListener('pointercancel',()=>{dragPart=null;partDragging=false;firmware.release();cables.endDrag();});canvas.addEventListener('lostpointercapture',()=>firmware.release());
- const peek=document.querySelector('#peek');let hoveredAnchor=new THREE.Vector3(),hoveredIsPart=false;
- function inspectPart(e,pin=false){if(current>.35)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hits=ray.intersectObjects([...animated,cables.group],true);if(hits.length){let p=hits[0].object;while(p&&!p.userData.name)p=p.parent;if(p){hoveredName=p.userData.name;hoveredIsPart=!!p.userData.bench;hoveredAnchor.copy(hits[0].point);canvas.style.cursor=hoveredIsPart?'grab':'';return;}}if(!peek.hidden){const pb=peek.getBoundingClientRect();if(e.clientX>pb.left-24&&e.clientX<pb.right+24&&e.clientY>pb.top-20&&e.clientY<pb.bottom+44){canvas.style.cursor='';return;}}hoveredName=null;if(!partsInfo.pinned)partsInfo.hide();canvas.style.cursor='';}
+ const peek=document.querySelector('#peek');let hoveredAnchor=new THREE.Vector3(),hoveredIsPart=false,hoveredPartRef=null;
+ function inspectPart(e,pin=false){if(current>.35)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hits=ray.intersectObjects([...animated,cables.group],true);if(hits.length){let p=hits[0].object;while(p&&!p.userData.name)p=p.parent;if(p){hoveredName=p.userData.name;hoveredIsPart=!!p.userData.bench;hoveredPartRef=hoveredIsPart?p:null;if(!hoveredIsPart)hoveredAnchor.copy(hits[0].point);canvas.style.cursor=hoveredIsPart?'grab':'';return;}}if(!peek.hidden){const pb=peek.getBoundingClientRect();if(e.clientX>pb.left-24&&e.clientX<pb.right+24&&e.clientY>pb.top-20&&e.clientY<pb.bottom+44){canvas.style.cursor='';return;}}hoveredName=null;hoveredPartRef=null;if(!partsInfo.pinned)partsInfo.hide();canvas.style.cursor='';}
  let peekSticky=false;
  peek.addEventListener('pointerenter',()=>peekSticky=true);
  peek.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();const n=peek.dataset.name;if(n)partsInfo.show(n,e.clientX,e.clientY+18,true);});
@@ -211,20 +233,27 @@ try {
   if(partDragging){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);
    if(ray.ray.intersectPlane(dragPlane,dragPoint)){badge.worldToLocal(dragLocal.copy(dragPoint));dragPart.userData.bench.x=clamp(dragLocal.x-dragOff.x,-194,194);dragPart.userData.bench.y=clamp(dragLocal.y-dragOff.y,-104,104);resolveBench(dragPart);}
    hoveredName=dragPart.userData.name;canvas.style.cursor='grabbing';e.preventDefault();return;}}
- if(!partsInfo.pinned)inspectPart(e);if(active===7||active===8){cables.moveDrag(e,camera,canvas);const near=cables.hover(e,camera,canvas);canvas.style.cursor=cables.dragging?'grabbing':near?'grab':'';}});canvas.addEventListener('pointerleave',e=>{const t=e.relatedTarget;if(t&&(t.id==='peek'||t.closest&&t.closest('#peek')))return;hoveredName=null;partsInfo.hide();});peek.addEventListener('pointerleave',e=>{peekSticky=false;if(e.relatedTarget===canvas)return;hoveredName=null;});
+ if(!partsInfo.pinned)inspectPart(e);if(active===7||active===8){cables.moveDrag(e,camera,canvas);const near=cables.hover(e,camera,canvas);canvas.style.cursor=cables.dragging?'grabbing':near?'grab':'';}});canvas.addEventListener('pointerleave',e=>{const t=e.relatedTarget;if(t&&(t.id==='peek'||t.closest&&t.closest('#peek')))return;hoveredName=null;hoveredPartRef=null;partsInfo.hide();});peek.addEventListener('pointerleave',e=>{peekSticky=false;if(e.relatedTarget===canvas)return;hoveredName=null;hoveredPartRef=null;});
  const YAXIS=new THREE.Vector3(0,1,0),shellA=new THREE.Vector3(),shellB=new THREE.Vector3();
  let stageBlend=-1;
  let lastTime=performance.now();
  function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=2.88*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
- document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);if(current<.35)resolveBench(partDragging?dragPart:null);
+ document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);if(current<.35){resolveBench(partDragging?dragPart:null);
+ const fallK=1-Math.exp(-dt*10);
+ for(const q of animated){const nq=q.userData.name;if(!q.userData.bench||!FOOT[nq])continue;if(partDragging&&q===dragPart)continue;
+  const fq=FOOT[nq],bq=q.userData.bench;let sup=0;
+  for(const o of animated){if(o===q)continue;const no=o.userData.name;if(!o.userData.bench||!FOOT[no])continue;
+   const fo=FOOT[no],bo=o.userData.bench;
+   if(Math.abs(bq.x-bo.x)<fq[0]+fo[0]&&Math.abs(bq.y-bo.y)<fq[1]+fo[1]&&(bo.z-o.userData.z0)<(bq.z-q.userData.z0)-.01)sup=Math.max(sup,bo.z-o.userData.z0+TOPH[no]);}
+  bq.z+=(q.userData.z0+sup-bq.z)*fallK;}}
  workbench.visible=current<1.12;cutting.material.opacity=1;top.material.opacity=1;workbench.position.set(0,-260*leaveBench,0);workbench.rotation.x=-.85*leaveBench;const matC=Math.cos(workbench.rotation.x),matS=Math.sin(workbench.rotation.x);
- const stageClose=smooth(current,8.7,10),stageKey=leaveBench+stageClose;if(hoveredName&&current<.35&&!partDragging&&!inspect){peek.dataset.name=hoveredName;shellB.copy(hoveredAnchor).project(camera);const r2=canvas.getBoundingClientRect();peek.style.left=(r2.left+(shellB.x+1)*r2.width/2)+'px';peek.style.top=(r2.top+(1-shellB.y)*r2.height/2-34)+'px';peek.hidden=false;}else if(!peekSticky||current>=.35)peek.hidden=true;
+ const stageClose=smooth(current,8.7,10),stageKey=leaveBench+stageClose;if(hoveredName&&current<.35&&!partDragging&&!inspect){peek.dataset.name=hoveredName;if(hoveredPartRef){shellB.set(hoveredPartRef.userData.bench.x,hoveredPartRef.userData.bench.y,hoveredPartRef.userData.bench.z+(TOPH[hoveredName]||6)+4);badge.localToWorld(shellB);}else shellB.copy(hoveredAnchor);shellB.project(camera);const r2=canvas.getBoundingClientRect();peek.style.left=(r2.left+(shellB.x+1)*r2.width/2)+'px';peek.style.top=(r2.top+(1-shellB.y)*r2.height/2-34)+'px';peek.hidden=false;}else if(!peekSticky||current>=.35)peek.hidden=true;
  if(Math.abs(stageBlend-stageKey)>.004||stageKey===0&&stageBlend!==0||stageKey===2&&stageBlend!==2){stageBlend=stageKey;const mobile=innerWidth<=760;stage.style.left=lerp(mobile?0:4,mobile?0:38,leaveBench)+'%';stage.style.right=lerp(mobile?0:4,mobile?0:1,leaveBench)+'%';const top0=lerp(mobile?39:37,mobile?55:6,leaveBench),h0=lerp(mobile?53:57,mobile?42:89,leaveBench);stage.style.top=lerp(top0,mobile?56:1,stageClose)+'%';stage.style.height=lerp(h0,mobile?42:99,stageClose)+'%';resize();}
 
  for(const p of animated){const {home,offset,phase,bench,benchRotation,name}=p.userData;
- p.userData.lift=lerp(p.userData.lift||0,name===hoveredName&&current<.35?7:0,Math.min(1,dt*12));
+ p.userData.lift=lerp(p.userData.lift||0,partDragging&&p===dragPart?9:(name===hoveredName&&current<.35?2.5:0),Math.min(1,dt*12));
  if(p.userData.benchOnly){p.visible=current<1.05;p.scale.setScalar(1);shellA.copy(bench);shellA.z=bench.z+p.userData.lift;const sy=shellA.y,sz=shellA.z;shellA.y=sy*matC-sz*matS-260*leaveBench;shellA.z=sy*matS+sz*matC;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);p.rotation.set(workbench.rotation.x,benchRotation-p.parent.rotation.y,0);continue;}
  const entryStart=phase<=1?.3:phase-.18,entryEnd=Math.min(phase+.38,10),entry=smooth(current,entryStart,entryEnd);
  const isShell=phase===1;
