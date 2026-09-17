@@ -2,7 +2,7 @@ import * as THREE from 'three';
 const V=(...a)=>new THREE.Vector3(...a),clamp=THREE.MathUtils.clamp;
 const smooth=(v,a,b)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
 // Physical endpoints are local pad coordinates, never free-floating approximations.
-export function createCables(root,{display,esp,battery,charger,strip,switches,shellFront,shellRear}){
+export function createCables(root,{display,esp,battery,charger,strip,switches,shellFront,shellRear,ribbonAt=[-4,99]}){const [rbx,rby]=ribbonAt,rdx=rbx+4,rdy=rby-99;
  const anchor=(object,xyz,label)=>({object,point:V(...xyz),label});
  const e=(side,row,label)=>anchor(esp,[side*12,27-(row-1)*2.54,1.2],`ESP32 · ${label} (${side<0?'J1':'J3'}-${row})`);
  const d=(i,label)=>anchor(display,[-11.43+i*2.54,-33,-.6],`Display · ${label}`);
@@ -158,7 +158,7 @@ export function createCables(root,{display,esp,battery,charger,strip,switches,sh
     const benchLb=smooth(current,.12,1.15),benchSink=260*benchLb,rotX=-.85*benchLb,cR=Math.cos(rotX),sR=Math.sin(rotX);
     const BP=(x,y0,z0)=>V(x,y0*cR-z0*sR-benchSink,y0*sR+z0*cR);
     const r=net.ribbonIndex;
-    if(r!==undefined){const y0=99+(r-4.5)*.92;a=BP(-4,y0,1.05);b=BP(-34.4,y0,2.6);guide=new THREE.CatmullRomCurve3([a,BP(-16,y0,1.05),BP(-28,y0,1.05),BP(-37.5,y0,1.05),BP(-40.7,y0,4.2),BP(-37.5,y0,7.4),BP(-34.6,y0,4.6),b]);}
+    if(r!==undefined){const y0=99+rdy+(r-4.5)*.92;a=BP(-4+rdx,y0,1.05);b=BP(-34.4+rdx,y0,2.6);guide=new THREE.CatmullRomCurve3([a,BP(-16+rdx,y0,1.05),BP(-28+rdx,y0,1.05),BP(-37.5+rdx,y0,1.05),BP(-40.7+rdx,y0,4.2),BP(-37.5+rdx,y0,7.4),BP(-34.6+rdx,y0,4.6),b]);}
     else {const lane=index-10;a=V(-59-lane*.9,101-benchSink,3);b=V(-82-lane*.9,99-benchSink,3);guide=new THREE.CatmullRomCurve3([a,V(-64-lane*.9,92-benchSink,3),V(-77-lane*.9,92-benchSink,3),b]);}
    } else if(net.ribbonIndex!==undefined){
     const lane=(net.ribbonIndex-4.5)*.9;

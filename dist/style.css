@@ -13,3 +13,26 @@ footer{z-index:8}
 #peek{position:fixed;z-index:26;width:30px;height:30px;border-radius:50%;border:1px solid #d0c4de;background:#fffefa;color:#5d4a78;display:grid;place-items:center;box-shadow:0 4px 14px #2f204025;transform:translate(-50%,-100%);cursor:pointer;padding:0}#peek:hover{background:#efe7fa}#peek[hidden]{display:none}
 
 #stage{left:0!important;right:0!important;top:0!important;height:100%!important;width:100%}
+
+#fps{position:fixed;right:22px;top:136px;z-index:25;font:10px monospace;color:#8f84a0;letter-spacing:.05em;pointer-events:none}
+.parts-picker{display:none}
+@media(max-width:760px){#fps{right:14px;top:104px}
+ body.on-bench .parts-picker{display:flex;position:fixed;left:0;right:0;bottom:34px;transform:none;z-index:9;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#fffefaf2;border-top:1px solid #d9d0e3;backdrop-filter:blur(10px);font:11px monospace;color:#73697d}
+ body.on-bench .parts-picker select{max-width:58%;border:1px solid #c7bbd8;border-radius:6px;padding:8px;background:#fff;color:#32293c}
+ .chapter .copy{transition:opacity .15s linear}
+ h1,h2{font-size:38px}.chapter h2{font-size:34px}.copy>p:not(.eyebrow):not(.spec):not(.small-note){font-size:13.5px;line-height:1.5}.instruction p{font-size:11.5px;line-height:1.55}.instruction b{font-size:12.5px}.instruction{margin:12px 0 10px}
+ #part-detail{width:min(300px,92vw);left:4vw!important;top:auto!important;bottom:92px!important}
+}
+
+@media(max-width:760px){
+ body.on-bench .parts-picker{flex-direction:row;padding:8px 14px}
+ body.on-bench .parts-picker select{max-width:60%;padding:7px}
+ body.on-bench #scene{touch-action:pan-y}
+ .hero{padding-top:84px;min-height:100svh;height:auto}
+ .hero .eyebrow{margin-bottom:8px}.hero h1{font-size:34px;margin:0 auto 8px;max-width:330px}.hero .lede{font-size:12px!important;line-height:1.45}.hero .start{font-size:11px;padding:6px 0;margin-top:2px}
+ .chapter:not(.hero){padding-top:80px}
+ .chapter:not(.hero) .copy{position:sticky;top:var(--stick,78px)}
+ .chapter .eyebrow{margin-bottom:10px}.chapter h2{font-size:30px;margin-bottom:10px}
+ .finale .copy{position:relative;top:auto}
+}
+@media(max-width:760px){#toggle-render,#render-panel{display:none}#fps{top:82px;right:14px}}
