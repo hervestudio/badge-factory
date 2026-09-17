@@ -165,7 +165,7 @@ try {
  'Front enclosure':[150,12,2,Math.PI], 'Rear enclosure':[48,12,2,0],
  'GC9B72 display':[-152,18,7,0], 'ESP32-S3 N16R8':[-33,42,4,0],
  'LiPo 505060':[-28,-37,4,0], 'TP4056 + boost':[-98,-29,5,Math.PI],
- 'Ground bus + dividers':[-148,-29,4,Math.PI],
+ 'Ground bus + dividers':[-172,-48,4,Math.PI],
  'Tactile switch 1':[-140,-60,4,0], 'Tactile switch 2':[-118,-60,4,0], 'Tactile switch 3':[-96,-60,4,0],
  'Previous button':[-139,-87,2.5,0], 'Menu button':[-116,-87,2.5,0], 'Next button':[-93,-87,2.5,0],
  'Strap bar':[55,100,2,0], 'Wire spool 1':[-64,90,7.5,0], 'Wire spool 2':[-92,81,7.5,0]
