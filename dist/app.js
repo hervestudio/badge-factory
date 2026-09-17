@@ -149,11 +149,11 @@ try {
  'LiPo 505060':[-31,-41,4,0], 'TP4056 + boost':[-108,-28,5,Math.PI],
  'Ground bus + dividers':[-177,-42,4,Math.PI],
  'Tactile switch 1':[-141,-71,4,0], 'Tactile switch 2':[-121,-70,4,0], 'Tactile switch 3':[-101,-70,4,0],
- 'Previous button':[-191,-103,2.5,0], 'Menu button':[-163,-101,2.5,0], 'Next button':[-128,-100,2.5,0],
+ 'Previous button':[-10,-100,2.5,0], 'Menu button':[14,-100,2.5,0], 'Next button':[38,-100,2.5,0],
  'Strap bar':[64,112,2,0], 'Wire spool 1':[-65,55,7.5,0], 'Wire spool 2':[-96,70,7.5,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
- for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=mobileBench?[-114+insertIndex++*14,8,2.5,0]:[-65+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=mobileBench?[-100+screwIndex++*20,-172,1.2,0]:[122+screwIndex++*20,-90,1.2,0];if(p.userData.name==='Screw cap')a=mobileBench?[10+capIndex++*24,-172,2.2,0]:[32+capIndex++*25,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.z0=a[2];p.userData.benchRotation=a[3];}
+ for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=mobileBench?[-114+insertIndex++*14,8,2.5,0]:[-88+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=mobileBench?[-100+screwIndex++*20,-172,1.2,0]:[148+screwIndex++*18,-90,1.2,0];if(p.userData.name==='Screw cap')a=mobileBench?[10+capIndex++*24,-172,2.2,0]:[62+capIndex++*25,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.z0=a[2];p.userData.benchRotation=a[3];}
  // Clay focus: while a part's card is open, everything else drops its materials.
  const clayMat=new THREE.MeshStandardMaterial({color:'#d6d1da',roughness:.92});
  const partCard=document.querySelector('#part-detail'),partSelect=document.querySelector('#part-select'),partsPicker=document.querySelector('.parts-picker');
@@ -238,18 +238,19 @@ try {
  // Opening: the camera drops in from above the bench and settles; the hero copy then fades in word by word.
  const easeIntro=t=>t<.5?16*t*t*t*t*t:1-Math.pow(-2*t+2,5)/2,easeBack=t=>{const c=1.70158;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)};
  // Cover screen: scrolling through #cover-space drives coverT from the intro (0) down to the workbench (1). The centre cap rides along.
- const coverEl=$('#cover'),coverBg=$('#cover-bg'),coverInner=$('.cover-inner'),coverSpace=$('#cover-space'),capSlot=$('#cap-slot');
+ const coverEl=$('#cover'),coverBg=$('#cover-bg'),coverInner=$('.cover-inner'),coverActions=$('.cover-actions'),coverSpace=$('#cover-space'),capSlot=$('#cap-slot');
  let coverT=0;const coverEnd=()=>Math.max(1,coverSpace.offsetHeight-innerHeight*.18);
- function updateCover(){coverT=clamp(scrollY/coverEnd(),0,1);const out=smooth(coverT,0,.4);coverEl.style.opacity=1-out;coverInner.style.setProperty('--cover-y',(-90*out)+'px');coverBg.style.opacity=1-smooth(coverT,.3,.85);coverEl.classList.toggle('gone',coverT>.3);document.body.classList.toggle('on-cover',coverT<.5);}
+ function updateCover(){coverT=clamp(scrollY/coverEnd(),0,1);const out=smooth(coverT,0,.4);coverEl.style.opacity=1-out;coverInner.style.setProperty('--cover-y',(-90*out)+'px');coverActions.style.setProperty('--cover-y',(60*out)+'px');coverBg.style.opacity=1-smooth(coverT,.3,.85);coverEl.classList.toggle('gone',coverT>.3);document.body.classList.toggle('on-cover',coverT<.5);}
  addEventListener('scroll',updateCover,{passive:true});addEventListener('resize',updateCover);updateCover();
  $('#cover-cta').addEventListener('click',e=>{e.preventDefault();const from=scrollY,to=coverEnd()+2,t0=performance.now(),D=reduced?1:1900;const step=now=>{const t=clamp((now-t0)/D,0,1);scrollTo({top:lerp(from,to,easeIntro(t)),behavior:'instant'});if(t<1)requestAnimationFrame(step);};requestAnimationFrame(step);});
  const capState={hx:0,hy:0,tx:0,ty:0,press:0,spinAt:-1e9,bornAt:-1};
  capSlot.addEventListener('pointermove',e=>{const r=capSlot.getBoundingClientRect();capState.tx=clamp((e.clientX-r.left)/r.width*2-1,-1,1);capState.ty=clamp((e.clientY-r.top)/r.height*2-1,-1,1);});
  capSlot.addEventListener('pointerleave',()=>{capState.tx=0;capState.ty=0;});
  capSlot.addEventListener('pointerdown',()=>{capState.press=1;capState.spinAt=performance.now();});
+ $('#cover-cta').addEventListener('pointerenter',()=>{capState.spinAt=performance.now();});
  let frameDist=400;const capV=new THREE.Vector3(),capP=new THREE.Vector3(),capU=new THREE.Vector3(),capA=new THREE.Vector3(),capB=new THREE.Vector3(),capLocal=new THREE.Vector3(),capQ=new THREE.Quaternion(),capQ2=new THREE.Quaternion(),benchQ=new THREE.Quaternion(),capE=new THREE.Euler();
 
- if(!reduced&&scrollY<10){document.body.classList.add('intro');const cta=$('#cover-cta'),credit=$('.cover-credit');cta.classList.add('w');cta.style.setProperty('--i',9);credit.classList.add('w');credit.style.setProperty('--i',12);setTimeout(()=>document.body.classList.add('intro-in'),250);for(const el of document.querySelectorAll('#cover .cover-eyebrow,#cover .cover-title')){let i=0;const walk=n=>{for(const c of [...n.childNodes]){if(c.nodeType===3){const frag=document.createDocumentFragment();for(const w of c.textContent.split(/(\s+)/)){if(!w)continue;if(/^\s+$/.test(w)){frag.append(w);continue;}const s=document.createElement('span');s.className='w';s.style.setProperty('--i',i++);s.textContent=w;frag.append(s);}c.replaceWith(frag);}else if(c.nodeType===1&&c.tagName!=='BR')walk(c);}};walk(el);}}
+ if(!reduced&&scrollY<10){document.body.classList.add('intro');const cta=$('#cover-cta'),credit=$('.cover-credit');cta.classList.add('w');cta.style.setProperty('--i',26);credit.classList.add('w');credit.style.setProperty('--i',30);setTimeout(()=>document.body.classList.add('intro-in'),250);for(const el of document.querySelectorAll('#cover .cover-eyebrow,#cover .cover-title,#cover .cover-lede')){let i=0;const walk=n=>{for(const c of [...n.childNodes]){if(c.nodeType===3){const frag=document.createDocumentFragment();for(const w of c.textContent.split(/(\s+)/)){if(!w)continue;if(/^\s+$/.test(w)){frag.append(w);continue;}const s=document.createElement('span');s.className='w';s.style.setProperty('--i',i++);s.textContent=w;frag.append(s);}c.replaceWith(frag);}else if(c.nodeType===1&&c.tagName!=='BR')walk(c);}};walk(el);}}
  const touch=()=>{dirty=true;inputAt=performance.now();};for(const ev of ['pointermove','pointerdown','pointerup','wheel','touchmove','keydown'])addEventListener(ev,touch,{passive:true});addEventListener('resize',touch);addEventListener('scroll',touch,{passive:true});
  function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;if(capState.bornAt<0)capState.bornAt=time+450;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
  fpsTicks++;if(time-fpsAt>500){const f=Math.round(fpsTicks*1000/(time-fpsAt));if(fpsEl)fpsEl.textContent=fpsRenders<fpsTicks*.6?`${f} fps · idle`:`${f} fps`;fpsTicks=0;fpsRenders=0;fpsAt=time;}
@@ -295,7 +296,7 @@ try {
   capV.set((rc.left+rc.width/2)/innerWidth*2-1,-(rc.top+rc.height/2)/innerHeight*2+1,.5).unproject(camera).sub(camera.position).normalize();capP.copy(camera.position).addScaledVector(capV,frameDist*.32);
   capU.set(0,1,0).applyQuaternion(camera.quaternion);capA.copy(capP).project(camera);capB.copy(capP).addScaledVector(capU,1).project(camera);const pxPerMm=Math.hypot((capB.x-capA.x)*innerWidth/2,(capB.y-capA.y)*innerHeight/2);
   const titleScale=Math.max(.05,rc.width*.96/(13.5*pxPerMm))*born*(1-capState.press*.16);
-  capE.set(Math.sin(time*.0007+1)*.1+capState.hy*.38,Math.sin(time*.0011)*.26+capState.hx*.45+spin,0);capQ.copy(camera.quaternion).multiply(capQ2.setFromEuler(capE));
+  capE.set(Math.sin(time*.0007+1)*.1+capState.hy*.38,Math.sin(time*.0011)*.26+capState.hx*.45+spin+capT*Math.PI*2.5,capT*Math.PI*.6);capQ.copy(camera.quaternion).multiply(capQ2.setFromEuler(capE));
   front.updateWorldMatrix(true,false);capLocal.copy(capP);front.worldToLocal(capLocal);front.getWorldQuaternion(capQ2).invert().multiply(capQ);
   benchQ.copy(cap.quaternion);capB.copy(cap.position);cap.position.lerpVectors(capLocal,capB,capT);cap.position.z+=Math.sin(Math.PI*capT)*40;cap.quaternion.slerpQuaternions(capQ2,benchQ,capT);cap.scale.setScalar(lerp(titleScale,1,capT));}
  else if(menuCapPart&&menuCapPart.scale.x!==1)menuCapPart.scale.setScalar(1);
