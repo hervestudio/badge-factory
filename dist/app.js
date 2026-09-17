@@ -193,7 +193,7 @@ try {
   if(glowPart===p)return;
   if(glowPart)glowPart.traverse(m=>{if(m.isMesh&&m.userData.__hm){m.material.dispose();m.material=m.userData.__hm;delete m.userData.__hm;}});
   glowPart=p;
-  if(p)p.traverse(m=>{if(m.isMesh&&!m.material.transparent&&!m.userData.__om){m.userData.__hm=m.material;const c=m.material.clone();c.emissive=new THREE.Color('#fff2dc');c.emissiveIntensity=.16;m.material=c;}});
+  if(p)p.traverse(m=>{const mt=m.material;if(!m.isMesh||!mt||Array.isArray(mt)||mt.isShaderMaterial||!mt.emissive||mt.transparent||m.userData.__om)return;try{const c=mt.clone();c.emissive=new THREE.Color('#fff2dc');c.emissiveIntensity=.16;m.userData.__hm=mt;m.material=c;}catch(err){}});
  }
  const parallax={x:0,y:0,tx:0,ty:0};
  addEventListener('pointermove',e=>{parallax.tx=e.clientX/innerWidth*2-1;parallax.ty=e.clientY/innerHeight*2-1;},{passive:true});
