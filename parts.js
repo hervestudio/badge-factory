@@ -80,3 +80,20 @@ export const PINS={
  batteryPlus:[-10,25,1],batteryMinus:[10,25,1],
 };
 export const RIBBON_COLORS=['#70422b','#d52b27','#ef791a','#e7c526','#229657','#246fc1','#8b43c5','#90979c','#eee8dc','#151621'];
+
+// Punch the printed sacrificial membranes out of a shell: every triangle whose centroid falls inside
+// one of the (x, y, r) cylinders and between zMin/zMax is dropped, leaving the opening clear.
+export function openMembranes(geometry,holes,zMin,zMax){
+ const pos=geometry.attributes.position,nrm=geometry.attributes.normal,keep=[];
+ for(let t=0;t<pos.count;t+=3){
+  const cx=(pos.getX(t)+pos.getX(t+1)+pos.getX(t+2))/3,cy=(pos.getY(t)+pos.getY(t+1)+pos.getY(t+2))/3,cz=(pos.getZ(t)+pos.getZ(t+1)+pos.getZ(t+2))/3;
+  let drop=false;
+  if(cz>=zMin&&cz<=zMax)for(const [hx,hy,hr] of holes)if((cx-hx)**2+(cy-hy)**2<=hr*hr){drop=true;break;}
+  if(!drop)keep.push(t);
+ }
+ if(keep.length*3===pos.count)return geometry;
+ const out=new THREE.BufferGeometry(),p2=new Float32Array(keep.length*9),n2=new Float32Array(keep.length*9);
+ keep.forEach((t,i)=>{for(let k=0;k<3;k++){const s=(t+k)*3,dst=(i*3+k)*3;p2[dst]=pos.getX(t+k);p2[dst+1]=pos.getY(t+k);p2[dst+2]=pos.getZ(t+k);n2[dst]=nrm.getX(t+k);n2[dst+1]=nrm.getY(t+k);n2[dst+2]=nrm.getZ(t+k);}});
+ out.setAttribute('position',new THREE.BufferAttribute(p2,3));out.setAttribute('normal',new THREE.BufferAttribute(n2,3));
+ return out;
+}
