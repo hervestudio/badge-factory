@@ -269,7 +269,7 @@ try {
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
  const shellFlip=1-smooth(current,2.42,2.84),frontYaw=2.88-Math.PI*shellFlip;
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=frontYaw*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
- document.body.classList.toggle('on-bench',current<.35);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
+ document.body.classList.toggle('on-bench',current<.35&&coverT>.7);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
  if(partDragging&&dragPart&&dragPart.userData.body){const b=dragPart.userData.body,tz=TOPH[dragPart.userData.name]/2+26;b.wakeUp();let vx=(dragTarget.x-b.position.x)*14,vy=(dragTarget.y-b.position.y)*14;const L=Math.hypot(vx,vy),cap=900;if(L>cap){vx*=cap/L;vy*=cap/L;}b.velocity.set(vx,vy,(tz-b.position.z)*14);b.angularVelocity.set(0,0,0);b.quaternion.set(0,0,0,1);}
  physWorld.step(1/120,Math.min(dt,.05),8);syncPhysics();}
  workbench.visible=current<1.12;cutting.material.opacity=1;top.material.opacity=1;workbench.position.set(0,-260*leaveBench,0);workbench.rotation.x=-.85*leaveBench;const matC=Math.cos(workbench.rotation.x),matS=Math.sin(workbench.rotation.x);
