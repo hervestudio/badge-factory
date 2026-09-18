@@ -59,7 +59,8 @@ body.on-cover #stage{pointer-events:none}
 .cover-credit a{text-decoration:none}
 .header-links{display:flex;gap:30px;align-items:center}
 body.on-cover header{background:none}
-body.on-cover .header-link,body.on-cover .cover-credit{color:#fff}
+body.on-cover .cover-credit{color:#fff}
+.header-link{color:#fff;color:color-mix(in srgb,#26232d calc(var(--chrome-ink,1) * 100%),#ffffff)}
 .header-link{transition:color .4s}
 body.on-cover .bottom-bar,body.on-cover .step-nav,body.on-cover .scene-caption,body.on-cover .parts-picker,body.on-cover #peek{opacity:0;pointer-events:none}
 .bottom-bar,.step-nav{transition:opacity .4s}
@@ -118,3 +119,10 @@ body.on-bench .bench-copy,body.on-bench .bom-cta{opacity:1;pointer-events:auto}
  .bom-cta{height:52px;padding:0 26px;font-size:18px;bottom:104px}
  .bom-list td{font-size:12px;padding:9px 6px}
 }
+
+/* Every section title (and the dialogs') uses the cover's display face, at the bench title's size. */
+.chapter h2,.bench-title,dialog h2{font-family:DingosBold,Dingos,'Arial Black',sans-serif;font-weight:400;letter-spacing:-.02em;line-height:1.1}
+.chapter h2,.bench-title{font-size:clamp(30px,4.1vw,60px);margin-bottom:22px}
+.bench-title{margin-bottom:0}
+dialog h2{font-size:clamp(26px,2.8vw,40px);line-height:1.15}
+@media(max-width:760px){.chapter h2,.bench-title{font-size:27px;margin-bottom:12px}.bench-title{margin-bottom:0}dialog h2{font-size:24px}}

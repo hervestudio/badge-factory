@@ -31,8 +31,8 @@ const easeIntro=t=>t<.5?16*t*t*t*t*t:1-Math.pow(-2*t+2,5)/2,easeBack=t=>{const c
 // Cover screen: scrolling through #cover-space drives coverT from the intro (0) down to the workbench (1). The centre cap rides along.
 const benchCopy=$('.bench-copy'),bomCta=$('.bom-cta');
 const coverEl=$('#cover'),coverBg=$('#cover-bg'),coverInner=$('.cover-inner'),coverActions=$('.cover-actions'),coverSpace=$('#cover-space'),capSlot=$('#cap-slot');
-let coverT=0;const coverEnd=()=>Math.max(1,coverSpace.offsetHeight-innerHeight*.18);
-function updateCover(){coverT=clamp(scrollY/coverEnd(),0,1);const out=smooth(coverT,0,.4);coverEl.style.opacity=1-out;coverInner.style.setProperty('--cover-y',(-90*out)+'px');coverActions.style.setProperty('--cover-y',(60*out)+'px');coverBg.style.opacity=1-smooth(coverT,.3,.85);coverEl.classList.toggle('gone',coverT>.3);document.body.classList.toggle('on-cover',coverT<.5);}
+const COVER_DONE=.86;let coverT=0;const coverEnd=()=>Math.max(1,coverSpace.offsetHeight-innerHeight*.18);
+function updateCover(){coverT=clamp(scrollY/coverEnd(),0,1);const out=smooth(coverT,0,.4);coverEl.style.opacity=1-out;coverInner.style.setProperty('--cover-y',(-90*out)+'px');coverActions.style.setProperty('--cover-y',(60*out)+'px');coverBg.style.opacity=1-smooth(coverT,.3,.85);document.documentElement.style.setProperty('--chrome-ink',smooth(coverT,.42,.78));coverEl.classList.toggle('gone',coverT>.3);document.body.classList.toggle('on-cover',coverT<COVER_DONE);}
 addEventListener('scroll',updateCover,{passive:true});addEventListener('resize',updateCover);updateCover();
 $('#cover-cta').addEventListener('click',e=>{e.preventDefault();const from=scrollY,to=coverEnd()+2,t0=performance.now(),D=reduced?1:1900;const step=now=>{const t=clamp((now-t0)/D,0,1);scrollTo({top:lerp(from,to,easeIntro(t)),behavior:'instant'});if(t<1)requestAnimationFrame(step);};requestAnimationFrame(step);});
 const capState={hx:0,hy:0,tx:0,ty:0,press:0,spinAt:-1e9,bornAt:-1};
@@ -269,7 +269,7 @@ try {
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
  const shellFlip=1-smooth(current,2.42,2.84),frontYaw=2.88-Math.PI*shellFlip;
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=frontYaw*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
- document.body.classList.toggle('on-bench',current<.35&&coverT>.7);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
+ document.body.classList.toggle('on-bench',current<.35&&coverT>=COVER_DONE);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
  if(partDragging&&dragPart&&dragPart.userData.body){const b=dragPart.userData.body,tz=TOPH[dragPart.userData.name]/2+26;b.wakeUp();let vx=(dragTarget.x-b.position.x)*14,vy=(dragTarget.y-b.position.y)*14;const L=Math.hypot(vx,vy),cap=900;if(L>cap){vx*=cap/L;vy*=cap/L;}b.velocity.set(vx,vy,(tz-b.position.z)*14);b.angularVelocity.set(0,0,0);b.quaternion.set(0,0,0,1);}
  physWorld.step(1/120,Math.min(dt,.05),8);syncPhysics();}
  workbench.visible=current<1.12;cutting.material.opacity=1;top.material.opacity=1;workbench.position.set(0,-260*leaveBench,0);workbench.rotation.x=-.85*leaveBench;const matC=Math.cos(workbench.rotation.x),matS=Math.sin(workbench.rotation.x);
