@@ -4,7 +4,7 @@ import { FirmwareDisplay } from './emulator-display.js';
 import { createCables } from './cables.js';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar, openMembranes} from './parts.js';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js';
 import { STLLoader } from './vendor/STLLoader.js';
 import { loadGLB } from './glb.js';
 import { detectPerformance, createAdaptiveRatio } from './perf.js';
@@ -46,7 +46,7 @@ let coverRevealed=false;
 function revealCover(){if(coverRevealed)return;coverRevealed=true;document.body.classList.remove('cover-pending');capState.bornAt=-1;if(document.body.classList.contains('intro'))requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.add('intro-in')));}
 const capped=(p,ms)=>Promise.race([p,new Promise(r=>setTimeout(r,ms))]);
 Promise.all([capped(sceneReady,3500),capped(document.fonts?document.fonts.ready:Promise.resolve(),1500)]).then(revealCover);
-if(!reduced&&scrollY<10){document.body.classList.add('intro');const cta=$('#cover-cta'),credit=$('.cover-credit');cta.classList.add('w');cta.style.setProperty('--i',26);credit.classList.add('w');credit.style.setProperty('--i',30);for(const el of document.querySelectorAll('#cover .cover-eyebrow,#cover .cover-title,#cover .cover-lede')){let i=0;const walk=n=>{for(const c of [...n.childNodes]){if(c.nodeType===3){const frag=document.createDocumentFragment();for(const w of c.textContent.split(/(\s+)/)){if(!w)continue;if(/^\s+$/.test(w)){frag.append(w);continue;}const s=document.createElement('span');s.className='w';s.style.setProperty('--i',i++);s.textContent=w;frag.append(s);}c.replaceWith(frag);}else if(c.nodeType===1&&c.tagName!=='BR')walk(c);}};walk(el);}}
+if(!reduced&&scrollY<10){document.body.classList.add('intro');const cta=$('.cta-wrap'),credit=$('.cover-credit');cta.classList.add('w');cta.style.setProperty('--i',26);credit.classList.add('w');credit.style.setProperty('--i',30);for(const el of document.querySelectorAll('#cover .cover-eyebrow,#cover .cover-title,#cover .cover-lede')){let i=0;const walk=n=>{for(const c of [...n.childNodes]){if(c.nodeType===3){const frag=document.createDocumentFragment();for(const w of c.textContent.split(/(\s+)/)){if(!w)continue;if(/^\s+$/.test(w)){frag.append(w);continue;}const s=document.createElement('span');s.className='w';s.style.setProperty('--i',i++);s.textContent=w;frag.append(s);}c.replaceWith(frag);}else if(c.nodeType===1&&c.tagName!=='BR')walk(c);}};walk(el);}}
 
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(32,1,5,1500);
 const badge=new THREE.Group(),front=new THREE.Group(),back=new THREE.Group();badge.add(front,back);scene.add(badge);
@@ -85,12 +85,12 @@ try {
  controls=new OrbitControls(camera,canvas);controls.enabled=false;controls.enableDamping=true;controls.enableZoom=false;controls.enablePan=false;controls.target.set(0,7,0);controls.minPolarAngle=.22;controls.maxPolarAngle=Math.PI-.22;
  await document.fonts.load('16px Dingos');
  const loader=new STLLoader();
- const [geos,menuCap]=await Promise.all([Promise.all(['shell-0','shell-1',...Array.from({length:7},(_,i)=>`cap-${i}`)].map(n=>loader.loadAsync(`assets/${n}.stl`))),loadGLB('assets/menu-cap.glb')]);
+ const [geos,menuCap,arrowCap]=await Promise.all([Promise.all(['shell-0','shell-1',...Array.from({length:7},(_,i)=>`cap-${i}`)].map(n=>loader.loadAsync(`assets/${n}.stl`))),loadGLB('assets/menu-cap.glb'),loadGLB('assets/arrow-cap.glb')]);
  // The centre cap is a modelled part: unit radius, face at y=0 looking down -y, inlay recessed into it. Re-seat it face-up at z=0, 6.75 mm radius like the printed caps.
  for(const {geometry} of menuCap){geometry.rotateX(-Math.PI/2);geometry.rotateZ(Math.PI);geometry.scale(6.75,6.75,6.75);}
+ // The arrow cap is modelled pointing up; the next button reuses it turned over.
+ for(const {geometry} of arrowCap){geometry.rotateX(-Math.PI/2);geometry.scale(6.75,6.75,6.75);}
  geos[0].rotateY(Math.PI);geos[1].translate(-80,0,0);
- geos[0]=openMembranes(geos[0],[[-19.802,-33.471,5],[0,-38.5,5],[19.802,-33.471,5]],-1.3,-.95);
- geos[0]=openMembranes(geos[0],[[-26,-60,1.4],[26,-60,1.4],[-26,60,1.4],[26,60,1.4]],-.7,-.3);
  for(const g of geos){const a=g.attributes.position,n=g.attributes.normal,uv=new Float32Array(a.count*2);for(let i=0;i<a.count;i++){const x=Math.abs(n.getX(i)),y=Math.abs(n.getY(i)),z=Math.abs(n.getZ(i));uv[i*2]=(x>z?a.getY(i):a.getX(i))/10;uv[i*2+1]=(z>=x&&z>=y?a.getY(i):a.getZ(i))/10}g.setAttribute('uv',new THREE.BufferAttribute(uv,2))}
  const face=part(front,'Front enclosure',[0,0,0],[0,0,10],1);mesh(face,geos[0],mat.shell);
  const rear=part(back,'Rear enclosure',[0,0,-16],[0,0,-8],1);mesh(rear,geos[1],mat.rear);
@@ -129,8 +129,8 @@ try {
  }
  // Finish caps use connected components from small_parts.stl, preserving engravings.
  let menuCapPart=null;
- buttonPositions.forEach(([x,y],i)=>{const cap=part(front,['Previous button','Menu button','Next button'][i],[x,y,1.5],[i===0?-14:i===2?14:0,-8,92],10);if(i===1){menuCapPart=cap;menuCap.forEach(({geometry,material},k)=>{const m=mesh(cap,geometry,k===0?mat.rear:material);m.userData.button=i;clickables.push(m);});return;}const g=geos[i===0?3:4].clone();g.rotateY(Math.PI);const m=mesh(cap,g,mat.shell);m.userData.button=i;clickables.push(m);
- decal(cap,10,10,[0,0,.02],(c,w,h)=>{c.strokeStyle='#21192b';c.lineWidth=w*.10;c.lineCap='round';c.lineJoin='round';if(i===1){c.lineWidth=w*.055;c.beginPath();c.arc(w/2,h/2,w*.40,0,Math.PI*2);c.stroke();c.beginPath();c.arc(w/2,h*.49,w*.26,.15,Math.PI-.15);c.stroke();c.fillStyle='#21192b';for(let q of [.35,.65]){c.beginPath();c.arc(w*q,h*.36,w*.045,0,Math.PI*2);c.fill()}}else{c.beginPath();c.moveTo(w*.3,h*(i===0?.58:.42));c.lineTo(w*.5,h*(i===0?.38:.62));c.lineTo(w*.7,h*(i===0?.58:.42));c.stroke()}});
+ buttonPositions.forEach(([x,y],i)=>{const cap=part(front,['Previous button','Menu button','Next button'][i],[x,y,1.5],[i===0?-14:i===2?14:0,-8,92],10);if(i===1){menuCapPart=cap;menuCap.forEach(({geometry,material},k)=>{const m=mesh(cap,geometry,k===0?mat.rear:material);m.userData.button=i;clickables.push(m);});return;}
+ arrowCap.forEach(({geometry,material},k)=>{const g=i===2?geometry.clone().rotateZ(Math.PI):geometry;const m=mesh(cap,g,k===0?mat.shell:material);m.userData.button=i;clickables.push(m);});return;
  });
  for(const x of [-26,26])for(const y of [-60,60]){
  const insert=part(back,'M2 brass insert',[x,y,-10.8],[0,0,18],1);cyl(insert,1.75,4,mat.gold,[0,0,0]);cyl(insert,.8,4.05,mat.black,[0,0,0]);

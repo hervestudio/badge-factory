@@ -65,7 +65,7 @@ body.on-cover .bottom-bar,body.on-cover .step-nav,body.on-cover .scene-caption,b
 .bottom-bar,.step-nav{transition:opacity .4s}
 body.intro #cover .w{display:inline-block;opacity:0;transform:translateY(.4em);filter:blur(5px)}
 body.intro-in #cover .w{opacity:1;transform:none;filter:blur(0);transition:opacity .6s ease,transform .8s cubic-bezier(.16,.8,.2,1),filter .6s ease;transition-delay:calc(var(--i)*40ms)}
-body.intro #cover .cover-cta.w{display:inline-flex}
+body.intro #cover .cta-wrap.w{display:inline-block}
 body.intro #cover .cover-credit.w{display:block}
 @media(max-width:760px){.cover-title{font-size:38px;line-height:1.15;white-space:normal}.cap-slot{width:2.4em;margin:0 -.2em}.cover-inner{transform:translateY(calc(-62% + var(--cover-y,0px)))}.cover-eyebrow{font-size:16px;margin-bottom:10px}.cover-lede{font-size:14px;margin-top:16px}.cover-actions{bottom:6%}.cover-cta{height:64px;padding:0 38px;font-size:20px}.cover-credit{font-size:11px;margin-top:18px}.header-links{gap:16px}#cover-space{height:110vh}}
 
@@ -89,3 +89,4 @@ body.on-cover #loading:not(.error){opacity:0}
 /* Header links and the intro credit share the site's mono style; the underline is the hover state. */
 .header-link,.cover-credit a{text-decoration:none;text-underline-position:from-font;text-decoration-thickness:1px;text-underline-offset:3px}
 .header-link:hover,.header-link:focus-visible,.cover-credit a:hover,.cover-credit a:focus-visible{text-decoration:underline}
+.cta-wrap{display:inline-block}
