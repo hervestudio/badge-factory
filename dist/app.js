@@ -102,6 +102,9 @@ try {
  const display=part(front,'GC9B72 display',[0,3,-3.64],[4,4,-38],3);
  const screenCv=document.createElement('canvas');screenCv.width=screenCv.height=360;screenCtx=screenCv.getContext('2d');screenTexture=new THREE.CanvasTexture(screenCv);screenTexture.colorSpace=THREE.SRGBColorSpace;
  screenMesh=buildDisplay(display,new THREE.MeshBasicMaterial({map:screenTexture,toneMapped:false}));
+ // The screen is a display, not a surface: it is drawn again after the composer so neither the tone
+ // mapping nor the colour grade touches the emulator's pixels (layer 1 is that second, exact pass).
+ screenMesh.layers.enable(1);
  const firmware=new FirmwareDisplay(screenCtx,screenTexture);
  firmware.bind($('#prev-screen'),1);firmware.bind($('#next-screen'),2);firmware.bind($('#menu-screen'),4);
  const keys={ArrowLeft:1,ArrowUp:1,ArrowRight:2,ArrowDown:2,' ':4,Enter:4};
@@ -264,6 +267,12 @@ try {
  let lastTime=performance.now();
  const fpsEl=document.querySelector('#fps');let fpsTicks=0,fpsRenders=0,fpsAt=performance.now(),lastRender=0,dirty=true,inputAt=0;
  const touch=()=>{dirty=true;inputAt=performance.now();};for(const ev of ['pointermove','pointerdown','pointerup','wheel','touchmove','keydown'])addEventListener(ev,touch,{passive:true});addEventListener('resize',touch);addEventListener('scroll',touch,{passive:true});
+ const depthOnly=new THREE.MeshBasicMaterial({colorWrite:false});
+ function drawScreenExact(){if(!screenMesh)return;
+  const auto=renderer.autoClear;renderer.autoClear=false;
+  scene.overrideMaterial=depthOnly;camera.layers.enableAll();renderer.clearDepth();renderer.render(scene,camera);
+  scene.overrideMaterial=null;camera.layers.set(1);renderer.render(scene,camera);
+  camera.layers.set(0);renderer.autoClear=auto;}
  function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;if(capState.bornAt<0)capState.bornAt=coverRevealed?time+120:time+1e5;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
  fpsTicks++;if(time-fpsAt>500){const f=Math.round(fpsTicks*1000/(time-fpsAt));if(fpsEl)fpsEl.textContent=(fpsRenders<fpsTicks*.6?`${f} fps · idle`:`${f} fps`)+` · ×${renderer.getPixelRatio()}`;fpsTicks=0;fpsRenders=0;fpsAt=time;}
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
@@ -320,7 +329,7 @@ try {
  // Render on demand: when nothing moves, drop to a slow idle cadence to keep the GPU cool.
  const physicsAwake=current<.35&&(partDragging||physParts.some(p=>p.userData.body.sleepState!==2));
  const busy=dirty||time-inputAt<700||inspect||partDragging||physicsAwake||Math.abs(current-target)>5e-4||Math.abs(parallax.x-parallax.tx)+Math.abs(parallax.y-parallax.ty)>2e-3||(current>6.7&&current<9.7)||current>9.9;
- if(busy||time-lastRender>(coverT<1?32:250)){composer.render();if(busy)adaptive.frame(time);else adaptive.reset();lastRender=time;fpsRenders++;dirty=false;}
+ if(busy||time-lastRender>(coverT<1?32:250)){composer.render();if(current>9.5||inspect)drawScreenExact();if(busy)adaptive.frame(time);else adaptive.reset();lastRender=time;fpsRenders++;dirty=false;}
  }
  $('#loading').classList.add('hidden');updateTarget();requestAnimationFrame(frame);markSceneReady();
 } catch(error){console.error(error);$('#loading').textContent='The 3D view could not load. Reload the page to try again; the assembly guide is available below.';$('#loading').classList.add('error');revealCover()}
