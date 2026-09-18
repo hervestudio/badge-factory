@@ -4,7 +4,7 @@ import { FirmwareDisplay } from './emulator-display.js';
 import { createCables } from './cables.js';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import { material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar } from './parts.js';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar, openMembranes} from './parts.js';
 import { STLLoader } from './vendor/STLLoader.js';
 import { loadGLB } from './glb.js';
 import { detectPerformance, createAdaptiveRatio } from './perf.js';
@@ -89,6 +89,8 @@ try {
  // The centre cap is a modelled part: unit radius, face at y=0 looking down -y, inlay recessed into it. Re-seat it face-up at z=0, 6.75 mm radius like the printed caps.
  for(const {geometry} of menuCap){geometry.rotateX(-Math.PI/2);geometry.rotateZ(Math.PI);geometry.scale(6.75,6.75,6.75);}
  geos[0].rotateY(Math.PI);geos[1].translate(-80,0,0);
+ geos[0]=openMembranes(geos[0],[[-19.802,-33.471,5],[0,-38.5,5],[19.802,-33.471,5]],-1.3,-.95);
+ geos[0]=openMembranes(geos[0],[[-26,-60,1.4],[26,-60,1.4],[-26,60,1.4],[26,60,1.4]],-.7,-.3);
  for(const g of geos){const a=g.attributes.position,n=g.attributes.normal,uv=new Float32Array(a.count*2);for(let i=0;i<a.count;i++){const x=Math.abs(n.getX(i)),y=Math.abs(n.getY(i)),z=Math.abs(n.getZ(i));uv[i*2]=(x>z?a.getY(i):a.getX(i))/10;uv[i*2+1]=(z>=x&&z>=y?a.getY(i):a.getZ(i))/10}g.setAttribute('uv',new THREE.BufferAttribute(uv,2))}
  const face=part(front,'Front enclosure',[0,0,0],[0,0,10],1);mesh(face,geos[0],mat.shell);
  const rear=part(back,'Rear enclosure',[0,0,-16],[0,0,-8],1);mesh(rear,geos[1],mat.rear);
@@ -119,7 +121,7 @@ try {
  // Three actual tactile switches behind the separate print caps.
  const switches=[];
  const buttonPositions=[[-19.802,-33.471],[0,-38.5],[19.802,-33.471]];
- buttonPositions.forEach(([x,y],i)=>{const sw=part(front,'Tactile switch '+(i+1),[x,y,-3],[i===0?-18:i===2?18:0,-8,-24],2);switches.push(sw);buildSwitch(sw);});
+ buttonPositions.forEach(([x,y],i)=>{const sw=part(front,'Tactile switch '+(i+1),[x,y,-3],[i===0?-4:i===2?4:0,-3,26],2);sw.userData.dropIn=true;switches.push(sw);buildSwitch(sw);});
  // Two spools of silicone hook-up wire sit on the bench; runs are cut from them.
  for(const [name,color,spin] of [['Wire spool 1','#d5312b',.45],['Wire spool 2','#23262d',-2.3]]){
   const sp=part(front,name,[0,0,-30],[0,0,-20],5);sp.userData.benchOnly=true;
@@ -159,7 +161,7 @@ try {
  const top=mesh(workbench,topGeo,new THREE.MeshStandardMaterial({map:matTexture,roughness:.94,bumpMap:grain,bumpScale:.025}),[0,0,-.09]);top.castShadow=false;
  for(const m of [cutting.material,top.material]){m.transparent=true;m.depthWrite=false;}
  const benchPos=mobileBench?{
- 'Front enclosure':[44,-95,2,0], 'Rear enclosure':[-44,-95,2,0],
+ 'Front enclosure':[44,-95,10.7,0], 'Rear enclosure':[-44,-95,2,0],
  'GC9B72 display':[-72,120,7,0], 'ESP32-S3 N16R8':[78,72,4,0],
  'LiPo 505060':[-66,60,4,0], 'TP4056 + boost':[10,72,5,Math.PI],
  'Ground bus + dividers':[10,44,4,Math.PI],
@@ -167,7 +169,7 @@ try {
  'Previous button':[18,8,2.5,0], 'Menu button':[38,8,2.5,0], 'Next button':[58,8,2.5,0],
  'Strap bar':[98,8,2,0], 'Wire spool 1':[84,140,7.5,0], 'Wire spool 2':[40,140,7.5,0]
  }:{
- 'Front enclosure':[131,28,2,0], 'Rear enclosure':[57,28,2,0],
+ 'Front enclosure':[131,28,10.7,0], 'Rear enclosure':[57,28,2,0],
  'GC9B72 display':[-155,36,7,0], 'ESP32-S3 N16R8':[-26,36,4,0],
  'LiPo 505060':[-31,-41,4,0], 'TP4056 + boost':[-108,-28,5,Math.PI],
  'Ground bus + dividers':[-177,-42,4,Math.PI],
@@ -289,7 +291,7 @@ try {
  const size=isShell||current<1.05?1:entry;
  p.scale.setScalar(Math.max(.001,size));
  const destination=home.clone().addScaledVector(offset,(1-entry)*.42);
- if(isShell){const g=p.parent,tShell=name==='Front enclosure'?smooth(leaveBench,.3,1):smooth(leaveBench,0,.7);shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,tShell);const arcT=Math.sin(Math.PI*tShell);shellA.y+=42*arcT;shellA.z+=34*arcT;shellA.sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);if(tShell>=1)p.rotation.set(0,0,0);else{qA.setFromAxisAngle(YAXIS,-g.rotation.y).multiply(p.userData.benchQuat).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation));qB.setFromAxisAngle(YAXIS,lerp(benchRotation,name==='Front enclosure'?frontYaw:-.13,tShell)-g.rotation.y);p.quaternion.slerpQuaternions(qA,qB,smooth(tShell,0,.35));}}else if(entry>0){p.position.copy(destination);p.position.y-=55*(1-entry);}else{shellA.copy(bench);const by=shellA.y,bz=shellA.z;shellA.y=by*matC-bz*matS-260*leaveBench;shellA.z=by*matS+bz*matC;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);if(!isShell){if(entry>0)p.rotation.set(name==='M2×12 screw'?lerp(Math.PI/2,0,entry):0,lerp(benchRotation,0,entry),0);else p.quaternion.setFromAxisAngle(XAXIS,workbench.rotation.x).multiply(qTmp.setFromAxisAngle(YAXIS,-p.parent.rotation.y)).multiply(p.userData.benchQuat||qA.identity()).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation)).multiply(qB.setFromAxisAngle(XAXIS,name==='M2×12 screw'?Math.PI/2:0));}
+ if(isShell){const g=p.parent,tShell=name==='Front enclosure'?smooth(leaveBench,.3,1):smooth(leaveBench,0,.7);shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,tShell);const arcT=Math.sin(Math.PI*tShell);shellA.y+=42*arcT;shellA.z+=34*arcT;shellA.sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);if(tShell>=1)p.rotation.set(0,0,0);else{qA.setFromAxisAngle(YAXIS,-g.rotation.y).multiply(p.userData.benchQuat).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation));qB.setFromAxisAngle(YAXIS,lerp(benchRotation,name==='Front enclosure'?frontYaw:-.13,tShell)-g.rotation.y);p.quaternion.slerpQuaternions(qA,qB,smooth(tShell,0,.35));}}else if(entry>0){p.position.copy(destination);if(p.userData.dropIn)p.position.z+=44*(1-entry)**1.6;else p.position.y-=55*(1-entry);}else{shellA.copy(bench);const by=shellA.y,bz=shellA.z;shellA.y=by*matC-bz*matS-260*leaveBench;shellA.z=by*matS+bz*matC;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);if(!isShell){if(entry>0)p.rotation.set(name==='M2×12 screw'?lerp(Math.PI/2,0,entry):0,lerp(benchRotation,0,entry),0);else p.quaternion.setFromAxisAngle(XAXIS,workbench.rotation.x).multiply(qTmp.setFromAxisAngle(YAXIS,-p.parent.rotation.y)).multiply(p.userData.benchQuat||qA.identity()).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation)).multiply(qB.setFromAxisAngle(XAXIS,name==='M2×12 screw'?Math.PI/2:0));}
  }
  if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
  const widthNeeded=lerp(mobileBench?330:540,lerp(214,120,close),leaveBench),heightNeeded=lerp(mobileBench?392:245,lerp(200,221,close),leaveBench);
