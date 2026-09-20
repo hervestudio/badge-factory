@@ -126,3 +126,6 @@ body.on-bench .bench-copy,body.on-bench .bom-cta{opacity:1;pointer-events:auto}
 .bench-title{margin-bottom:0}
 dialog h2{font-size:clamp(26px,2.8vw,40px);line-height:1.15}
 @media(max-width:760px){.chapter h2,.bench-title{font-size:27px;margin-bottom:12px}.bench-title{margin-bottom:0}dialog h2{font-size:24px}}
+.bom-sheet{margin:14px 0 4px}
+.bom-sheet a{display:inline-flex;align-items:center;gap:.5em;padding:11px 18px;border:1px solid #cdbfe0;border-radius:99px;background:#f6f1fc;font:12px monospace;color:#5c4780;text-decoration:none;transition:background .25s,border-color .25s}
+.bom-sheet a:hover{background:#ece0fa;border-color:#b49ddb}
