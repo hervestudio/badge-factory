@@ -40,7 +40,7 @@ capSlot.addEventListener('pointermove',e=>{const r=capSlot.getBoundingClientRect
 capSlot.addEventListener('pointerleave',()=>{capState.tx=0;capState.ty=0;});
 capSlot.addEventListener('pointerdown',()=>{capState.press=1;capState.spinAt=performance.now();});
 $('#cover-cta').addEventListener('pointerenter',()=>{capState.spinAt=performance.now();});
-let capHandedOver=false,frameDist=400;const capV=new THREE.Vector3(),capP=new THREE.Vector3(),capU=new THREE.Vector3(),capA=new THREE.Vector3(),capB=new THREE.Vector3(),capLocal=new THREE.Vector3(),capQ=new THREE.Quaternion(),capQ2=new THREE.Quaternion(),benchQ=new THREE.Quaternion(),capE=new THREE.Euler();
+let pressedOnce=false,capHandedOver=false,frameDist=400;const capV=new THREE.Vector3(),capP=new THREE.Vector3(),capU=new THREE.Vector3(),capA=new THREE.Vector3(),capB=new THREE.Vector3(),capLocal=new THREE.Vector3(),capQ=new THREE.Quaternion(),capQ2=new THREE.Quaternion(),benchQ=new THREE.Quaternion(),capE=new THREE.Euler();
 
 let markSceneReady;const sceneReady=new Promise(r=>{markSceneReady=r});
 let coverRevealed=false;
@@ -105,8 +105,9 @@ try {
  // The screen is a display, not a surface: it is drawn again after the composer so neither the tone
  // mapping nor the colour grade touches the emulator's pixels (layer 1 is that second, exact pass).
  screenMesh.layers.enable(1);
+ const tapHint=mesh(front,new THREE.RingGeometry(7.4,8.8,56),new THREE.MeshBasicMaterial({color:'#f4d13a',transparent:true,opacity:0,depthWrite:false,toneMapped:false}),[0,-38.5,3.9]);tapHint.castShadow=tapHint.receiveShadow=false;tapHint.visible=false;
  const firmware=new FirmwareDisplay(screenCtx,screenTexture);
- firmware.bind($('#prev-screen'),1);firmware.bind($('#next-screen'),2);firmware.bind($('#menu-screen'),4);
+
  const keys={ArrowLeft:1,ArrowUp:1,ArrowRight:2,ArrowDown:2,' ':4,Enter:4};
  canvas.addEventListener('keydown',e=>{if(active===10&&keys[e.key]){e.preventDefault();firmware.hold(keys[e.key],true)}});canvas.addEventListener('keyup',e=>{if(keys[e.key]){e.preventDefault();firmware.hold(keys[e.key],false)}});addEventListener('blur',()=>firmware.release());
  // DevKit with RF can, antenna, headers, USB connectors and surface components.
@@ -132,8 +133,8 @@ try {
   buildSpool(sp,color,spin);
  }
  // Finish caps use connected components from small_parts.stl, preserving engravings.
- let menuCapPart=null;
- buttonPositions.forEach(([x,y],i)=>{const cap=part(front,['Previous button','Menu button','Next button'][i],[x,y,1.5],[0,0,44],10);cap.userData.dropIn=true;if(i===1){menuCapPart=cap;menuCap.forEach(({geometry,material},k)=>{const m=mesh(cap,geometry,k===0?mat.rear:material);m.userData.button=i;clickables.push(m);});return;}
+ let menuCapPart=null;const capParts=[];
+ buttonPositions.forEach(([x,y],i)=>{const cap=part(front,['Previous button','Menu button','Next button'][i],[x,y,1.5],[0,0,44],10);cap.userData.dropIn=true;capParts[i]=cap;if(i===1){menuCapPart=cap;menuCap.forEach(({geometry,material},k)=>{const m=mesh(cap,geometry,k===0?mat.rear:material);m.userData.button=i;clickables.push(m);});return;}
  arrowCap.forEach(({geometry,material},k)=>{const g=i===2?geometry.clone().rotateZ(Math.PI):geometry;const m=mesh(cap,g,k===0?mat.shell:material);m.userData.button=i;clickables.push(m);});return;
  });
  for(const x of [-26,26])for(const y of [-60,60]){
@@ -305,7 +306,7 @@ try {
  const size=isShell||current<1.05?1:entry;
  p.scale.setScalar(Math.max(.001,size));
  const destination=home.clone().addScaledVector(offset,(1-entry)*.42);
- if(isShell){const g=p.parent,tShell=name==='Front enclosure'?smooth(leaveBench,.3,1):smooth(leaveBench,0,.7);shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,tShell);const arcT=Math.sin(Math.PI*tShell);shellA.y+=42*arcT;shellA.z+=34*arcT;shellA.sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);if(tShell>=1)p.rotation.set(0,0,0);else{qA.setFromAxisAngle(YAXIS,-g.rotation.y).multiply(p.userData.benchQuat).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation));qB.setFromAxisAngle(YAXIS,lerp(benchRotation,name==='Front enclosure'?frontYaw:-.13,tShell)-g.rotation.y);p.quaternion.slerpQuaternions(qA,qB,smooth(tShell,0,.35));}}else if(entry>0){p.position.copy(destination);if(p.userData.dropIn){p.position.z+=44*(1-entry)**1.6;p.scale.setScalar(lerp(.45,1,entry));}else p.position.y-=55*(1-entry);}else{shellA.copy(bench);const by=shellA.y,bz=shellA.z;shellA.y=by*matC-bz*matS-260*leaveBench;shellA.z=by*matS+bz*matC;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);if(!isShell){if(entry>0)p.rotation.set(name==='M2×12 screw'?lerp(Math.PI/2,0,entry):0,lerp(benchRotation,0,entry),0);else p.quaternion.setFromAxisAngle(XAXIS,workbench.rotation.x).multiply(qTmp.setFromAxisAngle(YAXIS,-p.parent.rotation.y)).multiply(p.userData.benchQuat||qA.identity()).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation)).multiply(qB.setFromAxisAngle(XAXIS,name==='M2×12 screw'?Math.PI/2:0));}
+ if(isShell){const g=p.parent,tShell=name==='Front enclosure'?smooth(leaveBench,.3,1):smooth(leaveBench,0,.7);shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,tShell);const arcT=Math.sin(Math.PI*tShell);shellA.y+=42*arcT;shellA.z+=34*arcT;shellA.sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);if(tShell>=1)p.rotation.set(0,0,0);else{qA.setFromAxisAngle(YAXIS,-g.rotation.y).multiply(p.userData.benchQuat).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation));qB.setFromAxisAngle(YAXIS,lerp(benchRotation,name==='Front enclosure'?frontYaw:-.13,tShell)-g.rotation.y);p.quaternion.slerpQuaternions(qA,qB,smooth(tShell,0,.35));}}else if(entry>0){p.position.copy(destination);if(p.userData.dropIn){p.position.z+=44*(1-entry)**1.6;p.scale.setScalar(lerp(.45,1,entry));}else p.position.y-=55*(1-entry);}else{shellA.copy(bench);const by=shellA.y,bz=shellA.z;shellA.y=by*matC-bz*matS-260*leaveBench;shellA.z=by*matS+bz*matC;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);if(!isShell){if(entry>0)p.rotation.set(0,lerp(benchRotation,0,entry),0);else p.quaternion.setFromAxisAngle(XAXIS,workbench.rotation.x).multiply(qTmp.setFromAxisAngle(YAXIS,-p.parent.rotation.y)).multiply(p.userData.benchQuat||qA.identity()).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation)).multiply(qB.setFromAxisAngle(XAXIS,name==='M2×12 screw'?Math.PI/2:0));}
  }
  if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
  const widthNeeded=lerp(mobileBench?300:540,lerp(214,120,close),leaveBench),heightNeeded=lerp(mobileBench?300:242,lerp(200,221,close),leaveBench);
@@ -325,6 +326,10 @@ try {
   front.updateWorldMatrix(true,false);capLocal.copy(capP);front.worldToLocal(capLocal);front.getWorldQuaternion(capQ2).invert().multiply(capQ);
   benchQ.copy(cap.quaternion);capB.copy(cap.position);cap.position.lerpVectors(capLocal,capB,capT);cap.position.z+=Math.sin(Math.PI*capT)*40;cap.quaternion.slerpQuaternions(capQ2,benchQ,capT);cap.scale.setScalar(lerp(titleScale,1,capT));}
  else if(menuCapPart&&!capHandedOver){capHandedOver=true;menuCapPart.scale.setScalar(1);}
+ {const live=current>9.9&&!inspect;if(firmware.mask)pressedOnce=true;
+  for(let i=0;i<3;i++){const c=capParts[i];if(!c)continue;const want=live&&(firmware.mask&[1,4,2][i])?1:0;c.userData.press=lerp(c.userData.press||0,want,Math.min(1,dt*20));if(c.userData.press>.002)c.position.z-=c.userData.press*1.2;}
+  const hint=live&&!pressedOnce;tapHint.visible=hint;
+  if(hint){const t=(time%2400)/2400,k=1-Math.pow(1-Math.min(t*1.6,1),3);tapHint.scale.setScalar(lerp(.55,1.45,k));tapHint.material.opacity=.6*(1-k)*smooth(current,9.9,9.98);}}
  cables.update(current,dt);firmware.tick(dt,current>9.98);
  // Render on demand: when nothing moves, drop to a slow idle cadence to keep the GPU cool.
  const physicsAwake=current<.35&&(partDragging||physParts.some(p=>p.userData.body.sleepState!==2));
