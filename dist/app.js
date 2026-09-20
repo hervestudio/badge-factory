@@ -117,7 +117,7 @@ try {
  buildBattery(battery);
 
  // USB-C charger and boost board; no SD module or power switch in this revision.
- const charger=part(front,'TP4056 + boost',[5.5,-55.9,-5.2],[15,-16,-33],4);
+ const charger=part(front,'TP4056 + boost',[5.5,-55.9,-4.05],[15,-16,-33],4);
  buildCharger(charger);
  // Stripboard and the four flat 100 kOhm resistors.
  const strip=part(front,'Ground bus + dividers',[-16.4,-51.5,-2.5],[ -15,-7,-44],6.8);

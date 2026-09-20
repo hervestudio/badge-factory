@@ -42,7 +42,7 @@ export function buildBattery(battery){
 // USB-C charger and boost board.
 export function buildCharger(charger){
  box(charger,24,18,1.1,material('#16181c',.5),[0,0,0]);box(charger,7,7,3,mat.chip,[-5,1,-2]);box(charger,5,4,1.1,mat.chip,[5,2,-1.3]);box(charger,1.3,1.1,.5,material('#e04338',.35),[1.8,-6.5,-1.4]);box(charger,1.3,1.1,.5,material('#3f7de0',.35),[4,-6.5,-1.4]);
- box(charger,8.5,6,3.1,mat.silver,[-5.5,-8,-2]);box(charger,6.9,.2,1.8,mat.black,[-5.5,-11.1,-2]);
+ box(charger,8.5,6,3.1,mat.silver,[-6.5,-8,-2.15]);box(charger,6.9,.2,1.8,mat.black,[-6.5,-11,-2.15]);
  for(let i=0;i<4;i++){cyl(charger,1,.2,mat.gold,[-9+i*6,7,-.65]);box(charger,1.3,2,.8,mat.silver,[-8+i*5,-3,-1])}
  const powerText=label(charger,'TP4056  5V',17,3,[0,0,-3.6],'#16181c','#c9ced6');powerText.rotation.y=Math.PI;
 }
