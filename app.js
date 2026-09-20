@@ -139,7 +139,7 @@ try {
  for(const x of [-26,26])for(const y of [-60,60]){
  const insert=part(back,'M2 brass insert',[x,y,-10.8],[0,0,18],1);cyl(insert,1.75,4,mat.gold,[0,0,0]);cyl(insert,.8,4.05,mat.black,[0,0,0]);
  const screw=part(front,'M2×12 screw',[x,y,-5.4],[0,0,60],9.3);cyl(screw,1,10,mat.silver,[0,0,0]);const cone=new THREE.CylinderGeometry(1.9,1,1.8,24);cone.rotateX(Math.PI/2);mesh(screw,cone,mat.silver,[0,0,5]);box(screw,2,.4,.12,mat.black,[0,0,5.95]);
- const cap=part(front,'Screw cap',[x,y,1.1],[x*.3,y*.14,92],10);const g=geos[5].clone();g.rotateY(Math.PI);mesh(cap,g,mat.shell);
+ const cap=part(front,'Screw cap',[x,y,-.3],[x*.3,y*.14,92],10);mesh(cap,geos[5],mat.shell);
  }
  const bar=part(back,'Strap bar',[0,63.8,-8],[0,20,25],9);buildStrapBar(bar);
  const mobileBench=innerWidth<=760;
@@ -182,7 +182,7 @@ try {
  'Strap bar':[64,112,2,0], 'Wire spool 1':[-65,55,7.5,0], 'Wire spool 2':[-96,70,7.5,0]
  };
  let insertIndex=0,screwIndex=0,capIndex=0;
- for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=mobileBench?[-114+insertIndex++*14,8,2.5,0]:[-88+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=mobileBench?[-100+screwIndex++*20,-172,1.2,0]:[148+screwIndex++*18,-90,1.2,0];if(p.userData.name==='Screw cap')a=mobileBench?[10+capIndex++*24,-172,2.2,0]:[62+capIndex++*25,-92,2.2,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.bench0=[a[0],a[1]];p.userData.z0=a[2];p.userData.benchRotation=a[3];}
+ for(const p of animated){let a=benchPos[p.userData.name];if(p.userData.name==='M2 brass insert')a=mobileBench?[-114+insertIndex++*14,8,2.5,0]:[-88+insertIndex++*20,-97,2.5,0];if(p.userData.name==='M2×12 screw')a=mobileBench?[-100+screwIndex++*20,-172,1.2,0]:[148+screwIndex++*18,-90,1.2,0];if(p.userData.name==='Screw cap')a=mobileBench?[10+capIndex++*24,-172,.1,0]:[62+capIndex++*25,-92,.1,0];p.userData.bench=new THREE.Vector3(...a.slice(0,3));p.userData.bench0=[a[0],a[1]];p.userData.z0=a[2];p.userData.benchRotation=a[3];}
  // Clay focus: while a part's card is open, everything else drops its materials.
  const clayMat=new THREE.MeshStandardMaterial({color:'#d6d1da',roughness:.92});
  $('#tidy-up').addEventListener('click',()=>{for(const p of physParts){const b=p.userData.body,[x,y]=p.userData.bench0;b.position.set(x,y,b.shapes[0].halfExtents.z);b.quaternion.set(0,0,0,1);b.velocity.setZero();b.angularVelocity.setZero();b.wakeUp();}dirty=true;});
