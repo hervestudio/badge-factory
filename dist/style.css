@@ -134,3 +134,10 @@ dialog h2{font-size:clamp(26px,2.8vw,40px);line-height:1.15}
 .disclaimer{display:block;margin:4px 0 18px;padding:12px 15px;border:0;border-left:3px solid #e0a83c;border-radius:0 6px 6px 0;background:#fdf4e3;color:#6b4e18;font:12px/1.5 Arial,Helvetica,sans-serif;text-align:left;cursor:pointer;transition:background .25s}
 .disclaimer:hover,.disclaimer:focus-visible{background:#faead0}
 @media(max-width:760px){.disclaimer{font-size:11.5px;padding:10px 12px;margin-bottom:12px}}
+
+/* The finale footer carries the emulator's controls in short form. */
+.finale footer{display:block;bottom:56px;color:#6f6680}
+.emu-help p{margin:0 0 5px;font:10px/1.7 monospace;letter-spacing:.02em}
+.emu-help p:last-child{margin-bottom:0;color:#8c8499}
+.emu-help kbd{display:inline-block;min-width:1.5em;padding:1px 5px;margin:0 1px;border:1px solid #cfc6dc;border-radius:4px;background:#f6f2fb;font:inherit;color:#5b5069;text-align:center}
+@media(max-width:760px){.finale footer{bottom:40px;padding:7px 0;background:#fffffff2;backdrop-filter:blur(6px)}.emu-help .emu-note{display:none}.emu-help p{font-size:9px;line-height:1.55}.emu-help kbd{padding:0 3px}}
