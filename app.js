@@ -96,7 +96,7 @@ try {
  const face=part(front,'Front enclosure',[0,0,0],[0,0,10],1);mesh(face,geos[0],mat.shell);
  const rear=part(back,'Rear enclosure',[0,0,-16],[0,0,-8],1);mesh(rear,geos[1],mat.rear);
  // The two shells and all seven finish caps are tessellated from the supplied CAD.
- decal(face,53,23,[0,44,.08],(c,w,h)=>{c.fillStyle='#f2eddd';c.font=`${h*.51}px Dingos,Arial Black`;c.textBaseline='top';c.fillText('THREE',0,-h*.02,w*.9);c.fillText('CONF',0,h*.46,w*.8);c.fillStyle='#f1d128';c.beginPath();c.arc(w*.88,h*.67,h*.30,0,Math.PI*2);c.fill();c.save();c.translate(w*.88,h*.67);c.rotate(-.15);c.fillStyle='#171220';c.textAlign='center';c.textBaseline='middle';c.font=`${h*.26}px Dingos`;c.fillText('.JS',0,0);c.restore()});
+ decal(face,53,23,[0,44,.08],(c,w,h)=>{const pad=h*.035,size=h*.5;c.fillStyle='#f2eddd';c.font=`${size}px Dingos,Arial Black`;c.textBaseline='top';const y1=pad+c.measureText('THREE').actualBoundingBoxAscent,lh=size*.9;c.fillText('THREE',0,y1,w*.9);c.fillText('CONF',0,y1+lh,w*.8);const r=h*.29,cx=w-pad-r,cy=h-pad-r;c.fillStyle='#f1d128';c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fill();c.save();c.translate(cx,cy);c.rotate(-.15);c.fillStyle='#171220';c.textAlign='center';c.textBaseline='middle';c.font=`${h*.26}px Dingos`;c.fillText('.JS',0,0);c.restore();},900);
  decal(face,39,14,[0,-53.7,.09],(c,w,h)=>{c.fillStyle='#f1d12c';c.beginPath();c.roundRect(0,0,w,h,22);c.fill();c.fillStyle='#221a2d';c.textAlign='center';c.font=`${h*.29}px Dingos`;c.fillText('BRUNO SIMON',w/2,h*.47,w*.87);c.font=`bold ${h*.17}px Arial`;c.fillText('THREE.JS JOURNEY',w/2,h*.74)});
  // Display module, modeled to the measured CAD footprint.
  const display=part(front,'GC9B72 display',[0,3,-3.64],[4,4,-38],3);
