@@ -179,6 +179,12 @@ details.emu-help>summary::-webkit-details-marker{display:none}
 }
 
 body.inspecting #finished .copy{z-index:12}
+#finished .copy>*{transition:opacity .45s ease}
+body.inspecting #finished .copy>:not(.final-controls){opacity:0;pointer-events:none}
+body.inspecting #finished .final-controls{position:fixed;left:0;right:0;bottom:46px;margin:0;display:flex;justify-content:center;z-index:15}
+body.inspecting #finished .final-controls .text-button{display:none}
+body.inspecting #inspect{box-shadow:0 10px 30px #2a1f3a30}
+body.inspecting footer,body.inspecting .step-nav{opacity:0;pointer-events:none}
 /* Explore in 3D on a phone: the badge takes the screen, so only the way out stays on top of it. */
 @media(max-width:760px){
  body.inspecting footer,body.inspecting .step-nav,body.inspecting .bottom-bar{opacity:0;pointer-events:none}
@@ -209,3 +215,4 @@ body.inspecting #finished .copy{z-index:12}
  #fps{top:auto;bottom:74px;right:14px;font-size:9px}
  .finale footer{bottom:96px}
 }
+@media(max-width:760px){body.inspecting #fps{opacity:0}}

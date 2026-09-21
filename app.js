@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=45';
-import { PARTS, createPartsInfo } from './parts-info.js?v=45';
-import { FirmwareDisplay } from './emulator-display.js?v=45';
-import { createCables } from './cables.js?v=45';
+import { createRenderSettings } from './render-settings.js?v=47';
+import { PARTS, createPartsInfo } from './parts-info.js?v=47';
+import { FirmwareDisplay } from './emulator-display.js?v=47';
+import { createCables } from './cables.js?v=47';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=45';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=47';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=45';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=45';
+import { loadGLB } from './glb.js?v=47';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=47';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -68,14 +68,17 @@ addEventListener('scroll',updateTarget,{passive:true});
 let controls;
 // Explore in 3D frames the assembled badge itself, so it fills whatever screen it is on.
 const inspectBox=new THREE.Box3(),inspectSize=new THREE.Vector3(),inspectMid=new THREE.Vector3(),badgeShells=[];
+// Entering and leaving Explore in 3D is a blend between the story framing and the fitted view.
+const inspectPos=new THREE.Vector3(),inspectTarget=new THREE.Vector3(),storyLook=new THREE.Vector3(),blendLook=new THREE.Vector3();
+let inspectT=0,inspectE=0;const easeInOut=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 function fitInspect(){inspectBox.makeEmpty();for(const g of badgeShells)inspectBox.expandByObject(g);
  inspectBox.getSize(inspectSize);inspectBox.getCenter(inspectMid);
  const vFov=THREE.MathUtils.degToRad(camera.fov),aspect=(stage.clientWidth||1)/(stage.clientHeight||1);
  const hFov=2*Math.atan(Math.tan(vFov/2)*aspect);
- const d=Math.max(inspectSize.y/2/Math.tan(vFov/2),inspectSize.x/2/Math.tan(hFov/2))*1.12+inspectSize.z/2;
- controls.target.copy(inspectMid);camera.position.set(inspectMid.x+d*.16,inspectMid.y+d*.07,inspectMid.z+d*.98);controls.update();}
-function setInspect(value){inspect=value;document.body.classList.toggle('inspecting',value);$('#inspect').textContent=value?'Reset view ↺':'Explore in 3D ↗';
- if(controls){controls.enabled=value;if(value)fitInspect();else{camera.position.set(55,24,350);controls.target.set(0,7,0);controls.update();}}}
+ const d=Math.max(inspectSize.y/2/Math.tan(vFov/2),inspectSize.x/2/Math.tan(hFov/2))*1.42+inspectSize.z/2;
+ inspectTarget.copy(inspectMid);inspectPos.set(inspectMid.x+d*.16,inspectMid.y+d*.07,inspectMid.z+d*.98);controls.target.copy(inspectMid);}
+function setInspect(value){inspect=value;document.body.classList.toggle('inspecting',value);$('#inspect').textContent=value?'Close ✕':'Explore in 3D ↗';
+ if(controls){controls.enabled=false;if(value)fitInspect();}}
 $('#inspect').onclick=()=>setInspect(!inspect);
 $('#replay').onclick=()=>{setInspect(false);scrollTo({top:0,behavior:reduced?'instant':'smooth'})};
 
@@ -305,8 +308,7 @@ try {
  physWorld.step(1/120,Math.min(dt,.05),8);syncPhysics();}
  workbench.visible=current<1.12;cutting.material.opacity=1;top.material.opacity=1;workbench.position.set(0,-260*leaveBench,0);workbench.rotation.x=-.85*leaveBench;const matC=Math.cos(workbench.rotation.x),matS=Math.sin(workbench.rotation.x);
  const stageClose=smooth(current,8.7,10),stageKey=leaveBench+stageClose;if(hoveredName&&current<.35&&!partDragging&&!inspect){peek.dataset.name=hoveredName;if(hoveredPartRef){shellB.set(hoveredPartRef.userData.bench.x,hoveredPartRef.userData.bench.y,hoveredPartRef.userData.bench.z+(TOPH[hoveredName]||6)+4);badge.localToWorld(shellB);}else shellB.copy(hoveredAnchor);shellB.project(camera);const r2=canvas.getBoundingClientRect();peek.style.left=(r2.left+(shellB.x+1)*r2.width/2)+'px';peek.style.top=(r2.top+(1-shellB.y)*r2.height/2-34)+'px';peek.hidden=false;}else if(!peekSticky||current>=.35)peek.hidden=true;
- if(inspect){camera.clearViewOffset();camera.aspect=(stage.clientWidth||1)/(stage.clientHeight||1);camera.updateProjectionMatrix();}
- else {// The canvas always fills the window; the framing rectangle is applied as a camera view offset, so nothing is ever cropped.
+ {// The canvas always fills the window; the framing rectangle is applied as a camera view offset, so nothing is ever cropped.
  const mobile=innerWidth<=760,W=stage.clientWidth,H=stage.clientHeight;
  const l=lerp(mobile?0:4,mobile?0:38,leaveBench),r=lerp(mobile?0:4,mobile?0:1,leaveBench);
  let benchTop=13,benchH=81;{const cb=benchCopy.getBoundingClientRect(),bb=bomCta.getBoundingClientRect();
@@ -315,9 +317,10 @@ try {
   benchTop=t0/H*100;benchH=Math.max(b0-t0,H*.32)/H*100;}
  const top0=lerp(benchTop,mobile?58:6,leaveBench),h0=lerp(benchH,mobile?36:89,leaveBench);
  const t=lerp(top0,mobile?56:1,stageClose),hh=lerp(h0,mobile?38:99,stageClose);
- const vx=W*l/100,vw=W*(100-l-r)/100,vy=H*t/100,vh=H*hh/100;
+ let vx=W*l/100,vw=W*(100-l-r)/100,vy=H*t/100,vh=H*hh/100;
+ if(inspectE>0){vx=lerp(vx,0,inspectE);vy=lerp(vy,0,inspectE);vw=lerp(vw,W,inspectE);vh=lerp(vh,H,inspectE);}
  camera.aspect=vw/vh;camera.setViewOffset(vw,vh,-vx,-vy,W,H);camera.updateProjectionMatrix();
- if(mobile){for(let i=0;i<copies.length;i++){const c=copies[i],rc=c.getBoundingClientRect();if(rc.bottom<0||rc.top>H)continue;c.style.opacity=clamp((vy-rc.bottom)/90+1,.12,1);}}else if(copies[1].style.opacity!==''){for(const c of copies)c.style.opacity='';}}
+ if(mobile&&inspectE<.5){for(let i=0;i<copies.length;i++){const c=copies[i],rc=c.getBoundingClientRect();if(rc.bottom<0||rc.top>H)continue;c.style.opacity=clamp((vy-rc.bottom)/90+1,.12,1);}}else if(copies[1].style.opacity!==''){for(const c of copies)c.style.opacity='';}}
 
  for(const p of animated){const {home,offset,phase,bench,benchRotation,name}=p.userData;
  p.userData.lift=0;
@@ -330,13 +333,15 @@ try {
  const destination=home.clone().addScaledVector(offset,(1-entry)*.42);
  if(isShell){const g=p.parent,tShell=name==='Front enclosure'?smooth(leaveBench,.3,1):smooth(leaveBench,0,.7);shellB.copy(destination).applyAxisAngle(YAXIS,g.rotation.y).add(g.position);shellA.copy(bench).lerp(shellB,tShell);const arcT=Math.sin(Math.PI*tShell);shellA.y+=42*arcT;shellA.z+=34*arcT;shellA.sub(g.position).applyAxisAngle(YAXIS,-g.rotation.y);p.position.copy(shellA);if(tShell>=1)p.rotation.set(0,0,0);else{qA.setFromAxisAngle(YAXIS,-g.rotation.y).multiply(p.userData.benchQuat).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation));qB.setFromAxisAngle(YAXIS,lerp(benchRotation,name==='Front enclosure'?frontYaw:-.13,tShell)-g.rotation.y);p.quaternion.slerpQuaternions(qA,qB,smooth(tShell,0,.35));}}else if(entry>0){p.position.copy(destination);if(p.userData.dropIn){p.position.z+=44*(1-entry)**1.6;p.scale.setScalar(lerp(.45,1,entry));}else p.position.y-=55*(1-entry);}else{shellA.copy(bench);const by=shellA.y,bz=shellA.z;shellA.y=by*matC-bz*matS-260*leaveBench;shellA.z=by*matS+bz*matC;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);}if(p.userData.lift>.01)p.position.z+=p.userData.lift*(1-leaveBench);if(!isShell){if(entry>0)p.rotation.set(0,lerp(benchRotation,0,entry),0);else p.quaternion.setFromAxisAngle(XAXIS,workbench.rotation.x).multiply(qTmp.setFromAxisAngle(YAXIS,-p.parent.rotation.y)).multiply(p.userData.benchQuat||qA.identity()).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation)).multiply(qB.setFromAxisAngle(XAXIS,name==='M2×12 screw'?Math.PI/2:0));}
  }
- if(!inspect){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
+ inspectT=clamp(inspectT+(inspect?dt/.85:-dt/.6),0,1);inspectE=easeInOut(inspectT);if(controls)controls.enabled=inspect&&inspectT>=1;
+ if(!(inspect&&inspectT>=1)){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
  const widthNeeded=lerp(mobileBench?300:540,lerp(214,120,close),leaveBench),heightNeeded=lerp(mobileBench?300:242,lerp(200,221,close),leaveBench);
  const dist=Math.max(heightNeeded,widthNeeded/camera.aspect)/(2*Math.tan(THREE.MathUtils.degToRad(16)));frameDist=dist;
- parallax.x=lerp(parallax.x,parallax.tx,Math.min(1,dt*3.5));parallax.y=lerp(parallax.y,parallax.ty,Math.min(1,dt*3.5));const px=reduced?0:parallax.x,py=reduced?0:parallax.y;camera.position.set(lerp(0,lerp(85,24,close),leaveBench)+px*lerp(14,9,leaveBench),lerp(0,lerp(38,12,close),leaveBench)-py*lerp(9,6,leaveBench),dist);camera.lookAt(lerp(0,lerp(6,0,close),leaveBench)+px*lerp(4,2,leaveBench),lerp(0,lerp(-1,2,close),leaveBench)-py*lerp(3,2,leaveBench),0);
+ parallax.x=lerp(parallax.x,parallax.tx,Math.min(1,dt*3.5));parallax.y=lerp(parallax.y,parallax.ty,Math.min(1,dt*3.5));const px=reduced?0:parallax.x,py=reduced?0:parallax.y;camera.position.set(lerp(0,lerp(85,24,close),leaveBench)+px*lerp(14,9,leaveBench),lerp(0,lerp(38,12,close),leaveBench)-py*lerp(9,6,leaveBench),dist);storyLook.set(lerp(0,lerp(6,0,close),leaveBench)+px*lerp(4,2,leaveBench),lerp(0,lerp(-1,2,close),leaveBench)-py*lerp(3,2,leaveBench),0);camera.lookAt(storyLook);
  if(coverT<1){const e=easeIntro(coverT),eL=easeIntro(clamp(coverT/.8,0,1)),tx=lerp(0,lerp(6,0,close),leaveBench)+px*lerp(4,2,leaveBench),ty=lerp(0,lerp(-1,2,close),leaveBench)-py*lerp(3,2,leaveBench);
   // Start high above and ahead of the bench, looking at the horizon; descend and tilt down until the mat fills the frame.
-  camera.position.set(lerp(tx,camera.position.x,e),lerp(ty+dist*.95,camera.position.y,e)+Math.sin(Math.PI*e)*dist*.06,lerp(dist*.5,camera.position.z,e));camera.lookAt(tx,lerp(ty+dist*.95,ty,eL),lerp(-dist,0,eL));}
+  camera.position.set(lerp(tx,camera.position.x,e),lerp(ty+dist*.95,camera.position.y,e)+Math.sin(Math.PI*e)*dist*.06,lerp(dist*.5,camera.position.z,e));camera.lookAt(tx,lerp(ty+dist*.95,ty,eL),lerp(-dist,0,eL));storyLook.set(tx,lerp(ty+dist*.95,ty,eL),lerp(-dist,0,eL));}
+  if(inspectE>0){camera.position.lerp(inspectPos,inspectE);camera.lookAt(blendLook.lerpVectors(storyLook,inspectTarget,inspectE));}
  }else controls.update();
  if(menuCapPart&&coverT<1){camera.updateMatrixWorld();const cap=menuCapPart,rc=capSlot.getBoundingClientRect(),capT=easeIntro(clamp((coverT-.45)/.55,0,1));
   capState.hx=lerp(capState.hx,capState.tx,Math.min(1,dt*7));capState.hy=lerp(capState.hy,capState.ty,Math.min(1,dt*7));capState.press=lerp(capState.press,0,Math.min(1,dt*5));
@@ -355,7 +360,7 @@ try {
  cables.update(current,dt);firmware.tick(dt,current>9.98);
  // Render on demand: when nothing moves, drop to a slow idle cadence to keep the GPU cool.
  const physicsAwake=current<.35&&(partDragging||physParts.some(p=>p.userData.body.sleepState!==2));
- const busy=dirty||time-inputAt<700||inspect||partDragging||physicsAwake||Math.abs(current-target)>5e-4||Math.abs(parallax.x-parallax.tx)+Math.abs(parallax.y-parallax.ty)>2e-3||(current>6.7&&current<9.7)||current>9.9;
+ const busy=dirty||time-inputAt<700||inspect||inspectT>0||partDragging||physicsAwake||Math.abs(current-target)>5e-4||Math.abs(parallax.x-parallax.tx)+Math.abs(parallax.y-parallax.ty)>2e-3||(current>6.7&&current<9.7)||current>9.9;
  if(busy||time-lastRender>(coverT<1?32:250)){composer.render();if(current>9.5||inspect)drawScreenExact();if(busy)adaptive.frame(time);else adaptive.reset();lastRender=time;fpsRenders++;dirty=false;}
  }
  $('#loading').classList.add('hidden');updateTarget();requestAnimationFrame(frame);markSceneReady();
