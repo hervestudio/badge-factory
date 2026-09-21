@@ -260,6 +260,9 @@ body.debug #fps{display:inline}
  body.inspecting .finale footer{position:fixed;left:14px;right:auto;bottom:20px;width:auto;max-width:76vw;padding:0;background:none;backdrop-filter:none;z-index:15}
  body.inspecting details.emu-help{padding:11px 17px;border:1px solid #efeaf5;border-radius:20px;background:#fffffff2;backdrop-filter:blur(12px);box-shadow:0 8px 24px #2a1f3a1f}
  body.inspecting details.emu-help:not([open]){border-radius:999px;padding:10px 17px}
+ /* The pill is pinned to the bottom, so it unfolds upward: the chevron points that way. */
+ body.inspecting details.emu-help>summary::after{transform:rotate(-135deg) translate(-2px,-2px)}
+ body.inspecting details.emu-help[open]>summary::after{transform:rotate(45deg) translate(-2px,-2px)}
  body.inspecting #finished .final-controls{left:auto;right:14px;bottom:14px;justify-content:flex-end}
  body.inspecting #inspect{width:58px;height:58px;padding:0;border-radius:50%;background:#e7dff7;color:#3b3053;font-size:21px;box-shadow:0 8px 24px #2a1f3a26}
  body.inspecting #inspect span{display:none}
