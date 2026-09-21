@@ -160,3 +160,31 @@ details.instruction>summary::-webkit-details-marker{display:none}
  body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
  #detail,#part-detail,#cable-detail,#settings-json{-webkit-user-select:text;user-select:text}
 }
+
+details.emu-help>summary{list-style:none;font:10px/1.7 monospace;letter-spacing:.06em;text-transform:uppercase;color:#8c8499;cursor:default}
+details.emu-help>summary::-webkit-details-marker{display:none}
+@media(max-width:760px){
+ details.emu-help>summary{cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-size:9px}
+ details.emu-help>summary::after{content:'';width:6px;height:6px;border-right:1.5px solid #9b8bb5;border-bottom:1.5px solid #9b8bb5;transform:rotate(45deg) translate(-2px,-2px);transition:transform .25s}
+ details.emu-help[open]>summary::after{transform:rotate(-135deg) translate(-2px,-2px)}
+ details.emu-help>p:first-of-type{margin-top:7px}
+}
+
+/* The test step carries a checklist: it has to fit above the badge on a phone. */
+@media(max-width:760px){
+ .checks{margin-top:12px;gap:5px;font-size:11.5px}
+ .checks label{gap:8px;line-height:1.35}
+ .checks input{width:14px;height:14px}
+ .small-note{font-size:10px;line-height:1.5;margin-top:10px}
+}
+
+body.inspecting #finished .copy{z-index:12}
+/* Explore in 3D on a phone: the badge takes the screen, so only the way out stays on top of it. */
+@media(max-width:760px){
+ body.inspecting footer,body.inspecting .step-nav,body.inspecting .bottom-bar{opacity:0;pointer-events:none}
+ body.inspecting #finished .copy{z-index:15}
+ body.inspecting #finished .copy>:not(.final-controls){opacity:0;pointer-events:none}
+ body.inspecting #finished .final-controls{position:fixed;left:0;right:0;bottom:30px;margin:0;display:flex;justify-content:center;z-index:15}
+ body.inspecting #finished .final-controls .text-button{display:none}
+ body.inspecting #inspect{box-shadow:0 10px 30px #2a1f3a45}
+}
