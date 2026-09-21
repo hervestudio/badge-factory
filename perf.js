@@ -6,7 +6,7 @@ export function detectPerformance(gl){
  const dbg=gl.getExtension('WEBGL_debug_renderer_info');
  const gpu=String((dbg&&gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL))||gl.getParameter(gl.RENDERER)||'');
  const g=gpu.toLowerCase(),ua=navigator.userAgent;
- const cores=navigator.hardwareConcurrency||4,memory=navigator.deviceMemory||8;
+ const cores=navigator.hardwareConcurrency||0,memory=navigator.deviceMemory||0;
  const mobile=/Android|iPhone|iPad|Mobile/i.test(ua)||(navigator.maxTouchPoints>1&&Math.min(innerWidth,innerHeight)<900);
  let tier=2,reason='unknown GPU';
  if(/apple m\d|apple gpu/.test(g)&&!mobile){tier=3;reason='Apple silicon';}
@@ -15,15 +15,16 @@ export function detectPerformance(gl){
  else if(/mali|adreno|powervr|videocore/.test(g)){tier=1;reason='mobile GPU';}
  else if(/swiftshader|llvmpipe|software/.test(g)){tier=0;reason='software renderer';}
  // Safari hides the renderer string, so a phone is judged on its platform and CPU as well as its GPU.
- if(mobile){const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform||''));
-  const strong=ios||/apple|adreno \(tm\) [78]\d\d|adreno [78]\d\d|mali-g[6-9]\d/.test(g)||(cores>=8&&memory>=8);
-  tier=strong?3:Math.min(tier,1);reason=strong?(ios?'iOS device':'modern phone GPU'):reason+', mobile';}
- if(cores<=4||memory<=4){tier=Math.min(tier,1);reason+=', small CPU/RAM';}
+ const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform||''));
+ const strong=ios||/apple|adreno \(tm\) [78]\d\d|adreno [78]\d\d|mali-g[6-9]\d/.test(g)||(cores>=8&&memory>=8);
+ if(mobile)  {tier=strong?3:Math.min(tier,1);reason=strong?(ios?'iOS device':'modern phone GPU'):reason+', mobile';}
+ // A reported small CPU or RAM pulls the tier down, but never overrides a device we know is fast.
+ if(!strong&&((cores&&cores<=4)||(memory&&memory<=4))){tier=Math.min(tier,1);reason+=', small CPU/RAM';}
  let dpr=Math.min(devicePixelRatio||1,TIER_DPR[tier]);
  // Keep the framebuffer under ~9 Mpx whatever the screen (a 5K display at 2× would be four times a laptop panel).
  const budget=Math.sqrt((mobile?4.2e6:9e6)/Math.max(1,innerWidth*innerHeight));
  if(dpr>budget){dpr=Math.max(1,Math.round(budget*4)/4);reason+=', pixel budget';}
- return {gpu,tier,dpr,reason};
+ return {gpu,tier,dpr,reason,cores,memory};
 }
 
 // Feed it the wall-clock time of consecutive rendered frames; it answers with a lower ratio when the
