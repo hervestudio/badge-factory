@@ -14,8 +14,10 @@ export function detectPerformance(gl){
  else if(/intel|iris|uhd|hd graphics|vega \d|radeon graphics/.test(g)){tier=1;reason='integrated GPU';}
  else if(/mali|adreno|powervr|videocore/.test(g)){tier=1;reason='mobile GPU';}
  else if(/swiftshader|llvmpipe|software/.test(g)){tier=0;reason='software renderer';}
- if(mobile){const strong=/apple|adreno \(tm\) [78]\d\d|adreno [78]\d\d|mali-g[6-9]\d/.test(g);
-  tier=strong?3:Math.min(tier,1);reason=strong?'modern phone GPU':reason+', mobile';}
+ // Safari hides the renderer string, so a phone is judged on its platform and CPU as well as its GPU.
+ if(mobile){const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform||''));
+  const strong=ios||/apple|adreno \(tm\) [78]\d\d|adreno [78]\d\d|mali-g[6-9]\d/.test(g)||(cores>=8&&memory>=8);
+  tier=strong?3:Math.min(tier,1);reason=strong?(ios?'iOS device':'modern phone GPU'):reason+', mobile';}
  if(cores<=4||memory<=4){tier=Math.min(tier,1);reason+=', small CPU/RAM';}
  let dpr=Math.min(devicePixelRatio||1,TIER_DPR[tier]);
  // Keep the framebuffer under ~9 Mpx whatever the screen (a 5K display at 2× would be four times a laptop panel).
