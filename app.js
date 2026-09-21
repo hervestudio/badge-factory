@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=43';
-import { PARTS, createPartsInfo } from './parts-info.js?v=43';
-import { FirmwareDisplay } from './emulator-display.js?v=43';
-import { createCables } from './cables.js?v=43';
+import { createRenderSettings } from './render-settings.js?v=45';
+import { PARTS, createPartsInfo } from './parts-info.js?v=45';
+import { FirmwareDisplay } from './emulator-display.js?v=45';
+import { createCables } from './cables.js?v=45';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=43';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=45';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=43';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=43';
+import { loadGLB } from './glb.js?v=45';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=45';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -32,6 +32,11 @@ const easeIntro=t=>t<.5?16*t*t*t*t*t:1-Math.pow(-2*t+2,5)/2,easeBack=t=>{const c
 const benchCopy=$('.bench-copy'),bomCta=$('.bom-cta');
 // On phones the step detail starts folded, so the badge keeps the screen.
 const stepDetails=[...document.querySelectorAll('details.instruction,details.emu-help')];
+// The phone's bottom bar steps through the story; the desktop keeps its dot rail.
+for(const b of document.querySelectorAll('[data-step-jump]'))b.addEventListener('click',()=>{
+ const dir=+b.dataset.stepJump,i=Math.round(target)+dir;
+ const top=i<=0?(dir<0&&target<.3?0:coverEnd()+4):chapters[Math.min(i,chapters.length-1)].offsetTop+innerHeight*.075;
+ scrollTo({top,behavior:'smooth'});});
 const foldDetails=()=>{const wide=innerWidth>760;for(const d of stepDetails)d.open=wide;};foldDetails();addEventListener('resize',foldDetails);
 const coverEl=$('#cover'),coverBg=$('#cover-bg'),coverInner=$('.cover-inner'),coverActions=$('.cover-actions'),coverSpace=$('#cover-space'),capSlot=$('#cap-slot');
 const COVER_DONE=.86;let coverT=0;const coverEnd=()=>Math.max(1,coverSpace.offsetHeight-innerHeight*.18);
