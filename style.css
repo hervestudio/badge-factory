@@ -239,3 +239,18 @@ body.inspecting footer,body.inspecting .step-nav{opacity:0;pointer-events:none}
  body.inspecting .finale footer{opacity:1;pointer-events:auto;position:fixed;left:7%;right:7%;bottom:100px;z-index:15}
  body.inspecting details.emu-help>summary{color:#6f6680}
 }
+
+/* Render settings and the frame counter are for #debug only. */
+#toggle-render,#render-panel,#fps{display:none}
+body.debug #toggle-render{display:block}
+body.debug #fps{display:inline}
+
+.burger{display:none}
+@media(max-width:760px){
+ .step-open{grid-template-columns:1fr auto auto;grid-template-areas:'label label burger' 'prog count burger'}
+ .burger{grid-area:burger;display:grid;gap:3.5px;align-content:center;justify-items:end;width:26px;height:36px;padding-left:9px;border-left:1px solid #eee7f4}
+ .burger i{display:block;width:15px;height:1.6px;border-radius:2px;background:#8b81a0;transition:transform .3s ease,opacity .25s ease}
+ body.drawer-open .burger i:nth-child(1){transform:translateY(5.1px) rotate(45deg)}
+ body.drawer-open .burger i:nth-child(2){opacity:0}
+ body.drawer-open .burger i:nth-child(3){transform:translateY(-5.1px) rotate(-45deg)}
+}

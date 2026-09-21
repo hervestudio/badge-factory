@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=50';
-import { PARTS, createPartsInfo } from './parts-info.js?v=50';
-import { FirmwareDisplay } from './emulator-display.js?v=50';
-import { createCables } from './cables.js?v=50';
+import { createRenderSettings } from './render-settings.js?v=53';
+import { PARTS, createPartsInfo } from './parts-info.js?v=53';
+import { FirmwareDisplay } from './emulator-display.js?v=53';
+import { createCables } from './cables.js?v=53';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=50';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=53';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=50';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=50';
+import { loadGLB } from './glb.js?v=53';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=53';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -21,6 +21,8 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 const $=s=>document.querySelector(s),canvas=$('#scene'),stage=$('#stage');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const chapters=[...document.querySelectorAll('.chapter')],copies=[...document.querySelectorAll('.chapter .copy')];
+// #debug in the url brings back the render settings and the frame counter.
+if(/(^|[#?&])debug\b/.test(location.hash+location.search))document.body.classList.add('debug');
 const names=['THE MAKER’S WORKBENCH','PREPARE THE SHELLS','FIT THE SWITCHES','SEAT THE DISPLAY','INSTALL THE CHARGER','PLACE THE BATTERY','CONNECT THE ESP32','WIRE THE CONNECTIONS','TEST IT OPEN','CLOSE THE ENCLOSURE','READY FOR THREE CONF'];
 let current=0,target=0,active=-1,inspect=false,renderer,screenTexture,screenCtx,screenMesh,hoveredName=null;
 const animated=[],clickables=[];
@@ -324,8 +326,11 @@ try {
   const floor=mobile?Math.min(bb.top-10,H-34-(partsPicker.offsetHeight||56)-8):bb.top-18;
   const t0=clamp(cb.bottom+(mobile?10:22),70,H*.5),b0=clamp(floor,H*.5,H-16);
   benchTop=t0/H*100;benchH=Math.max(b0-t0,H*.32)/H*100;}
- const top0=lerp(benchTop,mobile?58:6,leaveBench),h0=lerp(benchH,mobile?36:89,leaveBench);
- const t=lerp(top0,mobile?56:1,stageClose),hh=lerp(h0,mobile?38:99,stageClose);
+ let stepTopPct=58,stepHPct=36;
+ if(mobile){const ci=clamp(Math.round(current)-1,0,copies.length-1),cb=copies[ci].getBoundingClientRect().bottom;
+  const t0=clamp(cb+14,H*.28,H*.58),floor=H-72;stepTopPct=t0/H*100;stepHPct=Math.max(floor-t0,H*.3)/H*100;}
+ const top0=lerp(benchTop,mobile?stepTopPct:6,leaveBench),h0=lerp(benchH,mobile?stepHPct:89,leaveBench);
+ const t=lerp(top0,mobile?stepTopPct:1,stageClose),hh=lerp(h0,mobile?stepHPct:99,stageClose);
  let vx=W*l/100,vw=W*(100-l-r)/100,vy=H*t/100,vh=H*hh/100;
  if(inspectE>0){vx=lerp(vx,0,inspectE);vy=lerp(vy,0,inspectE);vw=lerp(vw,W,inspectE);vh=lerp(vh,H,inspectE);}
  camera.aspect=vw/vh;camera.setViewOffset(vw,vh,-vx,-vy,W,H);camera.updateProjectionMatrix();
@@ -344,7 +349,7 @@ try {
  }
  inspectT=clamp(inspectT+(inspect?dt/.85:-dt/.6),0,1);inspectE=easeInOut(inspectT);if(controls)controls.enabled=inspect&&inspectT>=1;
  if(!(inspect&&inspectT>=1)){const close=smooth(current,8.7,10);badge.rotation.set(lerp(-.96,lerp(-.11,.025,close),leaveBench),lerp(0,lerp(-.05,-.2,close),leaveBench),lerp(0,lerp(-.04,-.06,close),leaveBench));
- const widthNeeded=lerp(mobileBench?300:540,lerp(214,120,close),leaveBench),heightNeeded=lerp(mobileBench?300:242,lerp(200,221,close),leaveBench);
+ const widthNeeded=lerp(mobileBench?300:540,lerp(mobileBench?186:214,mobileBench?104:120,close),leaveBench),heightNeeded=lerp(mobileBench?300:242,lerp(mobileBench?162:200,mobileBench?176:221,close),leaveBench);
  const dist=Math.max(heightNeeded,widthNeeded/camera.aspect)/(2*Math.tan(THREE.MathUtils.degToRad(16)));frameDist=dist;
  parallax.x=lerp(parallax.x,parallax.tx,Math.min(1,dt*3.5));parallax.y=lerp(parallax.y,parallax.ty,Math.min(1,dt*3.5));const px=reduced?0:parallax.x,py=reduced?0:parallax.y;camera.position.set(lerp(0,lerp(85,24,close),leaveBench)+px*lerp(14,9,leaveBench),lerp(0,lerp(38,12,close),leaveBench)-py*lerp(9,6,leaveBench),dist);storyLook.set(lerp(0,lerp(6,0,close),leaveBench)+px*lerp(4,2,leaveBench),lerp(0,lerp(-1,2,close),leaveBench)-py*lerp(3,2,leaveBench),0);camera.lookAt(storyLook);
  if(coverT<1){const e=easeIntro(coverT),eL=easeIntro(clamp(coverT/.8,0,1)),tx=lerp(0,lerp(6,0,close),leaveBench)+px*lerp(4,2,leaveBench),ty=lerp(0,lerp(-1,2,close),leaveBench)-py*lerp(3,2,leaveBench);
