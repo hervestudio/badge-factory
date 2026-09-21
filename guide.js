@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { STLLoader } from './vendor/STLLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { mat, material, mesh, wire, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, planarUVs, PINS, RIBBON_COLORS } from './parts.js?v=61';
+import { mat, material, mesh, wire, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, planarUVs, PINS, RIBBON_COLORS } from './parts.js?v=63';
 import { PARTS } from './parts-info.js';
 
 // Each figure is a small orbitable scene built from the same parts as the interactive page.
