@@ -146,7 +146,7 @@ export function createCables(root,{display,esp,battery,charger,strip,switches,sh
  select.addEventListener('change',()=>choose(+select.value));
  document.querySelector('#close-cable').onclick=()=>{card.hidden=true;selected=-1;select.value=''};
  function update(current,dt){
-  group.visible=current<.8||current>6.8;const inspecting=current>6.8&&current<9;
+  group.visible=current<.8||(current>6.8&&current<9.15);const inspecting=current>6.8&&current<9;
   document.body.classList.toggle('wiring-view',inspecting);if(!inspecting)card.hidden=true;
   root.updateWorldMatrix(true,true);
   const step=Math.min(dt,1/30),closed=smooth(current,8.6,9.6);
