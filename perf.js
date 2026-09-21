@@ -14,11 +14,12 @@ export function detectPerformance(gl){
  else if(/intel|iris|uhd|hd graphics|vega \d|radeon graphics/.test(g)){tier=1;reason='integrated GPU';}
  else if(/mali|adreno|powervr|videocore/.test(g)){tier=1;reason='mobile GPU';}
  else if(/swiftshader|llvmpipe|software/.test(g)){tier=0;reason='software renderer';}
- if(mobile){tier=Math.min(tier,1);reason+=', mobile';}
+ if(mobile){const strong=/apple|adreno \(tm\) [78]\d\d|adreno [78]\d\d|mali-g[6-9]\d/.test(g);
+  tier=strong?3:Math.min(tier,1);reason=strong?'modern phone GPU':reason+', mobile';}
  if(cores<=4||memory<=4){tier=Math.min(tier,1);reason+=', small CPU/RAM';}
  let dpr=Math.min(devicePixelRatio||1,TIER_DPR[tier]);
  // Keep the framebuffer under ~9 Mpx whatever the screen (a 5K display at 2× would be four times a laptop panel).
- const budget=Math.sqrt(9e6/Math.max(1,innerWidth*innerHeight));
+ const budget=Math.sqrt((mobile?4.2e6:9e6)/Math.max(1,innerWidth*innerHeight));
  if(dpr>budget){dpr=Math.max(1,Math.round(budget*4)/4);reason+=', pixel budget';}
  return {gpu,tier,dpr,reason};
 }
