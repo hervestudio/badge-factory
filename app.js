@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=34';
-import { PARTS, createPartsInfo } from './parts-info.js?v=34';
-import { FirmwareDisplay } from './emulator-display.js?v=34';
-import { createCables } from './cables.js?v=34';
+import { createRenderSettings } from './render-settings.js?v=35';
+import { PARTS, createPartsInfo } from './parts-info.js?v=35';
+import { FirmwareDisplay } from './emulator-display.js?v=35';
+import { createCables } from './cables.js?v=35';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=34';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=35';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=34';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=34';
+import { loadGLB } from './glb.js?v=35';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=35';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -142,7 +142,7 @@ try {
  });
  for(const x of [-26,26])for(const y of [-60,60]){
  const insert=part(back,'M2 brass insert',[x,y,-10.8],[0,0,18],1);cyl(insert,1.75,4,mat.gold,[0,0,0]);cyl(insert,.8,4.05,mat.black,[0,0,0]);
- const screw=part(front,'M2×12 screw',[x,y,-5.4],[0,0,52],9.3);screw.userData.dropIn=true;cyl(screw,1,10,mat.silver,[0,0,0]);const cone=new THREE.CylinderGeometry(1.9,1,1.8,24);cone.rotateX(Math.PI/2);mesh(screw,cone,mat.silver,[0,0,5]);box(screw,2,.4,.12,mat.black,[0,0,5.95]);
+ const screw=part(front,'M2×12 screw',[x,y,-5.4],[0,0,52],9.1);screw.userData.dropIn=true;cyl(screw,1,10,mat.silver,[0,0,0]);const cone=new THREE.CylinderGeometry(1.9,1,1.8,24);cone.rotateX(Math.PI/2);mesh(screw,cone,mat.silver,[0,0,5]);box(screw,2,.4,.12,mat.black,[0,0,5.95]);
  const cap=part(front,'Screw cap',[x,y,-.3],[0,0,44],10);cap.userData.dropIn=true;mesh(cap,geos[5],mat.shell);
  }
  const bar=part(back,'Strap bar',[0,63.8,-8],[0,20,25],9);buildStrapBar(bar);
@@ -279,8 +279,8 @@ try {
   camera.layers.set(0);renderer.autoClear=auto;}
  function frame(time){requestAnimationFrame(frame);if(document.hidden)return;const dt=Math.min((time-lastTime)/1000,.05);lastTime=time;if(capState.bornAt<0)capState.bornAt=coverRevealed?time+120:time+1e5;current=reduced?target:lerp(current,target,1-Math.exp(-dt*8));
  fpsTicks++;if(time-fpsAt>500){const f=Math.round(fpsTicks*1000/(time-fpsAt));if(fpsEl)fpsEl.textContent=(fpsRenders<fpsTicks*.6?`${f} fps · idle`:`${f} fps`)+` · ×${renderer.getPixelRatio()}`;fpsTicks=0;fpsRenders=0;fpsAt=time;}
- const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.6,9.6));
- const shellFlip=1-smooth(current,2.42,2.84),frontYaw=2.88-Math.PI*shellFlip;
+ const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.45,9.2));
+ const shellFlip=1-smooth(current,2.25,2.62),frontYaw=2.88-Math.PI*shellFlip;
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=frontYaw*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
  document.body.classList.toggle('on-bench',current<.35&&coverT>=COVER_DONE);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
  if(partDragging&&dragPart&&dragPart.userData.body){const b=dragPart.userData.body,tz=TOPH[dragPart.userData.name]/2+26;b.wakeUp();let vx=(dragTarget.x-b.position.x)*14,vy=(dragTarget.y-b.position.y)*14;const L=Math.hypot(vx,vy),cap=900;if(L>cap){vx*=cap/L;vy*=cap/L;}b.velocity.set(vx,vy,(tz-b.position.z)*14);b.angularVelocity.set(0,0,0);b.quaternion.set(0,0,0,1);}
@@ -303,7 +303,7 @@ try {
  for(const p of animated){const {home,offset,phase,bench,benchRotation,name}=p.userData;
  p.userData.lift=0;
  if(p.userData.benchOnly){p.visible=current<1.05;p.scale.setScalar(1);shellA.copy(bench);shellA.z=bench.z+p.userData.lift;const sy=shellA.y,sz=shellA.z;shellA.y=sy*matC-sz*matS-260*leaveBench;shellA.z=sy*matS+sz*matC;shellA.sub(p.parent.position).applyAxisAngle(YAXIS,-p.parent.rotation.y);p.position.copy(shellA);p.quaternion.setFromAxisAngle(XAXIS,workbench.rotation.x).multiply(qTmp.setFromAxisAngle(YAXIS,-p.parent.rotation.y)).multiply(p.userData.benchQuat).multiply(qFlip.setFromAxisAngle(YAXIS,benchRotation));continue;}
- const entryStart=phase<=1?.3:phase-.18,entryEnd=Math.min(phase+.38,10),entry=smooth(current,entryStart,entryEnd);
+ const entryStart=phase<=1?.3:phase-.6,entryEnd=Math.min(phase+.2,10),entry=smooth(current,entryStart,entryEnd);
  const isShell=phase===1;
  p.visible=current<1.05||entry>0||isShell;
  const size=isShell||current<1.05?1:entry;
