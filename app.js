@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=54';
-import { PARTS, createPartsInfo } from './parts-info.js?v=54';
-import { FirmwareDisplay } from './emulator-display.js?v=54';
-import { createCables } from './cables.js?v=54';
+import { createRenderSettings } from './render-settings.js?v=55';
+import { PARTS, createPartsInfo } from './parts-info.js?v=55';
+import { FirmwareDisplay } from './emulator-display.js?v=55';
+import { createCables } from './cables.js?v=55';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=54';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=55';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=54';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=54';
+import { loadGLB } from './glb.js?v=55';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=55';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -58,6 +58,7 @@ capSlot.addEventListener('pointermove',e=>{const r=capSlot.getBoundingClientRect
 capSlot.addEventListener('pointerleave',()=>{capState.tx=0;capState.ty=0;});
 capSlot.addEventListener('pointerdown',()=>{capState.press=1;capState.spinAt=performance.now();});
 $('#cover-cta').addEventListener('pointerenter',()=>{capState.spinAt=performance.now();});
+const STICK=88; // matches the mobile `.chapter .copy` sticky top in style.css
 let bandTop=-1,bandBottom=-1,pressedOnce=false,capHandedOver=false,frameDist=400;const capV=new THREE.Vector3(),capP=new THREE.Vector3(),capU=new THREE.Vector3(),capA=new THREE.Vector3(),capB=new THREE.Vector3(),capLocal=new THREE.Vector3(),capQ=new THREE.Quaternion(),capQ2=new THREE.Quaternion(),benchQ=new THREE.Quaternion(),capE=new THREE.Euler();
 
 let markSceneReady;const sceneReady=new Promise(r=>{markSceneReady=r});
@@ -327,7 +328,10 @@ try {
   const t0=clamp(cb.bottom+(mobile?10:22),70,H*.5),b0=clamp(floor,H*.5,H-16);
   benchTop=t0/H*100;benchH=Math.max(b0-t0,H*.32)/H*100;}
  let stepTopPct=58,stepHPct=36;
- if(mobile){const ci=clamp(Math.round(current)-1,0,copies.length-1),cb=copies[ci].getBoundingClientRect().bottom;
+ if(mobile){const ci=clamp(Math.round(current)-1,0,copies.length-1),cc=copies[ci];
+  // Aim at where the copy will sit once stuck (STICK + its height), not at where it is
+  // mid-slide: the band keeps one steady home per step instead of being pushed down.
+  const cb=Math.min(cc.getBoundingClientRect().bottom,STICK+cc.offsetHeight);
   const t0=clamp(cb+14,H*.28,H*.58),floor=H-72,k=bandTop<0?1:Math.min(1,dt*6);
   bandTop=bandTop<0?t0:lerp(bandTop,t0,k);bandBottom=bandBottom<0?floor:lerp(bandBottom,floor,k);
   stepTopPct=bandTop/H*100;stepHPct=Math.max(bandBottom-bandTop,H*.3)/H*100;}
@@ -336,7 +340,11 @@ try {
  let vx=W*l/100,vw=W*(100-l-r)/100,vy=H*t/100,vh=H*hh/100;
  if(inspectE>0){vx=lerp(vx,0,inspectE);vy=lerp(vy,0,inspectE);vw=lerp(vw,W,inspectE);vh=lerp(vh,H,inspectE);}
  camera.aspect=vw/vh;camera.setViewOffset(vw,vh,-vx,-vy,W,H);camera.updateProjectionMatrix();
- if(mobile&&inspectE<.5){for(let i=0;i<copies.length;i++){const c=copies[i],rc=c.getBoundingClientRect();if(rc.bottom<0||rc.top>H)continue;c.style.opacity=clamp((vy-rc.bottom)/90+1,.12,1);}}else if(copies[1].style.opacity!==''){for(const c of copies)c.style.opacity='';}}
+ if(mobile&&inspectE<.5){for(let i=0;i<copies.length;i++){const c=copies[i],rc=c.getBoundingClientRect();if(rc.bottom<0||rc.top>H)continue;
+  // A chapter only reads once it has climbed to its sticky spot; on the way up it stays
+  // fully out of the way, so no ghost text ever crosses the badge between steps.
+  c.style.opacity=c.parentNode.classList.contains('finale')?clamp((vy-rc.bottom)/90+1,.12,1)
+   :Math.min(clamp((vy-rc.bottom)/70+1,0,1),clamp((H*.4-rc.top)/(H*.18),0,1));}}else if(copies[1].style.opacity!==''){for(const c of copies)c.style.opacity='';}}
 
  for(const p of animated){const {home,offset,phase,bench,benchRotation,name}=p.userData;
  p.userData.lift=0;
