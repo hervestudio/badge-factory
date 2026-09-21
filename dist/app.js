@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=35';
-import { PARTS, createPartsInfo } from './parts-info.js?v=35';
-import { FirmwareDisplay } from './emulator-display.js?v=35';
-import { createCables } from './cables.js?v=35';
+import { createRenderSettings } from './render-settings.js?v=36';
+import { PARTS, createPartsInfo } from './parts-info.js?v=36';
+import { FirmwareDisplay } from './emulator-display.js?v=36';
+import { createCables } from './cables.js?v=36';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=35';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=36';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=35';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=35';
+import { loadGLB } from './glb.js?v=36';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=36';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -66,7 +66,7 @@ $('#inspect').onclick=()=>setInspect(!inspect);
 $('#replay').onclick=()=>{setInspect(false);scrollTo({top:0,behavior:reduced?'instant':'smooth'})};
 
 try {
- renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});const perf=detectPerformance(renderer.getContext());renderer.setPixelRatio(perf.dpr);console.info(`[badge] ${perf.gpu} → tier ${perf.tier}, pixel ratio ${perf.dpr} (${perf.reason})`);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});const perf=detectPerformance(renderer.getContext());renderer.setPixelRatio(perf.dpr);console.info(`[badge] ${perf.gpu||'renderer hidden'} → tier ${perf.tier}, pixel ratio ${perf.dpr} (${perf.reason}) · ${perf.cores||'?'} cores, ${perf.memory||'?'} GB, dpr ${devicePixelRatio}`);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
  const hemisphere=new THREE.HemisphereLight(0xe8edff,0x574339,.22);scene.add(hemisphere);
  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();
  scene.environment=pmrem.fromScene(room,.04).texture;scene.environmentIntensity=.32;room.dispose();pmrem.dispose();
