@@ -232,3 +232,10 @@ body.inspecting footer,body.inspecting .step-nav{opacity:0;pointer-events:none}
  .chapter:not(.hero) .copy{top:88px}
 }
 @media(min-width:761px){#step-drawer{display:none}}
+
+/* On a phone the controls belong to Explore in 3D, not to the story page. */
+@media(max-width:760px){
+ .finale footer{opacity:0;pointer-events:none;transition:opacity .4s ease}
+ body.inspecting .finale footer{opacity:1;pointer-events:auto;position:fixed;left:7%;right:7%;bottom:100px;z-index:15}
+ body.inspecting details.emu-help>summary{color:#6f6680}
+}
