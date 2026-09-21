@@ -1,6 +1,17 @@
 # Three Conf — Inside the badge
 
+Live: **https://hervestudio.github.io/badge-factory/**
+
 A self-contained static Three.js assembly story. Serve `dist/` over HTTP; `npm run dev` starts a local preview on port 4173. No CDN or runtime third-party requests are required.
+
+## Publishing
+
+GitHub Pages serves the `gh-pages` branch, which holds the contents of `dist/`. To ship a new build:
+
+```sh
+git push origin main
+git subtree push --prefix dist origin gh-pages
+```
 
 ## Assets
 
