@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=38';
-import { PARTS, createPartsInfo } from './parts-info.js?v=38';
-import { FirmwareDisplay } from './emulator-display.js?v=38';
-import { createCables } from './cables.js?v=38';
+import { createRenderSettings } from './render-settings.js?v=43';
+import { PARTS, createPartsInfo } from './parts-info.js?v=43';
+import { FirmwareDisplay } from './emulator-display.js?v=43';
+import { createCables } from './cables.js?v=43';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=38';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=43';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=38';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=38';
+import { loadGLB } from './glb.js?v=43';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=43';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -31,7 +31,7 @@ const easeIntro=t=>t<.5?16*t*t*t*t*t:1-Math.pow(-2*t+2,5)/2,easeBack=t=>{const c
 // Cover screen: scrolling through #cover-space drives coverT from the intro (0) down to the workbench (1). The centre cap rides along.
 const benchCopy=$('.bench-copy'),bomCta=$('.bom-cta');
 // On phones the step detail starts folded, so the badge keeps the screen.
-const stepDetails=[...document.querySelectorAll('details.instruction')];
+const stepDetails=[...document.querySelectorAll('details.instruction,details.emu-help')];
 const foldDetails=()=>{const wide=innerWidth>760;for(const d of stepDetails)d.open=wide;};foldDetails();addEventListener('resize',foldDetails);
 const coverEl=$('#cover'),coverBg=$('#cover-bg'),coverInner=$('.cover-inner'),coverActions=$('.cover-actions'),coverSpace=$('#cover-space'),capSlot=$('#cap-slot');
 const COVER_DONE=.86;let coverT=0;const coverEnd=()=>Math.max(1,coverSpace.offsetHeight-innerHeight*.18);
@@ -61,7 +61,16 @@ function updateTarget(){const y=scrollY+innerHeight*.18;let i=0;while(i<chapters
 addEventListener('scroll',updateTarget,{passive:true});
 
 let controls;
-function setInspect(value){inspect=value;document.body.classList.toggle('inspecting',value);$('#inspect').textContent=value?'Reset view ↺':'Explore in 3D ↗';if(controls){controls.enabled=value;if(!value){camera.position.set(55,24,350);controls.target.set(0,7,0);controls.update()}}}
+// Explore in 3D frames the assembled badge itself, so it fills whatever screen it is on.
+const inspectBox=new THREE.Box3(),inspectSize=new THREE.Vector3(),inspectMid=new THREE.Vector3(),badgeShells=[];
+function fitInspect(){inspectBox.makeEmpty();for(const g of badgeShells)inspectBox.expandByObject(g);
+ inspectBox.getSize(inspectSize);inspectBox.getCenter(inspectMid);
+ const vFov=THREE.MathUtils.degToRad(camera.fov),aspect=(stage.clientWidth||1)/(stage.clientHeight||1);
+ const hFov=2*Math.atan(Math.tan(vFov/2)*aspect);
+ const d=Math.max(inspectSize.y/2/Math.tan(vFov/2),inspectSize.x/2/Math.tan(hFov/2))*1.12+inspectSize.z/2;
+ controls.target.copy(inspectMid);camera.position.set(inspectMid.x+d*.16,inspectMid.y+d*.07,inspectMid.z+d*.98);controls.update();}
+function setInspect(value){inspect=value;document.body.classList.toggle('inspecting',value);$('#inspect').textContent=value?'Reset view ↺':'Explore in 3D ↗';
+ if(controls){controls.enabled=value;if(value)fitInspect();else{camera.position.set(55,24,350);controls.target.set(0,7,0);controls.update();}}}
 $('#inspect').onclick=()=>setInspect(!inspect);
 $('#replay').onclick=()=>{setInspect(false);scrollTo({top:0,behavior:reduced?'instant':'smooth'})};
 
@@ -96,8 +105,8 @@ try {
  for(const {geometry} of arrowCap){geometry.rotateX(-Math.PI/2);geometry.scale(6.75,6.75,6.75);}
  geos[0].rotateY(Math.PI);geos[1].translate(-80,0,0);
  for(const g of geos){const a=g.attributes.position,n=g.attributes.normal,uv=new Float32Array(a.count*2);for(let i=0;i<a.count;i++){const x=Math.abs(n.getX(i)),y=Math.abs(n.getY(i)),z=Math.abs(n.getZ(i));uv[i*2]=(x>z?a.getY(i):a.getX(i))/10;uv[i*2+1]=(z>=x&&z>=y?a.getY(i):a.getZ(i))/10}g.setAttribute('uv',new THREE.BufferAttribute(uv,2))}
- const face=part(front,'Front enclosure',[0,0,0],[0,0,10],1);mesh(face,geos[0],mat.shell);
- const rear=part(back,'Rear enclosure',[0,0,-16],[0,0,-8],1);mesh(rear,geos[1],mat.rear);
+ const face=part(front,'Front enclosure',[0,0,0],[0,0,10],1);mesh(face,geos[0],mat.shell);badgeShells.push(face);
+ const rear=part(back,'Rear enclosure',[0,0,-16],[0,0,-8],1);mesh(rear,geos[1],mat.rear);badgeShells.push(rear);
  // The two shells and all seven finish caps are tessellated from the supplied CAD.
  decal(face,53,23,[0,44,.08],(c,w,h)=>{const pad=h*.035,size=h*.5;c.fillStyle='#f2eddd';c.font=`${size}px Dingos,Arial Black`;c.textBaseline='top';const y1=pad+c.measureText('THREE').actualBoundingBoxAscent,lh=size*.9;c.fillText('THREE',0,y1,w*.9);c.fillText('CONF',0,y1+lh,w*.8);const r=h*.29,cx=w-pad-r,cy=h-pad-r;c.fillStyle='#f1d128';c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fill();c.save();c.translate(cx,cy);c.rotate(-.15);c.fillStyle='#171220';c.textAlign='center';c.textBaseline='middle';c.font=`${h*.26}px Dingos`;c.fillText('.JS',0,0);c.restore();},900);
  decal(face,39,14,[0,-53.7,.09],(c,w,h)=>{c.fillStyle='#f1d12c';c.beginPath();c.roundRect(0,0,w,h,22);c.fill();c.fillStyle='#221a2d';c.textAlign='center';c.font=`${h*.29}px Dingos`;c.fillText('BRUNO SIMON',w/2,h*.47,w*.87);c.font=`bold ${h*.17}px Arial`;c.fillText('THREE.JS JOURNEY',w/2,h*.74)});
@@ -291,7 +300,8 @@ try {
  physWorld.step(1/120,Math.min(dt,.05),8);syncPhysics();}
  workbench.visible=current<1.12;cutting.material.opacity=1;top.material.opacity=1;workbench.position.set(0,-260*leaveBench,0);workbench.rotation.x=-.85*leaveBench;const matC=Math.cos(workbench.rotation.x),matS=Math.sin(workbench.rotation.x);
  const stageClose=smooth(current,8.7,10),stageKey=leaveBench+stageClose;if(hoveredName&&current<.35&&!partDragging&&!inspect){peek.dataset.name=hoveredName;if(hoveredPartRef){shellB.set(hoveredPartRef.userData.bench.x,hoveredPartRef.userData.bench.y,hoveredPartRef.userData.bench.z+(TOPH[hoveredName]||6)+4);badge.localToWorld(shellB);}else shellB.copy(hoveredAnchor);shellB.project(camera);const r2=canvas.getBoundingClientRect();peek.style.left=(r2.left+(shellB.x+1)*r2.width/2)+'px';peek.style.top=(r2.top+(1-shellB.y)*r2.height/2-34)+'px';peek.hidden=false;}else if(!peekSticky||current>=.35)peek.hidden=true;
- {// The canvas always fills the window; the framing rectangle is applied as a camera view offset, so nothing is ever cropped.
+ if(inspect){camera.clearViewOffset();camera.aspect=(stage.clientWidth||1)/(stage.clientHeight||1);camera.updateProjectionMatrix();}
+ else {// The canvas always fills the window; the framing rectangle is applied as a camera view offset, so nothing is ever cropped.
  const mobile=innerWidth<=760,W=stage.clientWidth,H=stage.clientHeight;
  const l=lerp(mobile?0:4,mobile?0:38,leaveBench),r=lerp(mobile?0:4,mobile?0:1,leaveBench);
  let benchTop=13,benchH=81;{const cb=benchCopy.getBoundingClientRect(),bb=bomCta.getBoundingClientRect();
@@ -302,7 +312,7 @@ try {
  const t=lerp(top0,mobile?56:1,stageClose),hh=lerp(h0,mobile?38:99,stageClose);
  const vx=W*l/100,vw=W*(100-l-r)/100,vy=H*t/100,vh=H*hh/100;
  camera.aspect=vw/vh;camera.setViewOffset(vw,vh,-vx,-vy,W,H);camera.updateProjectionMatrix();
- if(mobile){for(let i=0;i<copies.length;i++){const c=copies[i],rc=c.getBoundingClientRect();if(rc.bottom<0||rc.top>H)continue;c.style.opacity=clamp((vy-rc.bottom)/60+1,0,1);}}else if(copies[1].style.opacity!==''){for(const c of copies)c.style.opacity='';}}
+ if(mobile){for(let i=0;i<copies.length;i++){const c=copies[i],rc=c.getBoundingClientRect();if(rc.bottom<0||rc.top>H)continue;c.style.opacity=clamp((vy-rc.bottom)/90+1,.12,1);}}else if(copies[1].style.opacity!==''){for(const c of copies)c.style.opacity='';}}
 
  for(const p of animated){const {home,offset,phase,bench,benchRotation,name}=p.userData;
  p.userData.lift=0;
