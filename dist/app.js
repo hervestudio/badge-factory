@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=53';
-import { PARTS, createPartsInfo } from './parts-info.js?v=53';
-import { FirmwareDisplay } from './emulator-display.js?v=53';
-import { createCables } from './cables.js?v=53';
+import { createRenderSettings } from './render-settings.js?v=54';
+import { PARTS, createPartsInfo } from './parts-info.js?v=54';
+import { FirmwareDisplay } from './emulator-display.js?v=54';
+import { createCables } from './cables.js?v=54';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=53';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=54';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=53';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=53';
+import { loadGLB } from './glb.js?v=54';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=54';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -58,7 +58,7 @@ capSlot.addEventListener('pointermove',e=>{const r=capSlot.getBoundingClientRect
 capSlot.addEventListener('pointerleave',()=>{capState.tx=0;capState.ty=0;});
 capSlot.addEventListener('pointerdown',()=>{capState.press=1;capState.spinAt=performance.now();});
 $('#cover-cta').addEventListener('pointerenter',()=>{capState.spinAt=performance.now();});
-let pressedOnce=false,capHandedOver=false,frameDist=400;const capV=new THREE.Vector3(),capP=new THREE.Vector3(),capU=new THREE.Vector3(),capA=new THREE.Vector3(),capB=new THREE.Vector3(),capLocal=new THREE.Vector3(),capQ=new THREE.Quaternion(),capQ2=new THREE.Quaternion(),benchQ=new THREE.Quaternion(),capE=new THREE.Euler();
+let bandTop=-1,bandBottom=-1,pressedOnce=false,capHandedOver=false,frameDist=400;const capV=new THREE.Vector3(),capP=new THREE.Vector3(),capU=new THREE.Vector3(),capA=new THREE.Vector3(),capB=new THREE.Vector3(),capLocal=new THREE.Vector3(),capQ=new THREE.Quaternion(),capQ2=new THREE.Quaternion(),benchQ=new THREE.Quaternion(),capE=new THREE.Euler();
 
 let markSceneReady;const sceneReady=new Promise(r=>{markSceneReady=r});
 let coverRevealed=false;
@@ -87,8 +87,8 @@ function fitInspect(){inspectBox.makeEmpty();for(const g of badgeShells)inspectB
  const hFov=2*Math.atan(Math.tan(vFov/2)*aspect);
  const d=Math.max(inspectSize.y/2/Math.tan(vFov/2),inspectSize.x/2/Math.tan(hFov/2))*1.42+inspectSize.z/2;
  inspectTarget.copy(inspectMid);inspectPos.set(inspectMid.x+d*.16,inspectMid.y+d*.07,inspectMid.z+d*.98);controls.target.copy(inspectMid);}
-function setInspect(value){inspect=value;document.body.classList.toggle('inspecting',value);$('#inspect').textContent=value?'Close ✕':'Explore in 3D';
- const help=$('details.emu-help');if(help&&innerWidth<=760)help.open=value;
+function setInspect(value){inspect=value;document.body.classList.toggle('inspecting',value);$('#inspect').innerHTML=value?'<span>Close</span> ✕':'Explore in 3D';
+ const help=$('details.emu-help');if(help&&innerWidth<=760)help.open=false;
  if(controls){controls.enabled=false;if(value)fitInspect();}}
 $('#inspect').onclick=()=>setInspect(!inspect);
 $('#replay').onclick=()=>{setInspect(false);scrollTo({top:0,behavior:reduced?'instant':'smooth'})};
@@ -328,7 +328,9 @@ try {
   benchTop=t0/H*100;benchH=Math.max(b0-t0,H*.32)/H*100;}
  let stepTopPct=58,stepHPct=36;
  if(mobile){const ci=clamp(Math.round(current)-1,0,copies.length-1),cb=copies[ci].getBoundingClientRect().bottom;
-  const t0=clamp(cb+14,H*.28,H*.58),floor=H-72;stepTopPct=t0/H*100;stepHPct=Math.max(floor-t0,H*.3)/H*100;}
+  const t0=clamp(cb+14,H*.28,H*.58),floor=H-72,k=bandTop<0?1:Math.min(1,dt*6);
+  bandTop=bandTop<0?t0:lerp(bandTop,t0,k);bandBottom=bandBottom<0?floor:lerp(bandBottom,floor,k);
+  stepTopPct=bandTop/H*100;stepHPct=Math.max(bandBottom-bandTop,H*.3)/H*100;}
  const top0=lerp(benchTop,mobile?stepTopPct:6,leaveBench),h0=lerp(benchH,mobile?stepHPct:89,leaveBench);
  const t=lerp(top0,mobile?stepTopPct:1,stageClose),hh=lerp(h0,mobile?stepHPct:99,stageClose);
  let vx=W*l/100,vw=W*(100-l-r)/100,vy=H*t/100,vh=H*hh/100;
