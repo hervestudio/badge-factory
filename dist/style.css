@@ -188,3 +188,24 @@ body.inspecting #finished .copy{z-index:12}
  body.inspecting #finished .final-controls .text-button{display:none}
  body.inspecting #inspect{box-shadow:0 10px 30px #2a1f3a45}
 }
+
+/* Phone chrome: no parts picker, no dot rail — the bottom bar becomes a floating stepper. */
+.step-jump{display:none}
+@media(max-width:760px){
+ body.on-bench .parts-picker,.parts-picker,.step-nav{display:none!important}
+ .bottom-bar{left:10px;right:10px;bottom:10px;height:auto;padding:9px 9px 9px 15px;border-radius:17px;background:#fffffff5;backdrop-filter:blur(12px);box-shadow:0 7px 24px #2a1f3a1f;border:1px solid #efeaf5;
+  display:grid;grid-template-columns:1fr auto auto;grid-template-areas:'label label jump' 'prog count jump';align-items:center;gap:4px 10px}
+ #step-label{grid-area:label;font-size:8.5px}
+ .progress-track{grid-area:prog;margin:0}
+ #step-count{grid-area:count;font-size:8.5px}
+ .step-jump{grid-area:jump;display:flex;gap:7px}
+ .step-jump button{width:36px;height:36px;border-radius:50%;border:0;background:#ebe3f8;color:#4a3a62;display:grid;place-items:center;padding:0}
+ .step-jump button:active{background:#ddd0f2}
+ .finale footer{bottom:76px}
+ body.on-bench .bom-cta{bottom:80px}
+}
+
+@media(max-width:760px){
+ #fps{top:auto;bottom:74px;right:14px;font-size:9px}
+ .finale footer{bottom:96px}
+}
