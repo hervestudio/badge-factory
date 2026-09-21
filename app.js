@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=48';
-import { PARTS, createPartsInfo } from './parts-info.js?v=48';
-import { FirmwareDisplay } from './emulator-display.js?v=48';
-import { createCables } from './cables.js?v=48';
+import { createRenderSettings } from './render-settings.js?v=50';
+import { PARTS, createPartsInfo } from './parts-info.js?v=50';
+import { FirmwareDisplay } from './emulator-display.js?v=50';
+import { createCables } from './cables.js?v=50';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=48';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=50';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=48';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=48';
+import { loadGLB } from './glb.js?v=50';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=50';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -85,7 +85,8 @@ function fitInspect(){inspectBox.makeEmpty();for(const g of badgeShells)inspectB
  const hFov=2*Math.atan(Math.tan(vFov/2)*aspect);
  const d=Math.max(inspectSize.y/2/Math.tan(vFov/2),inspectSize.x/2/Math.tan(hFov/2))*1.42+inspectSize.z/2;
  inspectTarget.copy(inspectMid);inspectPos.set(inspectMid.x+d*.16,inspectMid.y+d*.07,inspectMid.z+d*.98);controls.target.copy(inspectMid);}
-function setInspect(value){inspect=value;document.body.classList.toggle('inspecting',value);$('#inspect').textContent=value?'Close ✕':'Explore in 3D ↗';
+function setInspect(value){inspect=value;document.body.classList.toggle('inspecting',value);$('#inspect').textContent=value?'Close ✕':'Explore in 3D';
+ const help=$('details.emu-help');if(help&&innerWidth<=760)help.open=value;
  if(controls){controls.enabled=false;if(value)fitInspect();}}
 $('#inspect').onclick=()=>setInspect(!inspect);
 $('#replay').onclick=()=>{setInspect(false);scrollTo({top:0,behavior:reduced?'instant':'smooth'})};
@@ -361,7 +362,7 @@ try {
   front.updateWorldMatrix(true,false);capLocal.copy(capP);front.worldToLocal(capLocal);front.getWorldQuaternion(capQ2).invert().multiply(capQ);
   benchQ.copy(cap.quaternion);capB.copy(cap.position);cap.position.lerpVectors(capLocal,capB,capT);cap.position.z+=Math.sin(Math.PI*capT)*40;cap.quaternion.slerpQuaternions(capQ2,benchQ,capT);cap.scale.setScalar(lerp(titleScale,1,capT));}
  else if(menuCapPart&&!capHandedOver){capHandedOver=true;menuCapPart.scale.setScalar(1);}
- {const live=current>9.9&&!inspect;if(firmware.mask)pressedOnce=true;
+ {const live=current>9.9||inspect;if(firmware.mask)pressedOnce=true;
   for(let i=0;i<3;i++){const c=capParts[i];if(!c)continue;const want=live&&(firmware.mask&[1,4,2][i])?1:0;c.userData.press=lerp(c.userData.press||0,want,Math.min(1,dt*20));if(c.userData.press>.002)c.position.z-=c.userData.press*1.2;}
   const hint=live&&!pressedOnce;tapHint.visible=hint;
   if(hint){const t=(time%2400)/2400,k=1-Math.pow(1-Math.min(t*1.6,1),3);tapHint.scale.setScalar(lerp(.55,1.45,k));tapHint.material.opacity=.6*(1-k)*smooth(current,9.9,9.98);}}
