@@ -216,3 +216,19 @@ body.inspecting footer,body.inspecting .step-nav{opacity:0;pointer-events:none}
  .finale footer{bottom:96px}
 }
 @media(max-width:760px){body.inspecting #fps{opacity:0}}
+
+/* The bottom bar's left half is a button: on phones it opens a drawer of every step. */
+.step-open{display:flex;align-items:center;gap:30px;flex:1;min-width:0;padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:default}
+#step-drawer{position:fixed;z-index:13;left:10px;right:10px;bottom:78px;display:flex;flex-direction:column;padding:7px;border-radius:17px;background:#fffffff7;backdrop-filter:blur(14px);border:1px solid #efeaf5;box-shadow:0 14px 40px #2a1f3a24;max-height:64vh;overflow:auto;overscroll-behavior:contain}
+#step-drawer[hidden]{display:none}
+#step-drawer button{display:flex;align-items:center;gap:12px;padding:11px 12px;border:0;border-radius:11px;background:none;font:10px/1 monospace;letter-spacing:.06em;color:#5f5670;text-align:left}
+#step-drawer button b{font-size:10px;color:#a596bd;min-width:18px}
+#step-drawer button.now{background:#f1eafc;color:#3c2f52}
+#step-drawer button.now b{color:#7b5fb0}
+@media(max-width:760px){
+ .step-open{cursor:pointer;display:grid;grid-template-columns:1fr auto;grid-template-areas:'label label' 'prog count';gap:4px 10px;align-items:center}
+ .bottom-bar{grid-template-columns:1fr auto;grid-template-areas:'open jump'}
+ .step-open{grid-area:open}
+ .chapter:not(.hero) .copy{top:88px}
+}
+@media(min-width:761px){#step-drawer{display:none}}

@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=47';
-import { PARTS, createPartsInfo } from './parts-info.js?v=47';
-import { FirmwareDisplay } from './emulator-display.js?v=47';
-import { createCables } from './cables.js?v=47';
+import { createRenderSettings } from './render-settings.js?v=48';
+import { PARTS, createPartsInfo } from './parts-info.js?v=48';
+import { FirmwareDisplay } from './emulator-display.js?v=48';
+import { createCables } from './cables.js?v=48';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=47';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=48';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=47';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=47';
+import { loadGLB } from './glb.js?v=48';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=48';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -33,10 +33,18 @@ const benchCopy=$('.bench-copy'),bomCta=$('.bom-cta');
 // On phones the step detail starts folded, so the badge keeps the screen.
 const stepDetails=[...document.querySelectorAll('details.instruction,details.emu-help')];
 // The phone's bottom bar steps through the story; the desktop keeps its dot rail.
-for(const b of document.querySelectorAll('[data-step-jump]'))b.addEventListener('click',()=>{
+const drawer=$('#step-drawer'),stepOpen=$('.step-open');
+const stepTop=i=>i<=0?coverEnd()+4:chapters[Math.min(i,chapters.length-1)].offsetTop+innerHeight*.075;
+drawer.innerHTML=names.map((n,i)=>`<button type="button" data-step-go="${i}"><b>${String(i).padStart(2,'0')}</b>${n}</button>`).join('');
+const closeDrawer=()=>{drawer.hidden=true;stepOpen.setAttribute('aria-expanded','false');document.body.classList.remove('drawer-open');};
+stepOpen.addEventListener('click',()=>{if(innerWidth>760)return;const open=drawer.hidden;drawer.hidden=!open;stepOpen.setAttribute('aria-expanded',String(open));document.body.classList.toggle('drawer-open',open);
+ if(open)for(const b of drawer.children)b.classList.toggle('now',+b.dataset.stepGo===Math.round(target));});
+drawer.addEventListener('click',e=>{const b=e.target.closest('[data-step-go]');if(!b)return;scrollTo({top:stepTop(+b.dataset.stepGo),behavior:'smooth'});closeDrawer();});
+document.addEventListener('pointerdown',e=>{if(!drawer.hidden&&!e.target.closest('#step-drawer,.step-open'))closeDrawer();},true);
+addEventListener('resize',()=>{if(innerWidth>760)closeDrawer();});
+for(const b of document.querySelectorAll('[data-step-jump]'))b.addEventListener('click',()=>{closeDrawer();
  const dir=+b.dataset.stepJump,i=Math.round(target)+dir;
- const top=i<=0?(dir<0&&target<.3?0:coverEnd()+4):chapters[Math.min(i,chapters.length-1)].offsetTop+innerHeight*.075;
- scrollTo({top,behavior:'smooth'});});
+ scrollTo({top:i<=0&&dir<0&&target<.3?0:stepTop(i),behavior:'smooth'});});
 const foldDetails=()=>{const wide=innerWidth>760;for(const d of stepDetails)d.open=wide;};foldDetails();addEventListener('resize',foldDetails);
 const coverEl=$('#cover'),coverBg=$('#cover-bg'),coverInner=$('.cover-inner'),coverActions=$('.cover-actions'),coverSpace=$('#cover-space'),capSlot=$('#cap-slot');
 const COVER_DONE=.86;let coverT=0;const coverEnd=()=>Math.max(1,coverSpace.offsetHeight-innerHeight*.18);
@@ -232,7 +240,7 @@ try {
  const renderSettings=createRenderSettings({renderer,scene,camera,key,fill,rim,hemisphere,ao,mat,grade});
  const partsInfo=createPartsInfo();
  const adaptive=createAdaptiveRatio(perf.dpr,(dpr,median)=>{renderer.setPixelRatio(dpr);resize();console.info(`[badge] frames at ${median.toFixed(1)} ms, pixel ratio lowered to ${dpr}`);});
- function resize(){const w=stage.clientWidth,h=stage.clientHeight;for(const c of copies)c.style.setProperty('--stick',Math.max(78,h*.58-c.offsetHeight-6)+'px');renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));updateTarget()};resize();addEventListener('resize',resize);
+ function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));updateTarget()};resize();addEventListener('resize',resize);
  const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down;
  // Parts can be picked up and rearranged on the cutting mat.
  let dragPart=null,partDragging=false,dragStart=null;
