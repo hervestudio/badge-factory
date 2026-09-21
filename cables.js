@@ -149,7 +149,8 @@ export function createCables(root,{display,esp,battery,charger,strip,switches,sh
   group.visible=current<.8||(current>6.8&&current<9.15);const inspecting=current>6.8&&current<9;
   document.body.classList.toggle('wiring-view',inspecting);if(!inspecting)card.hidden=true;
   root.updateWorldMatrix(true,true);
-  const step=Math.min(dt,1/30),closed=smooth(current,8.6,9.6);
+  // The halves fold shut between 8.45 and 9.2, so the wiring has to be tucked away by then.
+  const step=Math.min(dt,1/30),closed=smooth(current,8.5,9.0);
   if(closed<.99&&(current<1.05||current>6.8))crossNet(1-closed);
   nets.forEach((net,index)=>{
    const bench=net.ribbonIndex!==undefined?1-smooth(current,.9,1.05):0,reveal=smooth(current,6.94+index*.009,7.14+index*.009);net.shown=Math.max(bench,reveal,index===selected&&current>6.8?1:0);net.mesh.visible=net.shown>.001;if(!net.mesh.visible){net.started=false;return}if(drag&&drag.net===net&&net.shown<.05)drag=null;
