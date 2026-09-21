@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=56';
-import { PARTS, createPartsInfo } from './parts-info.js?v=56';
-import { FirmwareDisplay } from './emulator-display.js?v=56';
-import { createCables } from './cables.js?v=56';
+import { createRenderSettings } from './render-settings.js?v=57';
+import { PARTS, createPartsInfo } from './parts-info.js?v=57';
+import { FirmwareDisplay } from './emulator-display.js?v=57';
+import { createCables } from './cables.js?v=57';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=56';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=57';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=56';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=56';
+import { loadGLB } from './glb.js?v=57';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=57';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -245,7 +245,9 @@ try {
  const partsInfo=createPartsInfo();
  const adaptive=createAdaptiveRatio(perf.dpr,(dpr,median)=>{renderer.setPixelRatio(dpr);resize();console.info(`[badge] frames at ${median.toFixed(1)} ms, pixel ratio lowered to ${dpr}`);});
  function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);composer.setSize(w,h);const ratio=renderer.getPixelRatio();fxaa.uniforms.resolution.value.set(1/(w*ratio),1/(h*ratio));updateTarget()};resize();addEventListener('resize',resize);
- const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down;
+ const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down,capDown=false;
+ const atPointer=(e,objects)=>{const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);return ray.intersectObjects(objects,true)[0];};
+ const badgeAt=e=>atPointer(e,screenMesh?[...badgeShells,screenMesh]:badgeShells);
  // Parts can be picked up and rearranged on the cutting mat.
  let dragPart=null,partDragging=false,dragStart=null;
  const dragPlane=new THREE.Plane(),dragPoint=new THREE.Vector3(),dragLocal=new THREE.Vector3(),dragNormal=new THREE.Vector3(),dragQuat=new THREE.Quaternion(),dragOff={x:0,y:0};
@@ -266,10 +268,13 @@ try {
  syncPhysics();
  const dragTarget=new THREE.Vector2(),brushPlane=new THREE.Plane(),brushPrev={part:null,x:0,y:0},hoveredHit=new THREE.Vector3();
  function benchPartAt(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);for(const h of ray.intersectObjects(animated,true)){let p=h.object;while(p&&!p.userData.name)p=p.parent;if(p&&p.userData.bench)return {p,point:h.point};}return null;}
- canvas.addEventListener('pointerdown',e=>{if(current<.35){inspectPart(e);const hit=benchPartAt(e);if(hit){dragPart=hit.p;partDragging=false;dragStart=[e.clientX,e.clientY];dragPlane.setFromNormalAndCoplanarPoint(dragNormal.set(0,0,1).applyQuaternion(badge.getWorldQuaternion(dragQuat)),hit.point);badge.worldToLocal(dragLocal.copy(hit.point));dragOff.x=dragLocal.x-dragPart.userData.bench.x;dragOff.y=dragLocal.y-dragPart.userData.bench.y;dragTarget.set(dragPart.userData.bench.x,dragPart.userData.bench.y);if(dragPart.userData.body)dragPart.userData.body.wakeUp();brushPrev.part=null;if(e.pointerType!=='touch')canvas.setPointerCapture(e.pointerId);}}down=[e.clientX,e.clientY];if((active===7||active===8)&&cables.startDrag(e,camera,canvas)){canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';}if(active!==10)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(clickables)[0];if(hit){firmware.hold([1,4,2][hit.object.userData.button],true);canvas.setPointerCapture(e.pointerId);}});
+ canvas.addEventListener('pointerdown',e=>{if(current<.35){inspectPart(e);const hit=benchPartAt(e);if(hit){dragPart=hit.p;partDragging=false;dragStart=[e.clientX,e.clientY];dragPlane.setFromNormalAndCoplanarPoint(dragNormal.set(0,0,1).applyQuaternion(badge.getWorldQuaternion(dragQuat)),hit.point);badge.worldToLocal(dragLocal.copy(hit.point));dragOff.x=dragLocal.x-dragPart.userData.bench.x;dragOff.y=dragLocal.y-dragPart.userData.bench.y;dragTarget.set(dragPart.userData.bench.x,dragPart.userData.bench.y);if(dragPart.userData.body)dragPart.userData.body.wakeUp();brushPrev.part=null;if(e.pointerType!=='touch')canvas.setPointerCapture(e.pointerId);}}down=[e.clientX,e.clientY];if((active===7||active===8)&&cables.startDrag(e,camera,canvas)){canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';}if(active!==10)return;const hit=atPointer(e,clickables);capDown=!!hit;if(hit){firmware.hold([1,4,2][hit.object.userData.button],true);canvas.setPointerCapture(e.pointerId);}});
  canvas.addEventListener('pointerup',e=>{
  if(e.pointerType==='touch'&&dragPart&&!partDragging&&current<.35){partsInfo.show(dragPart.userData.name,innerWidth/2-145,innerHeight-300,true);}
  if(e.pointerType==='touch'){hoveredName=null;hoveredPartRef=null;peek.hidden=true;}
+ // A tap on the finished badge — anywhere but a button cap — is the way into Explore.
+ if(active===10&&!inspect&&!capDown&&down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<10&&badgeAt(e))setInspect(true);
+ capDown=false;
  dragPart=null;partDragging=false;canvas.style.cursor='';firmware.release();cables.endDrag();if((active===7||active===8)&&down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<10)cables.pick(e,camera,canvas)});
  canvas.addEventListener('pointercancel',()=>{dragPart=null;partDragging=false;firmware.release();cables.endDrag();});canvas.addEventListener('lostpointercapture',()=>firmware.release());
  const peek=document.querySelector('#peek');let hoveredAnchor=new THREE.Vector3(),hoveredIsPart=false,hoveredPartRef=null;
@@ -289,6 +294,7 @@ try {
    if(ray.ray.intersectPlane(dragPlane,dragPoint)){badge.worldToLocal(dragLocal.copy(dragPoint));dragTarget.set(clamp(dragLocal.x-dragOff.x,-(matW/2-14),matW/2-14),clamp(dragLocal.y-dragOff.y,-(matH/2-17),matH/2-17));}
    hoveredName=dragPart.userData.name;canvas.style.cursor='grabbing';e.preventDefault();return;}}
  if(!partsInfo.pinned)inspectPart(e);
+ if(active===10&&!inspect&&e.pointerType!=='touch')canvas.style.cursor=(atPointer(e,clickables)||badgeAt(e))?'pointer':'';
  // Brushing: sliding the pointer across a part nudges it, as if grazed by a hand.
  if(current<.35&&!dragPart&&hoveredPartRef&&hoveredPartRef.userData.body){
   brushPlane.setFromNormalAndCoplanarPoint(dragNormal.set(0,0,1).applyQuaternion(badge.getWorldQuaternion(dragQuat)),hoveredHit);
@@ -315,7 +321,7 @@ try {
  const leaveBench=smooth(current,.12,1.15),opened=leaveBench*(1-smooth(current,8.45,9.2));
  const shellFlip=1-smooth(current,2.25,2.62),frontYaw=2.88-Math.PI*shellFlip;
  const swing=Math.sin(Math.PI*Math.min(1,opened))*smooth(current,1.2,10);front.position.set(47*opened,0,26*swing);front.rotation.y=frontYaw*opened;back.position.set(-47*opened,0,-6*swing);back.rotation.y=-.13*opened;
- document.body.classList.toggle('on-bench',current<.35&&coverT>=COVER_DONE);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
+ document.body.classList.toggle('on-bench',current<.35&&coverT>=COVER_DONE);document.body.classList.toggle('at-finale',active===10);if(current>=.35)partsInfo.hide(true);setClay(current<.35&&partsInfo.pinned&&!partCard.hidden&&partSelect.value?partSelect.value:null);setGlow(current<.35&&!clayActive?(partDragging?dragPart:hoveredPartRef):null);if(current<.35){
  if(partDragging&&dragPart&&dragPart.userData.body){const b=dragPart.userData.body,tz=TOPH[dragPart.userData.name]/2+26;b.wakeUp();let vx=(dragTarget.x-b.position.x)*14,vy=(dragTarget.y-b.position.y)*14;const L=Math.hypot(vx,vy),cap=900;if(L>cap){vx*=cap/L;vy*=cap/L;}b.velocity.set(vx,vy,(tz-b.position.z)*14);b.angularVelocity.set(0,0,0);b.quaternion.set(0,0,0,1);}
  physWorld.step(1/120,Math.min(dt,.05),8);syncPhysics();}
  workbench.visible=current<1.12;cutting.material.opacity=1;top.material.opacity=1;workbench.position.set(0,-260*leaveBench,0);workbench.rotation.x=-.85*leaveBench;const matC=Math.cos(workbench.rotation.x),matS=Math.sin(workbench.rotation.x);
