@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=36';
-import { PARTS, createPartsInfo } from './parts-info.js?v=36';
-import { FirmwareDisplay } from './emulator-display.js?v=36';
-import { createCables } from './cables.js?v=36';
+import { createRenderSettings } from './render-settings.js?v=37';
+import { PARTS, createPartsInfo } from './parts-info.js?v=37';
+import { FirmwareDisplay } from './emulator-display.js?v=37';
+import { createCables } from './cables.js?v=37';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=36';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=37';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=36';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=36';
+import { loadGLB } from './glb.js?v=37';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=37';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -251,7 +251,9 @@ try {
  peek.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();const n=peek.dataset.name;if(n)partsInfo.show(n,e.clientX,e.clientY+18,true);});
  canvas.addEventListener('pointermove',e=>{
  if(dragPart&&current<.35){
-  if(!partDragging&&Math.hypot(e.clientX-dragStart[0],e.clientY-dragStart[1])>4){partDragging=true;partsInfo.hide(true);}
+  if(!partDragging){const dx=e.clientX-dragStart[0],dy=e.clientY-dragStart[1];
+   if(e.pointerType==='touch'&&Math.abs(dy)>7&&Math.abs(dy)>Math.abs(dx)){dragPart=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);return;}
+   if(Math.hypot(dx,dy)>4){partDragging=true;partsInfo.hide(true);}}
   if(partDragging){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);
    if(ray.ray.intersectPlane(dragPlane,dragPoint)){badge.worldToLocal(dragLocal.copy(dragPoint));dragTarget.set(clamp(dragLocal.x-dragOff.x,-(matW/2-14),matW/2-14),clamp(dragLocal.y-dragOff.y,-(matH/2-17),matH/2-17));}
    hoveredName=dragPart.userData.name;canvas.style.cursor='grabbing';e.preventDefault();return;}}
