@@ -1,4 +1,4 @@
-const sheet='https://docs.google.com/spreadsheets/d/1InVfUqUMoApTDr02GGZ7CWCyKzVZiWv7K0hK1Q5fXj0/edit#gid=2008436455';
+const sheet='https://docs.google.com/spreadsheets/d/1EfUPVHs7wSwlldLFNaDVboAn1Yhtki07MRFuqXJAVWQ/edit?gid=1969714195#gid=1969714195';
 export const PARTS={
  'Front enclosure':['Printed front shell','Violet PLA · Medium enclosure. Holds the display, switches, charger and sensing board.','https://www.amazon.fr/dp/B0F48FCLXW'],
  'Rear enclosure':['Printed rear shell','Yellow PLA · Carries the ESP32, battery shelf and four M2 inserts.','https://shop.polymaker.com/en-eu/products/panchroma-matte?variant=43631458484281'],

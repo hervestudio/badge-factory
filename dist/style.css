@@ -145,3 +145,12 @@ dialog h2{font-size:clamp(26px,2.8vw,40px);line-height:1.15}
 /* Four header links: the short labels come in before they would crowd the wordmark. */
 @media(max-width:900px){.header-link .hl-lg{display:none}.header-link .hl-sm{display:inline}.header-links{gap:12px}.header-link{font-size:11px}}
 @media(max-width:760px){.header-links{gap:10px}.header-link{font-size:9.5px}}
+
+/* Step details: a plain block on desktop, a fold-out on phones so the badge keeps the screen. */
+details.instruction>summary{list-style:none;font-size:15px;font-weight:600;cursor:default}
+details.instruction>summary::-webkit-details-marker{display:none}
+@media(max-width:760px){
+ details.instruction>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px}
+ details.instruction>summary::after{content:'';width:7px;height:7px;flex:none;border-right:1.6px solid #9b8bb5;border-bottom:1.6px solid #9b8bb5;transform:rotate(45deg) translate(-2px,-2px);transition:transform .25s}
+ details.instruction[open]>summary::after{transform:rotate(-135deg) translate(-2px,-2px)}
+}
