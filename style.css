@@ -154,3 +154,9 @@ details.instruction>summary::-webkit-details-marker{display:none}
  details.instruction>summary::after{content:'';width:7px;height:7px;flex:none;border-right:1.6px solid #9b8bb5;border-bottom:1.6px solid #9b8bb5;transform:rotate(45deg) translate(-2px,-2px);transition:transform .25s}
  details.instruction[open]>summary::after{transform:rotate(-135deg) translate(-2px,-2px)}
 }
+
+/* Phones: dragging parts and swiping should never start a text selection or a long-press callout. */
+@media(max-width:760px){
+ body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+ #detail,#part-detail,#cable-detail,#settings-json{-webkit-user-select:text;user-select:text}
+}

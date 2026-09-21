@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=37';
-import { PARTS, createPartsInfo } from './parts-info.js?v=37';
-import { FirmwareDisplay } from './emulator-display.js?v=37';
-import { createCables } from './cables.js?v=37';
+import { createRenderSettings } from './render-settings.js?v=38';
+import { PARTS, createPartsInfo } from './parts-info.js?v=38';
+import { FirmwareDisplay } from './emulator-display.js?v=38';
+import { createCables } from './cables.js?v=38';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=37';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=38';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=37';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=37';
+import { loadGLB } from './glb.js?v=38';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=38';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -237,7 +237,7 @@ try {
  syncPhysics();
  const dragTarget=new THREE.Vector2(),brushPlane=new THREE.Plane(),brushPrev={part:null,x:0,y:0},hoveredHit=new THREE.Vector3();
  function benchPartAt(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);for(const h of ray.intersectObjects(animated,true)){let p=h.object;while(p&&!p.userData.name)p=p.parent;if(p&&p.userData.bench)return {p,point:h.point};}return null;}
- canvas.addEventListener('pointerdown',e=>{if(current<.35){inspectPart(e);const hit=benchPartAt(e);if(hit){dragPart=hit.p;partDragging=false;dragStart=[e.clientX,e.clientY];dragPlane.setFromNormalAndCoplanarPoint(dragNormal.set(0,0,1).applyQuaternion(badge.getWorldQuaternion(dragQuat)),hit.point);badge.worldToLocal(dragLocal.copy(hit.point));dragOff.x=dragLocal.x-dragPart.userData.bench.x;dragOff.y=dragLocal.y-dragPart.userData.bench.y;dragTarget.set(dragPart.userData.bench.x,dragPart.userData.bench.y);if(dragPart.userData.body)dragPart.userData.body.wakeUp();brushPrev.part=null;canvas.setPointerCapture(e.pointerId);}}down=[e.clientX,e.clientY];if((active===7||active===8)&&cables.startDrag(e,camera,canvas)){canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';}if(active!==10)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(clickables)[0];if(hit){firmware.hold([1,4,2][hit.object.userData.button],true);canvas.setPointerCapture(e.pointerId);}});
+ canvas.addEventListener('pointerdown',e=>{if(current<.35){inspectPart(e);const hit=benchPartAt(e);if(hit){dragPart=hit.p;partDragging=false;dragStart=[e.clientX,e.clientY];dragPlane.setFromNormalAndCoplanarPoint(dragNormal.set(0,0,1).applyQuaternion(badge.getWorldQuaternion(dragQuat)),hit.point);badge.worldToLocal(dragLocal.copy(hit.point));dragOff.x=dragLocal.x-dragPart.userData.bench.x;dragOff.y=dragLocal.y-dragPart.userData.bench.y;dragTarget.set(dragPart.userData.bench.x,dragPart.userData.bench.y);if(dragPart.userData.body)dragPart.userData.body.wakeUp();brushPrev.part=null;if(e.pointerType!=='touch')canvas.setPointerCapture(e.pointerId);}}down=[e.clientX,e.clientY];if((active===7||active===8)&&cables.startDrag(e,camera,canvas)){canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';}if(active!==10)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(clickables)[0];if(hit){firmware.hold([1,4,2][hit.object.userData.button],true);canvas.setPointerCapture(e.pointerId);}});
  canvas.addEventListener('pointerup',e=>{
  if(e.pointerType==='touch'&&dragPart&&!partDragging&&current<.35){partsInfo.show(dragPart.userData.name,innerWidth/2-145,innerHeight-300,true);}
  if(e.pointerType==='touch'){hoveredName=null;hoveredPartRef=null;peek.hidden=true;}
@@ -252,7 +252,9 @@ try {
  canvas.addEventListener('pointermove',e=>{
  if(dragPart&&current<.35){
   if(!partDragging){const dx=e.clientX-dragStart[0],dy=e.clientY-dragStart[1];
-   if(e.pointerType==='touch'&&Math.abs(dy)>7&&Math.abs(dy)>Math.abs(dx)){dragPart=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);return;}
+   if(e.pointerType==='touch'){if(Math.abs(dy)>6&&Math.abs(dy)>=Math.abs(dx)){dragPart=null;return;}
+    if(Math.abs(dx)<10)return;
+    canvas.setPointerCapture(e.pointerId);}
    if(Math.hypot(dx,dy)>4){partDragging=true;partsInfo.hide(true);}}
   if(partDragging){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);
    if(ray.ray.intersectPlane(dragPlane,dragPoint)){badge.worldToLocal(dragLocal.copy(dragPoint));dragTarget.set(clamp(dragLocal.x-dragOff.x,-(matW/2-14),matW/2-14),clamp(dragLocal.y-dragOff.y,-(matH/2-17),matH/2-17));}
