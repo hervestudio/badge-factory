@@ -14,7 +14,7 @@ const number=(name,fallback)=>{const v=Number.parseFloat(options.get(name));retu
 const poster=document.querySelector('#poster'),canvas=document.querySelector('#ball'),c=canvas.getContext('2d');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const state={spin:number('spin',.6),loopDur:6,pixelCount:16,introStart:null,introDur:1.15};
-let LP_T=0,LP_U=0,scale=1;
+let LP_T=0,LP_U=0,scale=1,lastT=0;
 
 // Seamless-loop time: snap each speed to a whole number of cycles per loop.
 const cyc=w=>w<=0?0:2*Math.PI*Math.max(1,Math.round(w*state.loopDur/(2*Math.PI)))*LP_U;
@@ -69,6 +69,26 @@ function drawDiscoBall(cx,cy,Rb){
  }
  drawFace(cx,cy,Rb);
 }
+// Light rays, cast from the ball's own centre so they always line up with it.
+function drawRays(cx,cy,Rb,t){
+ const N=14,L=Math.hypot(FRAME_W,FRAME_H);
+ c.save();c.globalCompositeOperation='lighter';c.translate(cx,cy);c.rotate(cyc(.22)+ballRotation()*.08);
+ for(let i=0;i<N;i++){
+  const tw=.45+.55*Math.sin(cyc(2)+i*1.7);if(tw<.28)continue;
+  const col=DISCO_PALS[(i*3)%DISCO_PALS.length];
+  const spread=.045+.03*(.5+.5*Math.sin(cyc(1.3)+i));
+  c.save();c.rotate((i/N)*Math.PI*2);
+  const g=c.createLinearGradient(Rb*.6,0,L,0);
+  g.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},0)`);
+  g.addColorStop(.05,`rgba(${col[0]},${col[1]},${col[2]},${.26*tw})`);
+  g.addColorStop(1,`rgba(${col[0]},${col[1]},${col[2]},0)`);
+  c.fillStyle=g;
+  const w=Math.tan(spread)*L;
+  c.beginPath();c.moveTo(Rb*.6,0);c.lineTo(L,w);c.lineTo(L,-w);c.closePath();c.fill();
+  c.restore();
+ }
+ c.restore();
+}
 // Pastel squares breathing around the ball.
 let pixels=[];
 function initPixels(){pixels=[];for(let i=0;i<state.pixelCount;i++)pixels.push({
@@ -95,6 +115,16 @@ function drawString(pivotX,cx,cy,Rb,theta){
  c.beginPath();c.arc(0,Rb*.02,Rb*.05,Math.PI,Math.PI*2);c.stroke();
  c.restore();
 }
+// The rope is real: after the drop the ball is a damped pendulum you can shove or drag.
+const ROPE=BALL.cy;                        // pivot sits at y = 0, so the rope is that long
+const pend={th:0,w:0,drag:false,lastTh:0,lastAt:0};
+const W0=2*Math.PI/1.9;                    // ~1.9 s for a full swing
+function stepPendulum(dt){
+ if(pend.drag)return;
+ const breeze=.045*Math.sin(LP_T*.55)+.03*Math.sin(LP_T*.23+1.7);   // never completely still
+ pend.w+=(-W0*W0*Math.sin(pend.th)-.55*pend.w+breeze)*dt;
+ pend.th+=pend.w*dt;
+}
 // Intro: the ball falls from above the top edge, overshoots, then swings itself still.
 const easeOutBack=(p,s=1.3)=>{const c3=s+1,x=p-1;return 1+c3*x*x*x+s*x*x};
 function introTransform(baseCx,baseCy,Rb,t){
@@ -106,6 +136,44 @@ function introTransform(baseCx,baseCy,Rb,t){
  const theta=.12*Math.exp(-1.25*tt)*Math.sin(7*tt);
  return {x:baseCx+Math.sin(theta)*Math.max(y,Rb*.5),y,theta};
 }
+
+// Pointer: a shove when it crosses the ball, a drag when it grabs it — and a little
+// parallax on the photos so the whole block breathes with the cursor.
+const photos=[...document.querySelectorAll('.ph')];
+const DEPTH={rooftop:1,sign:.62,bar:.8,crew:.5};
+const toFrame=e=>{const r=poster.getBoundingClientRect();return [(e.clientX-r.left)/r.width*FRAME_W,(e.clientY-r.top)/r.height*FRAME_H]};
+const ballAt=()=>[BALL.pivotX+ROPE*Math.sin(pend.th),ROPE*Math.cos(pend.th)];
+let prevPx=null;
+function onPointer(e){
+ const [px,py]=toFrame(e);
+ for(const el of photos){
+  const d=DEPTH[[...el.classList].find(k=>k in DEPTH)]||.6;
+  el.style.translate=`${(px/FRAME_W-.5)*-14*d}px ${(py/FRAME_H-.5)*-9*d}px`;
+ }
+ const [bx,by]=ballAt(),dist=Math.hypot(px-bx,py-by);
+ canvas.style.cursor=dist<BALL.r?(pend.drag?'grabbing':'grab'):'';
+ if(pend.drag){
+  pend.th=Math.max(-.7,Math.min(.7,Math.atan2(px-BALL.pivotX,Math.max(py,BALL.r))));
+  const now=performance.now()/1000,dt=now-pend.lastAt;
+  if(dt>0.004){pend.w=(pend.th-pend.lastTh)/dt;pend.lastTh=pend.th;pend.lastAt=now;}
+  return;
+ }
+ if(prevPx!==null&&dist<BALL.r*1.15){
+  const vx=px-prevPx;                                  // the cursor pushes it along
+  pend.w+=Math.max(-3,Math.min(3,vx*.02/ROPE*60))+(bx-px)/BALL.r*.06;
+ }
+ prevPx=px;
+}
+poster.addEventListener('pointermove',onPointer);
+poster.addEventListener('pointerleave',()=>{prevPx=null;for(const el of photos)el.style.translate='';});
+canvas.addEventListener('pointerdown',e=>{
+ const [px,py]=toFrame(e),[bx,by]=ballAt();
+ if(Math.hypot(px-bx,py-by)>BALL.r)return;
+ pend.drag=true;pend.lastTh=pend.th;pend.lastAt=performance.now()/1000;pend.w=0;
+ canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';
+});
+const letGo=()=>{if(pend.drag){pend.drag=false;pend.w=Math.max(-4,Math.min(4,pend.w));}};
+canvas.addEventListener('pointerup',letGo);canvas.addEventListener('pointercancel',letGo);
 
 function resize(){
  const r=poster.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
@@ -131,14 +199,18 @@ if('IntersectionObserver' in window){
 function frame(ts){
  requestAnimationFrame(frame);
  if(document.hidden||!onScreen)return;
- const t=ts/1000;
+ const t=ts/1000,dt=Math.min(.05,t-(lastT||t));lastT=t;
  if(state.introStart===null&&t>=armAt)state.introStart=t;
  LP_T=t;LP_U=(t%state.loopDur)/state.loopDur;
  updateFace();
  c.clearRect(0,0,FRAME_W,FRAME_H);
- const intro=introTransform(BALL.cx,BALL.cy,BALL.r,t);
- drawString(BALL.pivotX,intro.x,intro.y,BALL.r,intro.theta);
- drawPixels(intro.x,intro.y,BALL.r);
- drawDiscoBall(intro.x,intro.y,BALL.r);
+ const settled=state.introStart!==null&&(t-state.introStart>1.6||reduced);
+ let x,y,th;
+ if(settled){stepPendulum(Math.min(dt,.04));th=pend.th;x=BALL.pivotX+ROPE*Math.sin(th);y=ROPE*Math.cos(th);}
+ else{const intro=introTransform(BALL.cx,BALL.cy,BALL.r,t);x=intro.x;y=intro.y;th=intro.theta;pend.th=th;pend.w=0;}
+ drawRays(x,y,BALL.r,t);
+ drawString(BALL.pivotX,x,y,BALL.r,th);
+ drawPixels(x,y,BALL.r);
+ drawDiscoBall(x,y,BALL.r);
 }
 requestAnimationFrame(frame);
