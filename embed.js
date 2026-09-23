@@ -1,11 +1,11 @@
 // The finished badge on its own: the same scene, materials and firmware the assembly page
 // ends on, with no story around it — made to be dropped into an <iframe> on another site.
 import * as THREE from 'three';
-import { mat, mesh, cyl, texture, decal, planarUVs, buildDisplay, buildStrapBar } from './parts.js?v=68';
-import { FirmwareDisplay } from './emulator-display.js?v=68';
-import { loadGLB } from './glb.js?v=68';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=68';
-import { DEFAULTS, applyRenderSettings } from './render-state.js?v=68';
+import { mat, mesh, cyl, texture, decal, planarUVs, buildDisplay, buildStrapBar } from './parts.js?v=69';
+import { FirmwareDisplay } from './emulator-display.js?v=69';
+import { loadGLB } from './glb.js?v=69';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=69';
+import { DEFAULTS, applyRenderSettings } from './render-state.js?v=69';
 import { STLLoader } from './vendor/STLLoader.js';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -111,7 +111,7 @@ try {
  applyRenderSettings({renderer,scene,camera,key,fill,rim,hemisphere,ao,mat,grade},DEFAULTS);
 
  // Framing: fit the two shells, the way the assembly page frames Explore in 3D.
- const box=new THREE.Box3(),size=new THREE.Vector3(),mid=new THREE.Vector3(),margin=number('margin',1.12);
+ const box=new THREE.Box3(),size=new THREE.Vector3(),mid=new THREE.Vector3(),margin=number('margin',1.232);
  function fit(){
   box.makeEmpty();for(const g of shells)box.expandByObject(g);box.getSize(size);box.getCenter(mid);
   // The view zoom narrows the frustum, so the fit has to divide it out or the badge overflows.
