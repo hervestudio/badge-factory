@@ -1,13 +1,13 @@
-import { createRenderSettings } from './render-settings.js?v=63';
-import { PARTS, createPartsInfo } from './parts-info.js?v=63';
-import { FirmwareDisplay } from './emulator-display.js?v=63';
-import { createCables } from './cables.js?v=63';
+import { createRenderSettings } from './render-settings.js?v=64';
+import { PARTS, createPartsInfo } from './parts-info.js?v=64';
+import { FirmwareDisplay } from './emulator-display.js?v=64';
+import { createCables } from './cables.js?v=64';
 import * as THREE from 'three';
 import * as CANNON from './vendor/cannon-es.js';
-import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=63';
+import {material, mat, mesh, box, cyl, texture, decal, wire, label, buildDisplay, buildESP, buildBattery, buildCharger, buildStrip, buildSwitch, buildSpool, buildStrapBar} from './parts.js?v=64';
 import { STLLoader } from './vendor/STLLoader.js';
-import { loadGLB } from './glb.js?v=63';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=63';
+import { loadGLB } from './glb.js?v=64';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=64';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -338,7 +338,7 @@ try {
   // Aim at where the copy will sit once stuck (STICK + its height), not at where it is
   // mid-slide: the band keeps one steady home per step instead of being pushed down.
   const cb=Math.min(cc.getBoundingClientRect().bottom,STICK+cc.offsetHeight);
-  const t0=clamp(cb+14,H*.28,H*.58),floor=H-72,k=bandTop<0?1:Math.min(1,dt*6);
+  const t0=clamp(cb+14,H*.28,H*(ci===copies.length-1?.66:.58)),floor=H-72,k=bandTop<0?1:Math.min(1,dt*6);
   bandTop=bandTop<0?t0:lerp(bandTop,t0,k);bandBottom=bandBottom<0?floor:lerp(bandBottom,floor,k);
   stepTopPct=bandTop/H*100;stepHPct=Math.max(bandBottom-bandTop,H*.3)/H*100;}
  const top0=lerp(benchTop,mobile?stepTopPct:6,leaveBench),h0=lerp(benchH,mobile?stepHPct:89,leaveBench);
