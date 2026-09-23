@@ -21,7 +21,7 @@ assembly page ends on, with no story around it. It fills whatever iframe it is g
 | `bg` | `#d6d5f9` | Page background, e.g. `?bg=%23f5f4f0` or `?bg=transparent` to let the host show through |
 | `spin` | on | Slow auto-rotation; pauses while the visitor drags, resumes 2.6 s later. `?spin=0` to stop it |
 | `spinspeed` | `0.55` | Auto-rotation speed |
-| `margin` | `1.12` | Framing; higher leaves more room around the badge |
+| `margin` | `1.232` | Framing; higher leaves more room around the badge |
 | `zoom` | off | `?zoom=1` lets the wheel and pinch zoom. Off by default so the embed never swallows page scroll |
 | `drag` | one finger | `?drag=two` leaves one-finger swipes to the host page and turns the badge on two fingers |
 | `hint` | on | The animated "drag to turn · tap the buttons" pill, which leaves on the first gesture. `?hint=0` removes it |
