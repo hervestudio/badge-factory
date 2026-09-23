@@ -1,11 +1,11 @@
 // The finished badge on its own: the same scene, materials and firmware the assembly page
 // ends on, with no story around it — made to be dropped into an <iframe> on another site.
 import * as THREE from 'three';
-import { mat, mesh, cyl, texture, decal, planarUVs, buildDisplay, buildStrapBar } from './parts.js?v=74';
-import { FirmwareDisplay } from './emulator-display.js?v=74';
-import { loadGLB } from './glb.js?v=74';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=74';
-import { DEFAULTS, applyRenderSettings } from './render-state.js?v=74';
+import { mat, mesh, cyl, texture, decal, planarUVs, buildDisplay, buildStrapBar } from './parts.js?v=75';
+import { FirmwareDisplay } from './emulator-display.js?v=75';
+import { loadGLB } from './glb.js?v=75';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=75';
+import { DEFAULTS, applyRenderSettings } from './render-state.js?v=75';
 import { STLLoader } from './vendor/STLLoader.js';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
