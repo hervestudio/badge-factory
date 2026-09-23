@@ -43,8 +43,12 @@ block is actually scrolled into view, and nothing renders while it is off-screen
         style="border:0;width:100%;aspect-ratio:1028/990;display:block"></iframe>
 ```
 
-The composition keeps the frame's 1028 × 990 proportions and centres itself, so giving the iframe
-that aspect ratio avoids letterboxing. `?spin=` changes the ball's rotation speed (default `0.6`).
+The ball casts its own light rays, so they turn with it instead of sitting in the background, and
+once the drop has settled it hangs as a damped pendulum: the cursor shoves it as it crosses, and it
+can be grabbed and swung. The photos drift with the pointer, float on their own cycles and lift on
+hover. The composition keeps the frame's 1028 × 990 proportions and centres itself, so giving the
+iframe that aspect ratio avoids letterboxing. `?spin=` changes the ball's rotation speed (default
+`0.6`).
 
 ## Publishing
 
