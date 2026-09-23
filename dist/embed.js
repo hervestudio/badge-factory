@@ -1,11 +1,11 @@
 // The finished badge on its own: the same scene, materials and firmware the assembly page
 // ends on, with no story around it — made to be dropped into an <iframe> on another site.
 import * as THREE from 'three';
-import { mat, mesh, cyl, texture, decal, planarUVs, buildDisplay, buildStrapBar } from './parts.js?v=66';
-import { FirmwareDisplay } from './emulator-display.js?v=66';
-import { loadGLB } from './glb.js?v=66';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=66';
-import { DEFAULTS, applyRenderSettings } from './render-state.js?v=66';
+import { mat, mesh, cyl, texture, decal, planarUVs, buildDisplay, buildStrapBar } from './parts.js?v=68';
+import { FirmwareDisplay } from './emulator-display.js?v=68';
+import { loadGLB } from './glb.js?v=68';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=68';
+import { DEFAULTS, applyRenderSettings } from './render-state.js?v=68';
 import { STLLoader } from './vendor/STLLoader.js';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -21,7 +21,11 @@ const flag=(name,fallback)=>options.has(name)?!/^(0|false|no|off)$/i.test(option
 const number=(name,fallback)=>{const v=Number.parseFloat(options.get(name));return Number.isFinite(v)?v:fallback};
 // Lilac backdrop by default; the host page can ask for another colour, or ?bg=transparent.
 if(options.get('bg'))document.body.style.background=options.get('bg');
-const canvas=document.querySelector('#scene'),loading=document.querySelector('#loading');
+const canvas=document.querySelector('#scene'),loading=document.querySelector('#loading'),hint=document.querySelector('#hint');
+// The hand invites the first gesture, then gets out of the way for good.
+if(!flag('hint',true))hint.remove();
+const dropHint=()=>{if(hint.isConnected&&!hint.classList.contains('gone')){hint.classList.add('gone');setTimeout(()=>hint.remove(),600)}};
+for(const ev of ['pointerdown','keydown','wheel'])canvas.addEventListener(ev,dropHint,{passive:true});
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),lerp=(a,b,t)=>a+(b-a)*t;
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(30,innerWidth/innerHeight,1,4000);
