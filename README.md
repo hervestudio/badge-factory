@@ -7,8 +7,8 @@ A self-contained static Three.js assembly story. Serve `dist/` over HTTP; `npm r
 ## Embedding the 3D badge
 
 `dist/embed.html` is the assembled badge on its own — the same scene, materials and firmware the
-assembly page ends on, with no story around it. It fills whatever iframe it is given and is
-transparent by default, so the host page decides the backdrop.
+assembly page ends on, with no story around it. It fills whatever iframe it is given and sits on a lilac
+`#d6d5f9` backdrop, which `?bg=` overrides.
 
 ```html
 <iframe src="https://hervestudio.github.io/badge-factory/embed.html"
@@ -18,7 +18,7 @@ transparent by default, so the host page decides the backdrop.
 
 | Parameter | Default | What it does |
 | --- | --- | --- |
-| `bg` | transparent | Page background, e.g. `?bg=%23f5f4f0` |
+| `bg` | `#d6d5f9` | Page background, e.g. `?bg=%23f5f4f0` or `?bg=transparent` to let the host show through |
 | `spin` | on | Slow auto-rotation; pauses while the visitor drags, resumes 2.6 s later. `?spin=0` to stop it |
 | `spinspeed` | `0.55` | Auto-rotation speed |
 | `margin` | `1.12` | Framing; higher leaves more room around the badge |
