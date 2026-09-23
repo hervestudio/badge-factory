@@ -30,6 +30,22 @@ assembly page ends on, with no story around it. It fills whatever iframe it is g
 Clicking a button cap presses the real button; arrow keys and space work once the canvas has focus.
 Nothing renders while the iframe is off-screen or the tab is hidden.
 
+## The afterparty block
+
+`dist/embed-party.html` is the second embed: the event photos laid out as in the Figma frame, with
+the badge's disco ball drawn live over them — the animation from the disco-ball tool, dropping in on
+its string and swinging itself still. Everything fades in and the ball drops the first time the
+block is actually scrolled into view, and nothing renders while it is off-screen.
+
+```html
+<iframe src="https://hervestudio.github.io/badge-factory/embed-party.html"
+        title="Three.js Conf afterparty" loading="lazy"
+        style="border:0;width:100%;aspect-ratio:1028/990;display:block"></iframe>
+```
+
+The composition keeps the frame's 1028 × 990 proportions and centres itself, so giving the iframe
+that aspect ratio avoids letterboxing. `?spin=` changes the ball's rotation speed (default `0.6`).
+
 ## Publishing
 
 GitHub Pages serves the `gh-pages` branch, which holds the contents of `dist/`. To ship a new build:
