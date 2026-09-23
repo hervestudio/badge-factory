@@ -1,7 +1,7 @@
 // The Three.js Conf afterparty block: the event photos, and the badge's own disco ball
 // drawn live — the animation from the disco-ball tool, dropping in on its string.
 const FRAME_W=1028,FRAME_H=990;              // the Figma frame this is composed from
-const BALL={cx:509,cy:517.6,r:93.5,pivotX:509};   // measured off the ball export placed in that frame
+const BALL={cx:509,cy:517.6,r:112.2,pivotX:509}; // measured off the ball export in that frame, then 20% up
 const DISCO_PALS=[[158,197,240],[255,167,254],[255,203,138],[159,146,243],[128,219,188]];
 // Mouth / snout vector from the badge firmware's Mouth.svg (viewBox 71 × 73).
 const SNOUT_BLOB=new Path2D("M12.8717 29.0658C0.183031 19.6626 6.83373 -0.481934 22.6268 -0.481934H51.1003C66.7113 -0.481934 73.4774 19.2799 61.1424 28.8482L48.6013 38.5763C45.7282 40.805 42.1954 42.0146 38.5592 42.0146H35.7539C32.241 42.0146 28.8211 40.8855 25.9988 38.7939L12.8717 29.0658Z");
@@ -175,6 +175,35 @@ canvas.addEventListener('pointerdown',e=>{
 const letGo=()=>{if(pend.drag){pend.drag=false;pend.w=Math.max(-4,Math.min(4,pend.w));}};
 canvas.addEventListener('pointerup',letGo);canvas.addEventListener('pointercancel',letGo);
 
+// PARTYYYY arrives one letter at a time: split the word, keeping the exact widths the
+// stretched title has, so each glyph can be animated on its own.
+async function splitTitle(){
+ const svg=document.querySelector('.title'),text=svg.querySelector('text');
+ if(!text)return;
+ try{await document.fonts.load('122px Dingos');await document.fonts.ready}catch{}
+ const word=text.textContent;
+ try{
+  const probe=text.cloneNode(true);probe.removeAttribute('textLength');probe.removeAttribute('lengthAdjust');
+  probe.setAttribute('visibility','hidden');svg.append(probe);
+  const natural=probe.getComputedTextLength();probe.remove();
+  const k=natural>0?Number(text.getAttribute('textLength'))/natural:1;
+  const xs=[...word].map((_,i)=>text.getStartPositionOfChar(i).x);
+  const y=text.getAttribute('y'),size=text.getAttribute('font-size');
+  const frag=document.createDocumentFragment();
+  [...word].forEach((ch,i)=>{
+   const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+   g.setAttribute('transform',`translate(${xs[i]},0) scale(${k},1)`);
+   const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+   t.setAttribute('x',0);t.setAttribute('y',y);t.setAttribute('font-size',size);
+   t.setAttribute('class','ltr');t.style.setProperty('--i',i);t.textContent=ch;
+   g.append(t);frag.append(g);
+  });
+  text.replaceWith(frag);
+ }catch(e){/* keep the one-piece title if the split is not possible */}
+}
+// The letters must exist before the block is told to appear, or they are born settled.
+const titleReady=Promise.race([splitTitle(),new Promise(r=>setTimeout(r,1500))]);
+
 function resize(){
  const r=poster.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
  scale=r.width/FRAME_W;
@@ -187,7 +216,9 @@ initPixels();resize();
 
 // The block introduces itself the first time it is actually seen.
 let onScreen=true,started=false;
-const start=()=>{if(started)return;started=true;document.body.classList.add('in');state.introStart=null;armAt=performance.now()/1000+.35;};
+const start=()=>{if(started)return;started=true;state.introStart=null;
+ titleReady.then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{   // let the letters be painted first
+  document.body.classList.add('in');armAt=performance.now()/1000+.35;})));};
 let armAt=Infinity;
 if('IntersectionObserver' in window){
  onScreen=false;
