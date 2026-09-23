@@ -4,6 +4,31 @@ Live: **https://hervestudio.github.io/badge-factory/**
 
 A self-contained static Three.js assembly story. Serve `dist/` over HTTP; `npm run dev` starts a local preview on port 4173. No CDN or runtime third-party requests are required.
 
+## Embedding the 3D badge
+
+`dist/embed.html` is the assembled badge on its own — the same scene, materials and firmware the
+assembly page ends on, with no story around it. It fills whatever iframe it is given and is
+transparent by default, so the host page decides the backdrop.
+
+```html
+<iframe src="https://hervestudio.github.io/badge-factory/embed.html"
+        title="Three.js Conf badge in 3D" loading="lazy"
+        style="border:0;width:100%;height:520px;display:block"></iframe>
+```
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `bg` | transparent | Page background, e.g. `?bg=%23f5f4f0` |
+| `spin` | on | Slow auto-rotation; pauses while the visitor drags, resumes 2.6 s later. `?spin=0` to stop it |
+| `spinspeed` | `0.55` | Auto-rotation speed |
+| `margin` | `1.12` | Framing; higher leaves more room around the badge |
+| `zoom` | off | `?zoom=1` lets the wheel and pinch zoom. Off by default so the embed never swallows page scroll |
+| `drag` | one finger | `?drag=two` leaves one-finger swipes to the host page and turns the badge on two fingers |
+| `name`, `role` | BRUNO SIMON, THREE.JS JOURNEY | The name plate |
+
+Clicking a button cap presses the real button; arrow keys and space work once the canvas has focus.
+Nothing renders while the iframe is off-screen or the tab is hidden.
+
 ## Publishing
 
 GitHub Pages serves the `gh-pages` branch, which holds the contents of `dist/`. To ship a new build:
