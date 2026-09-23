@@ -1,11 +1,11 @@
 // The finished badge on its own: the same scene, materials and firmware the assembly page
 // ends on, with no story around it — made to be dropped into an <iframe> on another site.
 import * as THREE from 'three';
-import { mat, mesh, cyl, texture, decal, planarUVs, buildDisplay, buildStrapBar } from './parts.js?v=71';
-import { FirmwareDisplay } from './emulator-display.js?v=71';
-import { loadGLB } from './glb.js?v=71';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=71';
-import { DEFAULTS, applyRenderSettings } from './render-state.js?v=71';
+import { mat, mesh, cyl, texture, decal, planarUVs, buildDisplay, buildStrapBar } from './parts.js?v=72';
+import { FirmwareDisplay } from './emulator-display.js?v=72';
+import { loadGLB } from './glb.js?v=72';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=72';
+import { DEFAULTS, applyRenderSettings } from './render-state.js?v=72';
 import { STLLoader } from './vendor/STLLoader.js';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -24,7 +24,7 @@ if(options.get('bg'))document.body.style.background=options.get('bg');
 const canvas=document.querySelector('#scene'),loading=document.querySelector('#loading'),hint=document.querySelector('#hint');
 // The hand invites the first gesture, then gets out of the way for good.
 if(!flag('hint',true))hint.remove();
-const dropHint=()=>{if(hint.isConnected&&!hint.classList.contains('gone')){hint.classList.add('gone');setTimeout(()=>hint.remove(),600)}};
+const dropHint=()=>{if(hint.isConnected){document.body.classList.remove('hinting');setTimeout(()=>hint.remove(),600)}};
 for(const ev of ['pointerdown','keydown','wheel'])canvas.addEventListener(ev,dropHint,{passive:true});
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),lerp=(a,b,t)=>a+(b-a)*t;
@@ -148,6 +148,25 @@ try {
   scene.overrideMaterial=null;camera.layers.set(1);renderer.render(scene,camera);
   camera.layers.set(0);renderer.autoClear=auto;}
 
+
+ // The chip rides the badge: project its box each frame and hug the top-left corner it presents.
+ const corner=new THREE.Vector3();let hintX=-1,hintY=-1;
+ function placeHint(){
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for(let i=0;i<8;i++){
+   corner.set(i&1?box.max.x:box.min.x,i&2?box.max.y:box.min.y,i&4?box.max.z:box.min.z).project(camera);
+   const sx=(corner.x*.5+.5)*innerWidth,sy=(1-(corner.y*.5+.5))*innerHeight;
+   minX=Math.min(minX,sx);maxX=Math.max(maxX,sx);minY=Math.min(minY,sy);maxY=Math.max(maxY,sy);
+  }
+  // sit on the shoulder, not beside it: a share of the badge's own size inwards
+  const x=minX+(maxX-minX)*.14,y=minY+(maxY-minY)*.075;
+  const k=hintX<0?1:.12;                                    // settle, never jitter
+  hintX=hintX<0?x:hintX+(x-hintX)*k;hintY=hintY<0?y:hintY+(y-hintY)*k;
+  hint.style.setProperty('--x',Math.round(hintX)+'px');
+  hint.style.setProperty('--y',Math.round(hintY)+'px');
+  document.body.classList.add('hinting');
+ }
+
  const spinWanted=flag('spin',true)&&!reduced;let last=performance.now();
  function frame(time){requestAnimationFrame(frame);
   if(document.hidden||!onScreen){last=time;return}
@@ -161,6 +180,7 @@ try {
   if(!pressedOnce){const t=(time%2400)/2400,k=1-Math.pow(1-Math.min(t*1.6,1),3);tapHint.scale.setScalar(lerp(.55,1.45,k));tapHint.material.opacity=.6*(1-k);}
   firmware.tick(dt,true);
   composer.render();drawScreenExact();adaptive.frame(time);
+ if(hint.isConnected)placeHint();
  }
  loading.classList.add('hidden');requestAnimationFrame(frame);
 } catch(error){console.error(error);loading.textContent='The 3D badge could not load.';loading.classList.add('error');}

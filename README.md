@@ -24,7 +24,7 @@ assembly page ends on, with no story around it. It fills whatever iframe it is g
 | `margin` | `1.232` | Framing; higher leaves more room around the badge |
 | `zoom` | off | `?zoom=1` lets the wheel and pinch zoom. Off by default so the embed never swallows page scroll |
 | `drag` | one finger | `?drag=two` leaves one-finger swipes to the host page and turns the badge on two fingers |
-| `hint` | on | The animated "drag to turn · tap the buttons" pill, which leaves on the first gesture. `?hint=0` removes it |
+| `hint` | on | The round chip on the badge's shoulder — a swiping hand that leaves on the first gesture. `?hint=0` removes it |
 | `name`, `role` | BRUNO SIMON, THREE.JS JOURNEY | The name plate |
 
 Clicking a button cap presses the real button; arrow keys and space work once the canvas has focus.
