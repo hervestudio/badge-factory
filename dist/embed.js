@@ -1,11 +1,11 @@
 // The finished badge on its own: the same scene, materials and firmware the assembly page
 // ends on, with no story around it — made to be dropped into an <iframe> on another site.
 import * as THREE from 'three';
-import { mat, mesh, cyl, texture, decal, planarUVs, buildDisplay, buildStrapBar } from './parts.js?v=73';
-import { FirmwareDisplay } from './emulator-display.js?v=73';
-import { loadGLB } from './glb.js?v=73';
-import { detectPerformance, createAdaptiveRatio } from './perf.js?v=73';
-import { DEFAULTS, applyRenderSettings } from './render-state.js?v=73';
+import { mat, mesh, cyl, texture, decal, planarUVs, buildDisplay, buildStrapBar } from './parts.js?v=74';
+import { FirmwareDisplay } from './emulator-display.js?v=74';
+import { loadGLB } from './glb.js?v=74';
+import { detectPerformance, createAdaptiveRatio } from './perf.js?v=74';
+import { DEFAULTS, applyRenderSettings } from './render-state.js?v=74';
 import { STLLoader } from './vendor/STLLoader.js';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -165,8 +165,7 @@ try {
   hint.style.setProperty('--x',Math.round(hintX)+'px');
   hint.style.setProperty('--y',Math.round(hintY)+'px');
   if(!document.body.classList.contains('hinting')){document.body.classList.add('hinting');
-   setTimeout(()=>document.body.classList.add('hint-open'),450);      // say it,
-   setTimeout(()=>document.body.classList.remove('hint-open'),5200);} // then fold back to the dot
+   setTimeout(()=>document.body.classList.add('hint-open'),450);}  // and it stays said until they act
  }
 
  const spinWanted=flag('spin',true)&&!reduced;let last=performance.now();
